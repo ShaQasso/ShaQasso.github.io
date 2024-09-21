@@ -1,0 +1,33 @@
+---
+title: "Publications"
+---
+
+[Inflammation and bacteriophages affect DNA inversion states and functionality of the gut microbiota](https://doi.org/10.1016/j.chom.2024.02.003), *Cell Host & Microbe* (2024)\
+[#Carasso S]{.underline}, #Zaatry R, #Hajjo H, #Kadosh-Kariti D, Ben-Assa N, Naddaf N, Mandelbaum N, Pressman S, Chowers Y, Gefen T, Jeffrey K.L., Jofre J, Coyne M.J., Comstock L.E., Sharon I, Geva-Zatorsky N
+
+[Gut microbial signatures are associated with Lynch syndrome (LS) and cancer history in Druze communities in Israel](https://doi.org/10.1038/s41598-023-47723-3), *Scientific Reports* (2023)\
+#Naddaf R, [#Carasso S]{.underline}, Reznick-Levi G, Hasnis E, Qarawani A, Maza I, Gefen T, Half E. E., Geva-Zatorsky N
+
+[Extracellular vesicles of the Gram-positive gut symbiont \*Bifidobacterium longum\* induce immune-modulatory, anti-inflammatory effects](https://doi.org/10.1038/s41522-023-00400-9), *npj Biofilms and Microbiomes* (2023)\
+Mandelbaum N, Zhang L, [Carasso S]{.underline}, Ziv T, Lifshiz-Simon S, Davidovich I, Luz I, Berinstein E, Gefen T, Cooks T, Talmon Y, Balskus E. P., Geva-Zatorsky N
+
+[Microbiome characterization of infected diabetic foot ulcers in association with clinical outcomes: traditional cultures versus molecular sequencing methods](#0), *Front. Cell. Infect. Microbiol* (2022)\
+#Mudrik-Zohar H, [#Carasso S]{.underline}, Gefen T, Zalmanovich A, Katzir M, Cohen Y, Paitan Y, Geva-Zatorsky N, Chowers M
+
+[The mechanical cost of decreasing conduction velocity: a mathematical model of pacing-induced lower strain](#0)\](https://doi.org/10.4022%2Fjafib.20200444), *J Atr Fibrillation* (2021)\
+Marai I, Carasso D, [Carasso S]{.underline}, Carasso S
+
+[Metagenomic analysis reveals the signature of gut microbiota associated with human chronotypes](#0), *FASEB J* (2021) \
+[Carasso S]{.underline}, Fishman B, Lask LS, Shochat T, Geva-Zatorsky N, Tauber E
+
+["More guts than brains?"\--the role of gut microbiota in idiopathic intracranial hypertension](#0), *Journal of Neuro-Ophthalmology* (2021)\
+Berkowitz E, Kopelman Y, Kadosh D, [Carasso S]{.underline}, Tiosano B, Kesler A, Geva-Zatorsky N
+
+[Analysis of a phase-variable restriction modification system of the human gut symbiont \*Bacteroides fragilis](#0), *Nucleic Acids Research* (2020)\
+Ben-Assa N, Coyne MJ, Fomenkov A, Livny J, Robins WP, Muniesa M, Carey V, [Carasso S]{.underline}, Gefen T, Jofre J, Roberts RJ, Comstock LE, Geva-Zatorsky N
+
+[Oral capsulized fecal microbiota transplantation for eradication of carbapenemase-producing Enterobacteriaceae colonization with a metagenomic perspective](#0), *Clinical Infectious Diseases* (2020)\
+#Bar-Yoseph H, [#Carasso S]{.underline}, Shklar S, Korytny A, Even Dar R, Daoud H, Nassar R, Maharshak N, Hussein K, Geffen Y, Chowers Y, Geva-Zatorsky N, Paul M
+
+[Phage-Bacteria Associations: Analyze. Match. Develop Therapies](#0), *Cell Host & Microbe* (2020)\
+[Carasso S]{.underline}, Hajjo H, Geva-Zatorsky N

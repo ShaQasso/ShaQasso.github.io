@@ -4,18 +4,35 @@ project:
 
 
 website:
-  title: "ShaQasso.github.io"
+  title: "SHAQED CARASSO"
+  search: false
+
   navbar:
-    left:
+    right: 
       - href: index.qmd
         text: Home
-      - about.qmd
+      #- about.qmd
+      - href: Publications.qmd
+        text: Publications
+      - href: media/Shaqed_Carasso_CV_SEPT2024.pdf
+        text: CV
+        target: _blank 
+
+
+  page-footer:
+    background: light 
+    left: Copyright 2024, Shaqed Carasso
+    #right: This website is built with {{< fa heart title="a heart" >}}, [{{< fa brands github title="GitHub octocat logo" >}}](https://github.com/samanthacsik/samanthacsik.github.io){target=_blank}, [{{< fa brands r-project title="R Project" >}}](https://www.r-project.org/about.html){target=_blank} and [Quarto](https://quarto.org/){target=_blank}
+
+
 
 format:
   html:
-    theme: cosmo
+    theme: Lux
     css: styles.css
     toc: true
+    page-layout: full
+    b,strong {font-weight: bold}
 
 editor: visual
 
