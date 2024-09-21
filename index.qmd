@@ -16,7 +16,7 @@ about:
 ---
 
 ::: {#hero-heading}
-I'm a **PhD Candidate in Bioinformatics** focused on the gut microbiome and bacterial genomic alterations, mentored by Professors [Naama Geva-Zatorsky](https://md.technion.ac.il/naama-geva-zatorsky/) (Technion) and [Itai Sharon](https://www.migal.org.il/en/Itai_Sharon) (MIGAL). My work combines expertise in microbial genetics and data analysis to study gut bacteria functional plasticity and their interactions with the human host. Specifically, I am interested in reversible genomic alterations in gut bacteria, which can induce varied gene expression patterns, ultimately shaping the influence on the mammalian host's immune system.
+I'm a **PhD Candidate in Bioinformatics,** mentored by Professors [Naama Geva-Zatorsky](https://md.technion.ac.il/naama-geva-zatorsky/) (Technion) and [Itai Sharon](https://www.migal.org.il/en/Itai_Sharon) (MIGAL). My research focuses on the gut microbiome, combining microbial genetics and data analysis to study gut bacteria functional plasticity and their interactions with the human host. Specifically, I am interested in reversible genomic alterations in gut bacteria, which can induce varied gene expression patterns, ultimately shaping the influence on the mammali
 
 <div>
 
