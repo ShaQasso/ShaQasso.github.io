@@ -2,6 +2,10 @@
 title: "In the Press"
 ---
 
-[![Intestinal bacteria's reaction to inflammation effects immunity - study - The Jerusalem Post](media/jpost.jpeg){fig-align="center" width="495"}](https://www.jpost.com/health-and-wellness/article-796177)
+Intestinal bacteria's reaction to inflammation effects immunity - The Jerusalem Post
 
-[![Microbiome differences between night owls and morning people suggest dietary changes](media/sean-robbins-uwbyn88qZXo-unsplash.jpg){fig-align="center" width="495"}](https://phys.org/news/2022-01-microbiome-differences-night-owls-morning.html)
+[![](media/jpost.jpeg){fig-align="center" width="495"}](https://www.jpost.com/health-and-wellness/article-796177)
+
+Microbiome differences between night owls and morning people suggest dietary changes - phys.org
+
+[![](media/sean-robbins-uwbyn88qZXo-unsplash.jpg){fig-align="center" width="495"}](https://phys.org/news/2022-01-microbiome-differences-night-owls-morning.html)
