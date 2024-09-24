@@ -16,6 +16,8 @@ website:
         text: Publications
       - href: In the Press.qmd
         text: In the Press
+      - href: PPT painting.qmd
+        text: Illustrations
       - href: media/Shaqed_Carasso_CV_SEPT2024.pdf
         text: CV
         target: _blank 

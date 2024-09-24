@@ -1,0 +1,17 @@
+---
+title: "Creating Visuals During My PhD, with PPT"
+format: html
+---
+
+During my PhD, I began using PowerPoint as my primary tool for creating vector assets and figures, which allowed me to design some really fun illustrations to effectively communicate my research (but mostly because it's fun). 
+
+These are some examples...
+
+|                                                                |                                                         |
+|------------------------------------------|------------------------------|
+| Beer label for the lab.                                        | ![](media/beer_NGZ.jpg){width="241"}                    |
+| Swiss army knife representing bacterial functional plasticity. | ![](media/functional_plasticity_swiss.jpg){width="241"} |
+| Bacteria with different 'coats'.                               | ![](media/bacteria_in_coats.jpg){width="241"}           |
+| Graphical abstract for our Cell Host & Microbe paper.          | ![](media/graph_abst.jpg){width="241"}                  |
+| Suggested cover option for Cell Host & Microbe.                | ![](media/cell_host_suggestion.jpg){width="241"}        |
+| Logo for the NGZ lab.                                          | ![](media/lab logo.png){width="241"}                    |

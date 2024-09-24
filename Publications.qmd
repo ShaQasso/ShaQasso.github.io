@@ -17,27 +17,27 @@ Mandelbaum N, Zhang L, [Carasso S]{.underline}, Ziv T, Lifshiz-Simon S, Davidovi
 
 ## 2022
 
-[Microbiome characterization of infected diabetic foot ulcers in association with clinical outcomes: traditional cultures versus molecular sequencing methods](#0), *Front. Cell. Infect. Microbiol* (2022)\
+[Microbiome characterization of infected diabetic foot ulcers in association with clinical outcomes: traditional cultures versus molecular sequencing methods](https://doi.org/10.3389/fcimb.2022.836699), *Front. Cell. Infect. Microbiol* (2022)\
 #Mudrik-Zohar H, [#Carasso S]{.underline}, Gefen T, Zalmanovich A, Katzir M, Cohen Y, Paitan Y, Geva-Zatorsky N, Chowers M
 
 ## 2021
 
-[The mechanical cost of decreasing conduction velocity: a mathematical model of pacing-induced lower strain](#0)\](https://doi.org/10.4022%2Fjafib.20200444), *J Atr Fibrillation* (2021)\
+[The mechanical cost of decreasing conduction velocity: a mathematical model of pacing-induced lower strain](https://doi.org/10.4022%2Fjafib.20200444), *J Atr Fibrillation* (2021)\
 Marai I, Carasso D, [Carasso S]{.underline}, Carasso S
 
-[Metagenomic analysis reveals the signature of gut microbiota associated with human chronotypes](#0), *FASEB J* (2021)\
+[Metagenomic analysis reveals the signature of gut microbiota associated with human chronotypes](https://faseb.onlinelibrary.wiley.com/doi/10.1096/fj.202100857RR), *FASEB J* (2021)\
 [Carasso S]{.underline}, Fishman B, Lask LS, Shochat T, Geva-Zatorsky N, Tauber E
 
-["More guts than brains?"\--the role of gut microbiota in idiopathic intracranial hypertension](#0), *Journal of Neuro-Ophthalmology* (2021)\
+["More guts than brains?"\--the role of gut microbiota in idiopathic intracranial hypertension](https://doi.org/10.1097/wno.0000000000001330), *Journal of Neuro-Ophthalmology* (2021)\
 Berkowitz E, Kopelman Y, Kadosh D, [Carasso S]{.underline}, Tiosano B, Kesler A, Geva-Zatorsky N
 
 ## 2020
 
-[Analysis of a phase-variable restriction modification system of the human gut symbiont \*Bacteroides fragilis](#0), *Nucleic Acids Research* (2020)\
+[Analysis of a phase-variable restriction modification system of the human gut symbiont \*Bacteroides fragilis](https://doi.org/10.1093/nar/gkaa824), *Nucleic Acids Research* (2020)\
 Ben-Assa N, Coyne MJ, Fomenkov A, Livny J, Robins WP, Muniesa M, Carey V, [Carasso S]{.underline}, Gefen T, Jofre J, Roberts RJ, Comstock LE, Geva-Zatorsky N
 
-[Oral capsulized fecal microbiota transplantation for eradication of carbapenemase-producing Enterobacteriaceae colonization with a metagenomic perspective](#0), *Clinical Infectious Diseases* (2020)\
+[Oral capsulized fecal microbiota transplantation for eradication of carbapenemase-producing Enterobacteriaceae colonization with a metagenomic perspective](https://doi.org/10.1093/cid/ciaa737), *Clinical Infectious Diseases* (2020)\
 #Bar-Yoseph H, [#Carasso S]{.underline}, Shklar S, Korytny A, Even Dar R, Daoud H, Nassar R, Maharshak N, Hussein K, Geffen Y, Chowers Y, Geva-Zatorsky N, Paul M
 
-[Phage-Bacteria Associations: Analyze. Match. Develop Therapies](#0), *Cell Host & Microbe* (2020)\
+[Phage-Bacteria Associations: Analyze. Match. Develop Therapies](https://doi.org/10.1016/j.chom.2020.08.009), *Cell Host & Microbe* (2020)\
 [Carasso S]{.underline}, Hajjo H, Geva-Zatorsky N

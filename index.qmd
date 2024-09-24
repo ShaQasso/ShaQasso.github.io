@@ -27,3 +27,14 @@ I'm a **PhD Candidate in Bioinformatics,** mentored by Professors [Naama Geva-Za
 
 </div>
 :::
+
+#### Education
+
+**<i class="bi bi-virus"></i> PhD \| 2021 - Ongoing\
+**Technion -- Israel Institute of Technology
+
+**<i class="bi bi-virus"></i> MSc Cum Laude, in Medical Sciences \| 2018 - 2021\
+**Technion -- Israel Institute of Technology
+
+**<i class="bi bi-virus"></i> BSc, Biology \| 2014 - 2018\
+**Technion -- Israel Institute of Technology

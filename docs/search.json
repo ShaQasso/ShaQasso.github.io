@@ -32,7 +32,7 @@
     "href": "Publications.html#section-3",
     "title": "Publications",
     "section": "2021",
-    "text": "2021\nThe mechanical cost of decreasing conduction velocity: a mathematical model of pacing-induced lower strain](https://doi.org/10.4022%2Fjafib.20200444), J Atr Fibrillation (2021)\nMarai I, Carasso D, Carasso S, Carasso S\nMetagenomic analysis reveals the signature of gut microbiota associated with human chronotypes, FASEB J (2021)\nCarasso S, Fishman B, Lask LS, Shochat T, Geva-Zatorsky N, Tauber E\n“More guts than brains?”--the role of gut microbiota in idiopathic intracranial hypertension, Journal of Neuro-Ophthalmology (2021)\nBerkowitz E, Kopelman Y, Kadosh D, Carasso S, Tiosano B, Kesler A, Geva-Zatorsky N"
+    "text": "2021\nThe mechanical cost of decreasing conduction velocity: a mathematical model of pacing-induced lower strain, J Atr Fibrillation (2021)\nMarai I, Carasso D, Carasso S, Carasso S\nMetagenomic analysis reveals the signature of gut microbiota associated with human chronotypes, FASEB J (2021)\nCarasso S, Fishman B, Lask LS, Shochat T, Geva-Zatorsky N, Tauber E\n“More guts than brains?”--the role of gut microbiota in idiopathic intracranial hypertension, Journal of Neuro-Ophthalmology (2021)\nBerkowitz E, Kopelman Y, Kadosh D, Carasso S, Tiosano B, Kesler A, Geva-Zatorsky N"
   },
   {
     "objectID": "Publications.html#section-4",
@@ -42,11 +42,11 @@
     "text": "2020\nAnalysis of a phase-variable restriction modification system of the human gut symbiont *Bacteroides fragilis, Nucleic Acids Research (2020)\nBen-Assa N, Coyne MJ, Fomenkov A, Livny J, Robins WP, Muniesa M, Carey V, Carasso S, Gefen T, Jofre J, Roberts RJ, Comstock LE, Geva-Zatorsky N\nOral capsulized fecal microbiota transplantation for eradication of carbapenemase-producing Enterobacteriaceae colonization with a metagenomic perspective, Clinical Infectious Diseases (2020)\n#Bar-Yoseph H, #Carasso S, Shklar S, Korytny A, Even Dar R, Daoud H, Nassar R, Maharshak N, Hussein K, Geffen Y, Chowers Y, Geva-Zatorsky N, Paul M\nPhage-Bacteria Associations: Analyze. Match. Develop Therapies, Cell Host & Microbe (2020)\nCarasso S, Hajjo H, Geva-Zatorsky N"
   },
   {
-    "objectID": "In the Press.html",
-    "href": "In the Press.html",
-    "title": "In the Press",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "SHAQED CARASSO",
     "section": "",
-    "text": "Intestinal bacteria’s reaction to inflammation effects immunity - The Jerusalem Post\n\n\n\n\n\nMicrobiome differences between night owls and morning people suggest dietary changes - phys.org"
+    "text": "Google Scholar\n  \n  \n    \n     \n  \n  \n    \n     \n  \n  \n    \n     E-Mail\n  \n\n  \n  \nI’m a PhD Candidate in Bioinformatics, mentored by Professors Naama Geva-Zatorsky (Technion) and Itai Sharon (MIGAL). My research focuses on the gut microbiome, combining microbial genetics and data analysis to study gut bacteria functional plasticity and their interactions with the human host. Specifically, I am interested in reversible genomic alterations in gut bacteria, which can induce varied gene expression patterns, ultimately shaping the influence on the mammalian host.\n\nI’m currently completing my PhD and looking for postdoc opportunities to apply my skills in analyzing complex biological or medical data.\n\n\n\n\n\nEducation\n PhD | 2021 - Ongoing\nTechnion – Israel Institute of Technology\n MSc Cum Laude, in Medical Sciences | 2018 - 2021\nTechnion – Israel Institute of Technology\n BSc, Biology | 2014 - 2018\nTechnion – Israel Institute of Technology"
   },
   {
     "objectID": "about.html",
@@ -56,10 +56,17 @@
     "text": "About this site\n\n1 + 1\n\n[1] 2"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "SHAQED CARASSO",
+    "objectID": "In the Press.html",
+    "href": "In the Press.html",
+    "title": "In the Press",
     "section": "",
-    "text": "Google Scholar\n  \n  \n    \n     \n  \n  \n    \n     \n  \n  \n    \n     E-Mail\n  \n\n  \n  \nI’m a PhD Candidate in Bioinformatics, mentored by Professors Naama Geva-Zatorsky (Technion) and Itai Sharon (MIGAL). My research focuses on the gut microbiome, combining microbial genetics and data analysis to study gut bacteria functional plasticity and their interactions with the human host. Specifically, I am interested in reversible genomic alterations in gut bacteria, which can induce varied gene expression patterns, ultimately shaping the influence on the mammalian host.\n\nI’m currently completing my PhD and looking for postdoc opportunities to apply my skills in analyzing complex biological or medical data."
+    "text": "Intestinal bacteria’s reaction to inflammation effects immunity - The Jerusalem Post\n\n\n\n\n\nMicrobiome differences between night owls and morning people suggest dietary changes - phys.org"
+  },
+  {
+    "objectID": "PPT painting.html",
+    "href": "PPT painting.html",
+    "title": "Creating Visuals During My PhD, with PPT",
+    "section": "",
+    "text": "During my PhD, I began using PowerPoint as my primary tool for creating vector assets and figures, which allowed me to design some really fun illustrations to effectively communicate my research (but mostly because it’s fun).\nThese are some examples…\n\n\n\n\n\n\n\nBeer label for the lab.\n\n\n\nSwiss army knife representing bacterial functional plasticity.\n\n\n\nBacteria with different ‘coats’.\n\n\n\nGraphical abstract for our Cell Host & Microbe paper.\n\n\n\nSuggested cover option for Cell Host & Microbe.\n\n\n\nLogo for the NGZ lab."
   }
 ]
