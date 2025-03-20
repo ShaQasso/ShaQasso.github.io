@@ -2,6 +2,11 @@
 title: "Publications"
 ---
 
+## 2025
+
+[Bacteriophage-driven DNA inversions shape bacterial functionality and long-term co-existence in *Bacteroides fragilis*](#0)*, bioRxiv* (2025)\
+[#Carasso S]{.underline}, #Keshet-David R, Zhang J, Hajjo H, Kadosh-Kariti D, Gefen T, Geva-Zatorsky N
+
 ## 2024
 
 [Inflammation and bacteriophages affect DNA inversion states and functionality of the gut microbiota](https://doi.org/10.1016/j.chom.2024.02.003), *Cell Host & Microbe* (2024)\

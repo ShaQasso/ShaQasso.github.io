@@ -1,0 +1,8 @@
+---
+title: "Updates"
+listing:
+  contents: posts
+  sort: "date desc"
+  date-format: "medium"
+  type: "grid"
+---

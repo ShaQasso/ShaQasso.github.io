@@ -1,0 +1,15 @@
+---
+title: "My work was featured in nature reviews gastroenterology & hepatology's 2024 Year in Review!"
+description: "IBD in 2024"
+date: "12/15/2024"
+draft: false
+image: "/media/nat_rev_gast.jpg"
+---
+
+![](/media/nat_rev_gast.jpg)
+
+"Among the innumerable research papers on inflammatory bowel disease (IBD) in 2024, three stood out. Two clinical studies highlighted the maturing cycle of biologic agent treatment strategies in clinical practice, and a basic science study disentangled the interaction between the gut microbiota, bacteriophages and the host immune system."
+
+[Link to the article](https://www.nature.com/articles/s41575-024-01029-5)
+
+Katsidzira, L., Misselwitz, B. Biologic agents for IBD come of age as host--microbe interactions emerge. *Nat Rev Gastroenterol Hepatol* **22**, 94--95 (2025).

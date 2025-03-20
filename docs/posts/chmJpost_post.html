@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="dcterms.date" content="2024-04-10">
 
-<title>Publications – SHAQED CARASSO</title>
+<title>My work on gut bacteria’s DNA inversions in inflammation was mentioned in the news – SHAQED CARASSO</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,18 +24,20 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/quarto-listing/list.min.js"></script>
+<script src="../site_libs/quarto-listing/quarto-listing.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "language": {
     "search-no-results-text": "No results",
@@ -50,9 +53,67 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script>
 
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-listing .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
 
-<link rel="stylesheet" href="styles.css">
+    const options = {
+      valueNames: ['listing-title','listing-author','listing-date','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      
+      searchColumns: ["listing-title","listing-author","listing-date","listing-image","listing-description"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
 </head>
 
 <body class="nav-fixed">
@@ -62,7 +123,7 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">SHAQED CARASSO</span>
     </a>
   </div>
@@ -72,23 +133,23 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./index.html"> 
+    <a class="nav-link" href="../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./Publications.html" aria-current="page"> 
+    <a class="nav-link" href="../Publications.html"> 
 <span class="menu-text">Publications</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./news_list.html"> 
+    <a class="nav-link" href="../news_list.html"> 
 <span class="menu-text">Updates</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./PPT painting.html"> 
+    <a class="nav-link" href="../PPT painting.html"> 
 <span class="menu-text">Illustrations</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./media/Carasso_Shaqed_CV_OCT2024.pdf" target="_blank"> 
+    <a class="nav-link" href="../media/Carasso_Shaqed_CV_OCT2024.pdf" target="_blank"> 
 <span class="menu-text">CV</span></a>
   </li>  
 </ul>
@@ -102,33 +163,28 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#section" id="toc-section" class="nav-link active" data-scroll-target="#section">2025</a></li>
-  <li><a href="#section-1" id="toc-section-1" class="nav-link" data-scroll-target="#section-1">2024</a></li>
-  <li><a href="#section-2" id="toc-section-2" class="nav-link" data-scroll-target="#section-2">2023</a></li>
-  <li><a href="#section-3" id="toc-section-3" class="nav-link" data-scroll-target="#section-3">2022</a></li>
-  <li><a href="#section-4" id="toc-section-4" class="nav-link" data-scroll-target="#section-4">2021</a></li>
-  <li><a href="#section-5" id="toc-section-5" class="nav-link" data-scroll-target="#section-5">2020</a></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
-<main class="content column-page-left" id="quarto-document-content">
+<main class="content column-page" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Publications</h1>
+<h1 class="title">My work on gut bacteria’s DNA inversions in inflammation was mentioned in the news</h1>
 </div>
 
 
 
-<div class="quarto-title-meta column-page-left">
+<div class="quarto-title-meta column-page">
 
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 10, 2024</p>
+    </div>
+  </div>
   
     
   </div>
@@ -138,50 +194,77 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="section" class="level2">
-<h2 class="anchored" data-anchor-id="section">2025</h2>
-<p><a href="#0">Bacteriophage-driven DNA inversions shape bacterial functionality and long-term co-existence in <em>Bacteroides fragilis</em></a><em>, bioRxiv</em> (2025)<br>
-<u>#Carasso S</u>,&nbsp;#Keshet-David R,&nbsp;Zhang J,&nbsp;Hajjo H,&nbsp;Kadosh-Kariti D,&nbsp;Gefen T,&nbsp;Geva-Zatorsky N</p>
-</section>
-<section id="section-1" class="level2">
-<h2 class="anchored" data-anchor-id="section-1">2024</h2>
-<p><a href="https://doi.org/10.1016/j.chom.2024.02.003">Inflammation and bacteriophages affect DNA inversion states and functionality of the gut microbiota</a>, <em>Cell Host &amp; Microbe</em> (2024)<br>
-<u>#Carasso S</u>, #Zaatry R, #Hajjo H, #Kadosh-Kariti D, Ben-Assa N, Naddaf N, Mandelbaum N, Pressman S, Chowers Y, Gefen T, Jeffrey K.L., Jofre J, Coyne M.J., Comstock L.E., Sharon I, Geva-Zatorsky N</p>
-</section>
-<section id="section-2" class="level2">
-<h2 class="anchored" data-anchor-id="section-2">2023</h2>
-<p><a href="https://doi.org/10.1038/s41598-023-47723-3">Gut microbial signatures are associated with Lynch syndrome (LS) and cancer history in Druze communities in Israel</a>, <em>Scientific Reports</em> (2023)<br>
-#Naddaf R, <u>#Carasso S</u>, Reznick-Levi G, Hasnis E, Qarawani A, Maza I, Gefen T, Half E. E., Geva-Zatorsky N</p>
-<p><a href="https://doi.org/10.1038/s41522-023-00400-9">Extracellular vesicles of the Gram-positive gut symbiont *Bifidobacterium longum* induce immune-modulatory, anti-inflammatory effects</a>, <em>npj Biofilms and Microbiomes</em> (2023)<br>
-Mandelbaum N, Zhang L, <u>Carasso S</u>, Ziv T, Lifshiz-Simon S, Davidovich I, Luz I, Berinstein E, Gefen T, Cooks T, Talmon Y, Balskus E. P., Geva-Zatorsky N</p>
-</section>
-<section id="section-3" class="level2">
-<h2 class="anchored" data-anchor-id="section-3">2022</h2>
-<p><a href="https://doi.org/10.3389/fcimb.2022.836699">Microbiome characterization of infected diabetic foot ulcers in association with clinical outcomes: traditional cultures versus molecular sequencing methods</a>, <em>Front. Cell. Infect. Microbiol</em> (2022)<br>
-#Mudrik-Zohar H, <u>#Carasso S</u>, Gefen T, Zalmanovich A, Katzir M, Cohen Y, Paitan Y, Geva-Zatorsky N, Chowers M</p>
-</section>
-<section id="section-4" class="level2">
-<h2 class="anchored" data-anchor-id="section-4">2021</h2>
-<p><a href="https://doi.org/10.4022%2Fjafib.20200444">The mechanical cost of decreasing conduction velocity: a mathematical model of pacing-induced lower strain</a>, <em>J Atr Fibrillation</em> (2021)<br>
-Marai I, Carasso D, <u>Carasso S</u>, Carasso S</p>
-<p><a href="https://faseb.onlinelibrary.wiley.com/doi/10.1096/fj.202100857RR">Metagenomic analysis reveals the signature of gut microbiota associated with human chronotypes</a>, <em>FASEB J</em> (2021)<br>
-<u>Carasso S</u>, Fishman B, Lask LS, Shochat T, Geva-Zatorsky N, Tauber E</p>
-<p><a href="https://doi.org/10.1097/wno.0000000000001330">“More guts than brains?”--the role of gut microbiota in idiopathic intracranial hypertension</a>, <em>Journal of Neuro-Ophthalmology</em> (2021)<br>
-Berkowitz E, Kopelman Y, Kadosh D, <u>Carasso S</u>, Tiosano B, Kesler A, Geva-Zatorsky N</p>
-</section>
-<section id="section-5" class="level2">
-<h2 class="anchored" data-anchor-id="section-5">2020</h2>
-<p><a href="https://doi.org/10.1093/nar/gkaa824">Analysis of a phase-variable restriction modification system of the human gut symbiont *Bacteroides fragilis</a>, <em>Nucleic Acids Research</em> (2020)<br>
-Ben-Assa N, Coyne MJ, Fomenkov A, Livny J, Robins WP, Muniesa M, Carey V, <u>Carasso S</u>, Gefen T, Jofre J, Roberts RJ, Comstock LE, Geva-Zatorsky N</p>
-<p><a href="https://doi.org/10.1093/cid/ciaa737">Oral capsulized fecal microbiota transplantation for eradication of carbapenemase-producing Enterobacteriaceae colonization with a metagenomic perspective</a>, <em>Clinical Infectious Diseases</em> (2020)<br>
-#Bar-Yoseph H, <u>#Carasso S</u>, Shklar S, Korytny A, Even Dar R, Daoud H, Nassar R, Maharshak N, Hussein K, Geffen Y, Chowers Y, Geva-Zatorsky N, Paul M</p>
-<p><a href="https://doi.org/10.1016/j.chom.2020.08.009">Phage-Bacteria Associations: Analyze. Match. Develop Therapies</a>, <em>Cell Host &amp; Microbe</em> (2020)<br>
-<u>Carasso S</u>, Hajjo H, Geva-Zatorsky N</p>
+<p>Check out the links below</p>
+<p><a href="https://www.jpost.com/health-and-wellness/article-796177">JPost</a> (English)</p>
+<p><a href="https://www.technion.ac.il/blog/%D7%97%D7%95%D7%A7%D7%A8%D7%99%D7%9D-%D7%91%D7%98%D7%9B%D7%A0%D7%99%D7%95%D7%9F-%D7%92%D7%99%D7%9C%D7%95-%D7%9B%D7%99-%D7%97%D7%99%D7%99%D7%93%D7%A7%D7%99-%D7%94%D7%9E%D7%A2%D7%99-%D7%9E%D7%A1%D7%95/">Technion’s site</a> (Hebrew)</p>
+<p><a href="https://www.technion.ac.il/en/blog/gut-bacteria-and-the-immune-system/">Technion’s site</a> (English)</p>
+<p><a href="https://www.ynet.co.il/health/article/skm6siwlr">Ynet</a> (Hebrew)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="..\media/jpost.jpeg" class="img-fluid quarto-figure quarto-figure-center figure-img" width="507"></p>
+</figure>
+</div>
 
 
-</section>
 
-</main> <!-- /main -->
+
+<div class="quarto-listing quarto-listing-container-grid" id="listing-listing">
+<div class="list grid quarto-listing-cols-3">
+<div class="g-col-1" data-index="0" data-listing-date-sort="1734213600000" data-listing-file-modified-sort="1742456978884" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="70">
+<a href="../posts/nat_gast_post.html" class="quarto-grid-link">
+<div class="quarto-grid-item card h-100 card-left">
+<p class="card-img-top">
+<img loading="lazy" src="../media/nat_rev_gast.jpg" class="thumbnail-image card-img" style="height: 150px;">
+</p>
+<div class="card-body post-contents">
+<h5 class="no-anchor card-title listing-title">
+My work was featured in nature reviews gastroenterology &amp; hepatology’s 2024 Year in Review!
+</h5>
+<div class="card-text listing-description">
+IBD in 2024
+</div>
+<div class="card-attribution card-text-small justify">
+<div class="listing-author">
+
+</div>
+<div class="listing-date">
+Dec 15, 2024
+</div>
+</div>
+</div>
+</div>
+</a>
+</div>
+<div class="g-col-1" data-index="1" data-listing-date-sort="1641160800000" data-listing-file-modified-sort="1742456370781" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="8">
+<a href="../posts/chrono_post.html" class="quarto-grid-link">
+<div class="quarto-grid-item card h-100 card-left">
+<p class="card-img-top">
+<img loading="lazy" src="../media/sean-robbins-uwbyn88qZXo-unsplash.jpg" class="thumbnail-image card-img" style="height: 150px;">
+</p>
+<div class="card-body post-contents">
+<h5 class="no-anchor card-title listing-title">
+My work microbiome differences between night owls and morning people was mentioned in the news
+</h5>
+<div class="card-text listing-description">
+Check out the links below
+</div>
+<div class="card-attribution card-text-small justify">
+<div class="listing-author">
+
+</div>
+<div class="listing-date">
+Jan 3, 2022
+</div>
+</div>
+</div>
+</div>
+</a>
+</div>
+</div>
+<div class="listing-no-matching d-none">
+No matching items
+</div>
+</div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

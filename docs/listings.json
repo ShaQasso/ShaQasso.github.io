@@ -1,0 +1,34 @@
+[
+  {
+    "listing": "/news_list.html",
+    "items": [
+      "/posts/nat_gast_post.html",
+      "/posts/chmJpost_post.html",
+      "/posts/chrono_post.html"
+    ]
+  },
+  {
+    "listing": "/posts/news_list.html",
+    "items": []
+  },
+  {
+    "listing": "/posts/chrono_post.html",
+    "items": [
+      "/posts/chmJpost_post.html"
+    ]
+  },
+  {
+    "listing": "/posts/chmJpost_post.html",
+    "items": [
+      "/posts/nat_gast_post.html",
+      "/posts/chrono_post.html"
+    ]
+  },
+  {
+    "listing": "/posts/nat_gast_post.html",
+    "items": [
+      "/posts/chmJpost_post.html",
+      "/posts/chrono_post.html"
+    ]
+  }
+]

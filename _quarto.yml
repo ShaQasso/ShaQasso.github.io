@@ -14,8 +14,8 @@ website:
       #- about.qmd
       - href: Publications.qmd
         text: Publications
-      - href: In the Press.qmd
-        text: In the Press
+      - href: news_list.qmd
+        text: Updates
       - href: PPT painting.qmd
         text: Illustrations
       - href: media/Carasso_Shaqed_CV_OCT2024.pdf
@@ -37,6 +37,13 @@ format:
     toc: true
     page-layout: full
     b,strong {font-weight: bold}
+    
+    
+# Configure Blog Listing Page
+listing:
+  type: grid
+  date-format: "medium"
+  sort: "date desc"
 
 editor: visual
 
