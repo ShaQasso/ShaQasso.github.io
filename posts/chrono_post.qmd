@@ -1,5 +1,5 @@
 ---
-title: "My work microbiome differences between night owls and morning people was mentioned in the news"
+title: "My work on microbiome differences between night owls and morning people was mentioned in the news"
 description: ""
 date: "1/3/2022"
 draft: false

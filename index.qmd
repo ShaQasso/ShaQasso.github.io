@@ -38,3 +38,16 @@ Technion -- Israel Institute of Technology
 
 <i class="bi bi-virus"></i> BSc, Biology \| 2014 - 2018\
 Technion -- Israel Institute of Technology
+
+####  **News and Updates**
+
+---
+## Recent Blog Posts  
+listing:
+  contents: posts
+  sort-ui: false
+  filter-ui: false
+  sort: "date desc"
+  type: table
+  fields: [image, title, date]
+---

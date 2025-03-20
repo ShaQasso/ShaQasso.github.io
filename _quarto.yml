@@ -42,6 +42,7 @@ format:
 # Configure Blog Listing Page
 listing:
   type: grid
+  categories: false
   date-format: "medium"
   sort: "date desc"
 

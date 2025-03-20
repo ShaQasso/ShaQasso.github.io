@@ -14,6 +14,7 @@
   {
     "listing": "/posts/chrono_post.html",
     "items": [
+      "/posts/nat_gast_post.html",
       "/posts/chmJpost_post.html"
     ]
   },
@@ -34,11 +35,6 @@
   {
     "listing": "/index.html",
     "items": [
-      "/about.html",
-      "/In the Press.html",
-      "/news_list.html",
-      "/PPT painting.html",
-      "/Publications.html",
       "/posts/nat_gast_post.html",
       "/posts/chmJpost_post.html",
       "/posts/chrono_post.html"
@@ -64,6 +60,19 @@
       "/In the Press.html",
       "/index.html",
       "/news_list.html",
+      "/Publications.html",
+      "/posts/nat_gast_post.html",
+      "/posts/chmJpost_post.html",
+      "/posts/chrono_post.html"
+    ]
+  },
+  {
+    "listing": "/In the Press.html",
+    "items": [
+      "/about.html",
+      "/index.html",
+      "/news_list.html",
+      "/PPT painting.html",
       "/Publications.html",
       "/posts/nat_gast_post.html",
       "/posts/chmJpost_post.html",
