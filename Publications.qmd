@@ -4,7 +4,13 @@ title: "Publications"
 
 ## 2025
 
-[Bacteriophage-driven DNA inversions shape bacterial functionality and long-term co-existence in *Bacteroides fragilis*](#0)*, bioRxiv* (2025)\
+[Dietary carbohydrates alter immune-modulatory functionalities and DNA inversions in *Bacteroides thetaiotaomicron*](#0)*, Nature Communications* (2025)\
+Gal-Mandelbaum N, [Carasso S]{.underline}, Kedem A, Ziv T, Keshet-David R, Abboud R, Zaatry R, Gefen T, Geva-Zatorsky N
+
+[Esophageal microbiome correlates with post-esophagectomy anastomotic leak in cancer patients](#0), *ESMO Gastrointestinal Oncology* (2025)\
+#Naddaf R, #Shmilovich H, [#Carasso S]{.underline}, Keshet-David R, Herren R, Gefen T, Goshen-Lago T, Zwang Y, Livyatan I, Shental N, Haberfeld O, Straussman R, Markar S.R., Nilsson M, Kashtan H, Ben-Aharon I, Geva-Zatorsky N
+
+[Bacteriophage-driven DNA inversions shape bacterial functionality and long-term co-existence in *Bacteroides fragilis*](https://doi.org/10.1080/19490976.2025.2501492)*, Gut Microbes* (2025)\
 [#Carasso S]{.underline}, #Keshet-David R, Zhang J, Hajjo H, Kadosh-Kariti D, Gefen T, Geva-Zatorsky N
 
 ## 2024

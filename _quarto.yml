@@ -16,9 +16,7 @@ website:
         text: Publications
       - href: news_list.qmd
         text: Updates
-      - href: PPT painting.qmd
-        text: Illustrations
-      - href: media/Carasso_Shaqed_CV_OCT2024.pdf
+      - href: media/Carasso_Shaqed_CV_MAY2025.pdf
         text: CV
         target: _blank 
 
