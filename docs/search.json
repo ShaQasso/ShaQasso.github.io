@@ -88,7 +88,7 @@
     "href": "Game.html#about-the-game",
     "title": "MBIOTA ADVENTURES",
     "section": "About the Game",
-    "text": "About the Game\nThis is a browser-based microbiome game I built using Gemini 3.\nIt focuses on diversity, fitness, and host defense.\nYou can play it here:\n👉Launch MBIOTA ADVENTURES\n(Opens in a new tab)\nThe game was generated iteratively using Gemini 3, with custom prompts for gameplay mechanics, balancing, and artwork. I modified the event logic and diversity dynamics manually to keep it scientifically inspired and hopefully, fun."
+    "text": "About the Game\nThis is a browser-based microbiome game I built using Gemini 3.\nIt focuses on diversity, fitness, and host defense.\n\n 🦠 Play the Game \n\n(Opens in a new tab)\nThe game was generated iteratively using Gemini 3, with custom prompts for gameplay mechanics, balancing, and artwork. I modified the event logic and diversity dynamics manually to keep it scientifically inspired and hopefully, fun."
   },
   {
     "objectID": "index.html",

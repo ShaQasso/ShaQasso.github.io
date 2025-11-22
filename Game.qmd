@@ -2,6 +2,7 @@
 title: "MBIOTA ADVENTURES"
 sidebar: false
 toc: false
+listing: false
 ---
 
 ![](media/Mbiota_cover.png){width="400"}
@@ -11,9 +12,19 @@ toc: false
 This is a browser-based microbiome game I built using Gemini 3.\
 It focuses on diversity, fitness, and host defense.
 
-You can play it here:
-
-👉[**Launch MBIOTA ADVENTURES**](game/microbiome_game_v0.8.html)
+::: {style="margin-top: 1em;"}
+<a href="game/microbiome_game_v0.8.html" target="_blank" style="
+     display: inline-flex;
+     align-items: center;
+     gap: 0.5em;
+     padding: 0.5em 1em;
+     background-color: #8a2be2;  /* light purple */
+     color: white;
+     text-decoration: none;
+     border-radius: 6px;
+     font-weight: bold;
+     font-size: 1rem;"> 🦠 Play the Game </a>
+:::
 
 *(Opens in a new tab)*
 

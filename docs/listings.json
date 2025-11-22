@@ -1,20 +1,5 @@
 [
   {
-    "listing": "/Publications.html",
-    "items": [
-      "/about.html",
-      "/Game.html",
-      "/In the Press.html",
-      "/index.html",
-      "/news_list.html",
-      "/PPT painting.html",
-      "/posts/Broad_post.html",
-      "/posts/nat_gast_post.html",
-      "/posts/chmJpost_post.html",
-      "/posts/chrono_post.html"
-    ]
-  },
-  {
     "listing": "/posts/nat_gast_post.html",
     "items": [
       "/posts/Broad_post.html",
@@ -58,21 +43,6 @@
     "listing": "/about.html",
     "items": [
       "/Game.html",
-      "/In the Press.html",
-      "/index.html",
-      "/news_list.html",
-      "/PPT painting.html",
-      "/Publications.html",
-      "/posts/Broad_post.html",
-      "/posts/nat_gast_post.html",
-      "/posts/chmJpost_post.html",
-      "/posts/chrono_post.html"
-    ]
-  },
-  {
-    "listing": "/Game.html",
-    "items": [
-      "/about.html",
       "/In the Press.html",
       "/index.html",
       "/news_list.html",
