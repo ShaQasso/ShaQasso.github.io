@@ -875,7 +875,7 @@
                         setTimeout(() => {
                             setShield(0); 
                             
-                            let regen = Math.floor(currentEntropy * (8 + (level * 2)));
+                            let regen = Math.floor(currentEntropy * (level * 2));
                             
                             if (activeSynergies.some(s => s.id === 'mucus')) {
                                 regen += (2 + level);
