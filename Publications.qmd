@@ -4,14 +4,20 @@ title: "Publications"
 
 ## 2025
 
+[Bacteriophage-driven DNA inversions shape bacterial functionality and long-term co-existence in *Bacteroides fragilis*](https://doi.org/10.1080/19490976.2025.2501492)*, Gut Microbes* (2025)\
+[#Carasso S]{.underline}, #Keshet-David R, Zhang J, Hajjo H, Kadosh-Kariti D, Gefen T, Geva-Zatorsky N
+
 [Dietary carbohydrates alter immune-modulatory functionalities and DNA inversions in *Bacteroides thetaiotaomicron*](https://doi.org/10.1038/s41467-025-60202-9)*, Nature Communications* (2025)\
 Gal-Mandelbaum N, [Carasso S]{.underline}, Kedem A, Ziv T, Keshet-David R, Abboud R, Zaatry R, Gefen T, Geva-Zatorsky N
 
 [Esophageal microbiome correlates with post-esophagectomy anastomotic leak in cancer patients](https://doi.org/10.1016/j.esmogo.2025.100172), *ESMO Gastrointestinal Oncology* (2025)\
 #Naddaf R, #Shmilovich H, [#Carasso S]{.underline}, Keshet-David R, Herren R, Gefen T, Goshen-Lago T, Zwang Y, Livyatan I, Shental N, Haberfeld O, Straussman R, Markar S.R., Nilsson M, Kashtan H, Ben-Aharon I, Geva-Zatorsky N
 
-[Bacteriophage-driven DNA inversions shape bacterial functionality and long-term co-existence in *Bacteroides fragilis*](https://doi.org/10.1080/19490976.2025.2501492)*, Gut Microbes* (2025)\
-[#Carasso S]{.underline}, #Keshet-David R, Zhang J, Hajjo H, Kadosh-Kariti D, Gefen T, Geva-Zatorsky N
+[Efficiency and outcomes in microvascular anastomosis: A meta-analysis of mechanical versus manual techniques](https://doi.org/10.1016/j.jcms.2025.07.015), *Journal of Cranio-Maxillofacial Surgery* (2025)\
+Ohayon C, Gross N, Capucha T, [Carasso S]{.underline}, Fichter AM, Rachmiel A, Emodi O
+
+[The never-ending story: single versus dual venous anastomoses in microsurgical radial forearm free flap for head and neck reconstruction. A meta-analysis](#0), *Journal of Cranio-Maxillofacial Surgery* (2025)\
+Ohayon C, Ritschl LM, Capucha T, [Carasso S]{.underline}, Shkedy Y, Rachmiel A, Wolff K-D, Emodi O
 
 ## 2024
 
@@ -39,7 +45,7 @@ Marai I, Carasso D, [Carasso S]{.underline}, Carasso S
 [Metagenomic analysis reveals the signature of gut microbiota associated with human chronotypes](https://faseb.onlinelibrary.wiley.com/doi/10.1096/fj.202100857RR), *FASEB J* (2021)\
 [Carasso S]{.underline}, Fishman B, Lask LS, Shochat T, Geva-Zatorsky N, Tauber E
 
-["More guts than brains?"\--the role of gut microbiota in idiopathic intracranial hypertension](https://doi.org/10.1097/wno.0000000000001330), *Journal of Neuro-Ophthalmology* (2021)\
+["More guts than brains?"--the role of gut microbiota in idiopathic intracranial hypertension](https://doi.org/10.1097/wno.0000000000001330), *Journal of Neuro-Ophthalmology* (2021)\
 Berkowitz E, Kopelman Y, Kadosh D, [Carasso S]{.underline}, Tiosano B, Kesler A, Geva-Zatorsky N
 
 ## 2020

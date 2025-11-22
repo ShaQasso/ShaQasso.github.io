@@ -1,0 +1,19 @@
+---
+title: "MBIOTA ADVENTURES"
+page-layout: article
+---
+
+![](media/Mbiota_cover.png){width="400"}
+
+## About the Game
+
+This is a browser-based microbiome game I built using Gemini 3.\
+It focuses on diversity, fitness, and host defense.
+
+You can play it here:
+
+👉[**Launch MBIOTA ADVENTURES**](game/microbiome_game_v0.8.html)
+
+*(Opens in a new tab)*
+
+The game was generated iteratively using Gemini 3, with custom prompts for gameplay mechanics, balancing, and artwork. I modified the event logic and diversity dynamics manually to keep it scientifically inspired and hopefully, fun.

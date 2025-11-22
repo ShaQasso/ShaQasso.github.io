@@ -1,0 +1,9 @@
+---
+title: "Finished PhD, onward to the Broad!"
+#description: "Postdoc"
+date: "08/18/2025"
+draft: false
+image: "/media/broad_logo.png"
+---
+
+Finished my PhD at the Technion, moved to Cambridge, MA to join the Xavier lab at the Broad Institute.

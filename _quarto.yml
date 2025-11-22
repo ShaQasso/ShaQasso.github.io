@@ -19,6 +19,9 @@ website:
       - href: media/Carasso_Shaqed_CV_MAY2025.pdf
         text: CV
         target: _blank 
+      - href: Game.qmd
+        text: Play Mbiota Adv.
+
 
 
   page-footer:

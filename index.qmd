@@ -15,16 +15,15 @@ about:
       href: https://www.linkedin.com/in/shaqed-carasso/
     - icon: envelope-at-fill
       text: E-Mail
-      href: mailto:scarasso@campus.technion.ac.il
+      href: mailto:scarasso@broadinstitute.org
 ---
 
 ::: {#hero-heading}
-I'm a **PhD Candidate in Bioinformatics,** mentored by Professors [Naama Geva-Zatorsky](https://md.technion.ac.il/naama-geva-zatorsky/) (Technion) and [Itai Sharon](https://www.migal.org.il/en/Itai_Sharon) (MIGAL). My research focuses on the gut microbiome, combining microbial genetics and data analysis to study gut bacteria functional plasticity and their interactions with the human host. Specifically, I am interested in reversible genomic alterations in gut bacteria, which can induce varied gene expression patterns, ultimately shaping the influence on the mammalian host.
-:::
+I'm a **Postdoctoral Associate at the Broad Institute** in the Xavier lab, studying microbe–host interactions, combining wet-lab and computational approaches. Previously, I trained with [Naama Geva-Zatorsky](https://md.technion.ac.il/naama-geva-zatorsky/) (Technion) and [Itai Sharon](https://www.migal.org.il/en/Itai_Sharon) (MIGAL), where I investigated bacterial functional plasticity in the gut microbiome.
 
-#### Education
+#### **Education**
 
-<i class="bi bi-virus"></i> PhD \| 2021 - Ongoing\
+<i class="bi bi-virus"></i> PhD \| 2021 - 2025\
 Technion -- Israel Institute of Technology
 
 <i class="bi bi-virus"></i> MSc Cum Laude, in Medical Sciences \| 2018 - 2021\
@@ -32,6 +31,7 @@ Technion -- Israel Institute of Technology
 
 <i class="bi bi-virus"></i> BSc, Biology \| 2014 - 2018\
 Technion -- Israel Institute of Technology
+:::
 
 #### **News and Updates**
 
