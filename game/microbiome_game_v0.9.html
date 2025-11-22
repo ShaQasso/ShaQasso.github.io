@@ -250,7 +250,14 @@
                                         <div className="bg-yellow-500/20 text-yellow-500 w-6 h-6 flex items-center justify-center rounded"><i className="fa-solid fa-pills"></i></div>
                                         <div>
                                             <strong className="text-yellow-400">ABX (Antibiotic)</strong>
-                                            <p className="text-gray-400">Nukes pathogens (90% dmg). Hurts commensals (50%). <span className="text-red-400">Wipes out weak strains (&lt;5%).</span></p>
+                                            <p className="text-gray-400">Nukes pathogens. Hurts commensals. <span className="text-red-400">Wipes out weak strains (&lt;5%).</span></p>
+                                        </div>
+                                    </li>
+                                    <li className="flex gap-2 bg-gray-800/50 p-2 rounded">
+                                        <div className="bg-green-500/20 text-green-500 w-6 h-6 flex items-center justify-center rounded"><i className="fa-solid fa-apple-whole"></i></div>
+                                        <div>
+                                            <strong className="text-green-400">Food</strong>
+                                            <p className="text-gray-400">Buffs one random commensal bacteria.</p>
                                         </div>
                                     </li>
                                     <li className="flex gap-2 bg-gray-800/50 p-2 rounded">
@@ -643,7 +650,6 @@
                     } else {
                         const types = ['cdiff', 'salmo', 'candida', 'pylori'];
                         const type = types[Math.floor(Math.random() * types.length)];
-                        // FIXED: Added 'key: type' to ensure pathogens carry their ID
                         const newInfection = { ...SPECIES_DB[type], key: type, id: `inf_${Date.now()}`, abundance: 10, active: true, level: level }; 
                         const newM = [...prev, newInfection];
                         logMsg = `⚠️ WARNING: ${newInfection.name} infection detected!`;
@@ -980,7 +986,6 @@
                                 abundance: currentMicrobes[existingIndex].abundance + 5
                             };
                         } else {
-                            // FIXED: Explicitly added 'key: newBug.key' to restore Synergy
                             const bugToAdd = { 
                                 ...SPECIES_DB[newBug.key], 
                                 key: newBug.key,
