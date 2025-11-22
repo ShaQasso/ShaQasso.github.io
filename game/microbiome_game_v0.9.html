@@ -203,7 +203,7 @@
                                     A higher <strong>H-Index</strong> means a more diverse, robust microbiome. This directly powers your passive healing.
                                 </p>
                                 <div className="bg-teal-900/20 p-3 rounded border border-teal-800/50 font-mono text-xs text-teal-200">
-                                    Regen = H_Value × (8 + Level × 2)
+                                    Regen = Diversity modified by your level!
                                 </div>
                                 <p className="text-xs text-gray-500 mt-2">Don't let one species dominate. Maintain balance.</p>
                             </div>
@@ -257,7 +257,7 @@
                                         <div className="bg-purple-500/20 text-purple-500 w-6 h-6 flex items-center justify-center rounded"><i className="fa-solid fa-poop"></i></div>
                                         <div>
                                             <strong className="text-purple-400">FMT Kit</strong>
-                                            <p className="text-gray-400">Use to <strong>Thaw</strong> saved states or get a random <strong>Anonymous Donor</strong>.</p>
+                                            <p className="text-gray-400">Use to <strong>Thaw</strong> saved states or get a random <strong>Anonymous Donor</strong> (unique strains only).</p>
                                         </div>
                                     </li>
                                 </ul>
@@ -643,7 +643,8 @@
                     } else {
                         const types = ['cdiff', 'salmo', 'candida', 'pylori'];
                         const type = types[Math.floor(Math.random() * types.length)];
-                        const newInfection = { ...SPECIES_DB[type], id: `inf_${Date.now()}`, abundance: 10, active: true, level: level }; 
+                        // FIXED: Added 'key: type' to ensure pathogens carry their ID
+                        const newInfection = { ...SPECIES_DB[type], key: type, id: `inf_${Date.now()}`, abundance: 10, active: true, level: level }; 
                         const newM = [...prev, newInfection];
                         logMsg = `⚠️ WARNING: ${newInfection.name} infection detected!`;
                         return normalizeAbundance(newM);
@@ -979,8 +980,10 @@
                                 abundance: currentMicrobes[existingIndex].abundance + 5
                             };
                         } else {
+                            // FIXED: Explicitly added 'key: newBug.key' to restore Synergy
                             const bugToAdd = { 
                                 ...SPECIES_DB[newBug.key], 
+                                key: newBug.key,
                                 id: `bug_${Date.now()}_${Math.random()}`, 
                                 abundance: 5, 
                                 active: true, 
@@ -1040,7 +1043,6 @@
                                 <div className="h-4 w-px bg-gray-600"></div>
                                 <div className="text-blue-400 whitespace-nowrap"><i className="fa-solid fa-layer-group"></i> Lv {level}</div>
                                 <div className="h-4 w-px bg-gray-600"></div>
-                                {/* HUD H-INDEX UPDATE */}
                                 <div className="text-teal-400 font-bold font-mono whitespace-nowrap" title="Shannon Entropy (Diversity Score) - Higher = Better Regen">
                                     <i className="fa-solid fa-chart-network mr-1"></i> H: {currentEntropy.toFixed(2)}
                                 </div>
