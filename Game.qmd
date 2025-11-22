@@ -1,6 +1,7 @@
 ---
 title: "MBIOTA ADVENTURES"
-page-layout: article
+sidebar: false
+toc: false
 ---
 
 ![](media/Mbiota_cover.png){width="400"}

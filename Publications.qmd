@@ -1,5 +1,6 @@
 ---
 title: "Publications"
+listing: false
 ---
 
 ## 2025
