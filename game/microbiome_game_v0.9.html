@@ -553,7 +553,7 @@
                 }
             }, [microbes, view]);
 
-            const maxHP = useMemo(() => calculateMaxHP(microbes, baseHP), [microbes, baseHP]);
+	    const maxHP = useMemo(() => calculateMaxHP(microbes, baseHP, level), [microbes, baseHP, level]);
             const currentEntropy = useMemo(() => calculateShannonEntropy(microbes), [microbes]);
 
             const dynamicThreshold = useMemo(() => {
