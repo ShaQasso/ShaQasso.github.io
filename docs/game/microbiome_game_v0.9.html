@@ -833,6 +833,9 @@
             useEffect(() => {
                 let timer;
                 if (view === 'BATTLE' && turn === 1 && enemy) {
+                    // Fixed: clear enemy shield at start of their turn
+                    setEnemyShield(0);
+
                     timer = setTimeout(() => {
                         const action = Math.random();
                         
