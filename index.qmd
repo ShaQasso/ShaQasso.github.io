@@ -18,8 +18,8 @@ about:
       href: mailto:scarasso@broadinstitute.org
 ---
 
-::: {#hero-heading}
-I'm a **Postdoctoral Associate at the Broad Institute** in the Xavier lab, studying microbe–host interactions, combining wet-lab and computational approaches. Previously, I trained with [Naama Geva-Zatorsky](https://md.technion.ac.il/naama-geva-zatorsky/) (Technion) and [Itai Sharon](https://www.migal.org.il/en/Itai_Sharon) (MIGAL), where I investigated bacterial functional plasticity in the gut microbiome.
+:::: {#hero-heading}
+I'm a **Postdoctoral Associate at the Broad Institute** in the **Xavier lab**, studying microbe–host interactions, combining wet-lab and computational approaches. Previously, I trained with [Naama Geva-Zatorsky](https://md.technion.ac.il/naama-geva-zatorsky/) (Technion) and [Itai Sharon](https://www.migal.org.il/en/Itai_Sharon) (MIGAL), where I investigated bacterial functional plasticity in the gut microbiome.
 
 #### **Education**
 
@@ -31,7 +31,21 @@ Technion -- Israel Institute of Technology
 
 <i class="bi bi-virus"></i> BSc, Biology \| 2014 - 2018\
 Technion -- Israel Institute of Technology
+
+::: {style="margin-top: 2em; text-align: center;"}
+<a href="Game.qmd" style="
+     display: inline-flex;
+     align-items: center;
+     gap: 0.5em;
+     padding: 0.7em 1.5em;
+     background-color: #8a2be2;
+     color: white;
+     text-decoration: none;
+     border-radius: 6px;
+     font-weight: bold;
+     font-size: 1.2rem;">🦠PLAY⚔️<br>MBIOTA ADVENTURES </a>
 :::
+::::
 
 #### **News and Updates**
 
