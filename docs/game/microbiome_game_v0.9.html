@@ -119,11 +119,11 @@
             }));
         };
 
-        const calculateMaxHP = (microbes, currentBaseHP) => {
-            const livingSpecies = microbes.filter(m => m.abundance > 0.1).length;
-            return currentBaseHP + (livingSpecies * HP_PER_SPECIES);
+	const calculateMaxHP = (microbes, currentBaseHP, level) => {
+    	    const livingSpecies = microbes.filter(m => m.abundance > 0.1).length;
+    // Adds 10 HP for every Level you gain
+            return currentBaseHP + (livingSpecies * HP_PER_SPECIES) + (level * 10); 
         };
-
         const getXpThreshold = (level) => level * 50;
 
         const getRandomCommensals = (count) => {
