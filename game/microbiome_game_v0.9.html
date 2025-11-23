@@ -554,6 +554,13 @@
             }, [microbes, view]);
 
 	    const maxHP = useMemo(() => calculateMaxHP(microbes, baseHP, level), [microbes, baseHP, level]);
+	    // Auto-clamp HP: If MaxHP drops (due to ABX/Diversity loss), lower current HP to match.
+            useEffect(() => {
+                if (playerHP > maxHP) {
+                    setPlayerHP(maxHP);
+                }
+            }, [maxHP, playerHP]);
+            // ------------------------------
             const currentEntropy = useMemo(() => calculateShannonEntropy(microbes), [microbes]);
 
             const dynamicThreshold = useMemo(() => {
