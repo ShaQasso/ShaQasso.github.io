@@ -94,10 +94,10 @@
         };
 
         const SYNERGIES = [
-            { id: 'acid', name: 'Acid Alliance', microbes: ['lacto', 'bifido'], effect: 'All ATK +3', type: 'buff' },
+            { id: 'acid', name: 'Acid Alliance', microbes: ['lacto', 'bifido'], effect: 'All ATK (3 + Lvl)', type: 'buff' },
             { id: 'mucus', name: 'Mucus Bros', microbes: ['akker', 'faeci'], effect: 'Passive Regen Scaling', type: 'heal' },
             { id: 'spore', name: 'Biofilm Breakers', microbes: ['strepto', 'spore'], effect: 'All DMG +10%', type: 'dmg' },
-            { id: 'flora', name: 'Flora Shield', microbes: ['bacter', 'rhama'], effect: 'Max Shield +10', type: 'def' }
+            { id: 'flora', name: 'Flora Shield', microbes: ['bacter', 'rhama'], effect: 'Max Shield 5 + (Level * 2)', type: 'def' }
         ];
 
         const ENEMIES = [
@@ -745,9 +745,9 @@
                 if (skill.heal) heal = skill.heal + lvlBonus;
                 if (skill.block) block = skill.block + lvlBonus; 
                 
-                if (activeSynergies.some(s => s.id === 'acid')) dmg += 3;
+                if (activeSynergies.some(s => s.id === 'acid')) dmg += (3 + microbe.level);
                 if (activeSynergies.some(s => s.id === 'spore')) dmg = Math.floor(dmg * 1.1);
-                if (activeSynergies.some(s => s.id === 'flora') && block > 0) block += 5;
+                if (activeSynergies.some(s => s.id === 'flora') && block > 0) block += (5 + (microbe.level * 2));
 
                 const rpsMult = getRPSBonus(microbe.rps, enemy?.rps);
                 if (rpsMult > 1) dmg = Math.floor(dmg * rpsMult);
