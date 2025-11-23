@@ -674,7 +674,7 @@
                     { ...starters[2], id: `start_3_${Date.now()}`, abundance: 20, active: true, level: 1, xp: 0 },
                 ]);
                 setBaseHP(INITIAL_BASE_HP);
-                setPlayerHP(INITIAL_BASE_HP + (3 * HP_PER_SPECIES));
+                setPlayerHP(INITIAL_BASE_HP + (3 * HP_PER_SPECIES + 10));
                 setLevel(1);
                 setShield(0);
                 setEnemyShield(0);
@@ -711,7 +711,7 @@
                 if (potentialEnemies.length === 0) potentialEnemies = [ENEMIES[0]];
                 const template = potentialEnemies[Math.floor(Math.random() * potentialEnemies.length)];
                 
-                let scale = bossLevel ? 1 + (level * 0.15) : 1 + (level * 0.25);
+                let scale = bossLevel ? 1 + (level * 0.25) : 1 + (level * 0.35);
                 if (isHazard && !bossLevel && template.type === 'basic') scale *= 1.3;
                 
                 setEnemy({ 
@@ -730,8 +730,9 @@
             };
 
             const performRest = () => {
-                setPlayerHP(Math.min(maxHP, playerHP + 15)); 
-                addLog("Rested. Recovered 15 HP."); 
+                const healAmount = 15 + (level * 5);
+                setPlayerHP(Math.min(maxHP, playerHP + healAmount)); 
+                addLog(`Rested. Recovered ${healAmount} HP.`); 
                 setLevel(l => l+1);
                 setBattlesSinceRest(0);
             };
