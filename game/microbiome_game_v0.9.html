@@ -564,8 +564,9 @@
             const currentEntropy = useMemo(() => calculateShannonEntropy(microbes), [microbes]);
 
             const dynamicThreshold = useMemo(() => {
-                if (microbes.length === 0) return 20;
-                return Math.floor(100 / microbes.length);
+                if (microbes.length === 0) return 0;
+                // "60% Rule": You don't need an equal share, just 60% of an average share.
+                return Math.floor((100 / microbes.length) * 0.6);
             }, [microbes.length]);
 
             const activeSynergies = useMemo(() => {
