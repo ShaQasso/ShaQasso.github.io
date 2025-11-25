@@ -1024,7 +1024,7 @@
                 setMicrobes(prev => {
                     let newM = prev.map(m => {
                         if (m.type === 'pathogen') return { ...m, abundance: m.abundance * 0.1 }; 
-                        return { ...m, abundance: m.abundance * 0.5 }; 
+                        return { ...m, abundance: m.abundance * 0.75 }; 
                     }).filter(m => m.abundance > 5); 
                     
                     addLog("Antibiotics deployed. Widespread reduction. Weak strains wiped out.");
