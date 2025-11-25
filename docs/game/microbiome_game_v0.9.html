@@ -565,8 +565,8 @@
 
             const dynamicThreshold = useMemo(() => {
                 if (microbes.length === 0) return 0;
-                // "60% Rule": You don't need an equal share, just 60% of an average share.
-                return Math.floor((100 / microbes.length) * 0.6);
+                // "60% Rule": You don't need an equal share, just 75% of an average share.
+                return Math.floor((100 / microbes.length) * 0.75);
             }, [microbes.length]);
 
             const activeSynergies = useMemo(() => {
@@ -1259,7 +1259,7 @@
                                         )}
                                         
                                         <div className="text-[10px] text-gray-500 mt-1">
-                                            {battlesSinceRest < BATTLES_FOR_REST ? `${battlesSinceRest}/${BATTLES_FOR_REST} Battles` : "Skip Battle (+15 HP)"}
+                                            {battlesSinceRest < BATTLES_FOR_REST ? `${battlesSinceRest}/${BATTLES_FOR_REST} Battles` : "Skip Battle (replenish HP)"}
                                         </div>
                                     </div>
                                 </div>
