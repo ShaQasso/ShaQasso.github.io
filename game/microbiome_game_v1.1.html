@@ -292,7 +292,7 @@
                                         <div className="bg-purple-500/20 text-purple-500 w-8 h-8 flex shrink-0 items-center justify-center rounded"><i className="fa-solid fa-vial"></i></div>
                                         <div>
                                             <strong className="text-purple-400 text-xs">Phage Vial (Targeted)</strong>
-                                            <p className="text-[10px] text-gray-400">Enters <strong>Targeting Mode</strong>. Click a bacteria to infect it. <span className="text-red-400">Halves abundance (50%). If drops below 2%, eliminates the strain.</span></p>
+                                            <p className="text-[10px] text-gray-400">Enters <strong>Targeting Mode</strong>. Click a bacteria to infect it. <span className="text-red-400">Halves abundance (50%). If drops below 4%, eliminates the strain.</span></p>
                                         </div>
                                     </div>
                                     <div className="flex gap-2 bg-gray-800/50 p-2 rounded">
@@ -779,8 +779,8 @@
                             if (m.id === targetMicrobe.id) {
                                 // Apply 50% reduction
                                 let newAbundance = m.abundance * 0.5;
-                                // EXECUTION THRESHOLD: If below 2%, kill it.
-                                if (newAbundance < 2) {
+                                // EXECUTION THRESHOLD: If below 4%, kill it.
+                                if (newAbundance < 4) {
                                     killed = true;
                                     return null; // Mark for deletion
                                 }
