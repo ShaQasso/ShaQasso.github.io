@@ -82,7 +82,7 @@
         const HP_PER_SPECIES = 15;
         const XP_PER_ACTION = 20;
         const BATTLES_FOR_REST = 3;
-        const SAVE_KEY = 'mbiota_save_v1_4';
+        const SAVE_KEY = 'mbiota_save_v1_5';
         
         const SPECIES_DB = {
             // BLUE (Protective)
@@ -113,11 +113,34 @@
             { id: 'flora', name: 'Flora Shield', microbes: ['bacter', 'rhama'], effect: 'Max Shield 5 + (Level * 2)', type: 'def' }
         ];
 
-        const ENEMIES = [
-            { name: 'Inflammation', hp: 45, dmg: 8, rps: 'red', dropChance: 0.3, type: 'basic', minLvl: 1 },
-            { name: 'Sugar Spike', hp: 40, dmg: 10, rps: 'green', dropChance: 0.4, type: 'basic', minLvl: 1 },
-            { name: 'Antibiotic Residue', hp: 60, dmg: 6, rps: 'blue', dropChance: 0.5, type: 'elite', minLvl: 3 },
-            { name: 'Cortisol Storm', hp: 70, dmg: 12, rps: 'red', dropChance: 0.4, type: 'elite', minLvl: 3 },
+        // NEW: Modifiers Database
+        const MODIFIERS = {
+            commensal: {
+                'hasty': { name: 'Hasty', desc: 'Atk++ / Burns Abundance', color: 'text-amber-400', icon: 'fa-bolt' },
+                'bulky': { name: 'Bulky', desc: 'Block++ / Atk--', color: 'text-stone-400', icon: 'fa-weight-hanging' },
+                'efficient': { name: 'Efficient', desc: 'XP Gain +50%', color: 'text-emerald-300', icon: 'fa-graduation-cap' },
+                'toxic': { name: 'Toxic', desc: 'Dmg+++ / Hurts Host', color: 'text-lime-500', icon: 'fa-biohazard' },
+                'pure': { name: 'Pure', desc: 'Heal/Shield +25%', color: 'text-cyan-300', icon: 'fa-droplet' }
+            },
+            enemy: {
+                'resistant': { name: 'Resistant', desc: '-20% Dmg Taken', color: 'text-slate-400' },
+                'volatile': { name: 'Volatile', desc: 'Explodes on Death', color: 'text-orange-500' },
+                'aggressive': { name: 'Aggressive', desc: 'Dmg +25%', color: 'text-red-500' }
+            }
+        };
+
+        const getRandomModifier = (type, force = false) => {
+            // Increased base chance to 50%, or 100% if force is true
+            if (!force && Math.random() > 0.5) return null;
+            const keys = Object.keys(MODIFIERS[type]);
+            return keys[Math.floor(Math.random() * keys.length)];
+        };
+        
+         const ENEMIES = [
+            { name: 'Inflammation', hp: 45, dmg: 8, rps: 'red', dropChance: 0.1, type: 'basic', minLvl: 1 },
+            { name: 'Sugar Spike', hp: 40, dmg: 10, rps: 'green', dropChance: 0.2, type: 'basic', minLvl: 1 },
+            { name: 'Antibiotic Residue', hp: 60, dmg: 6, rps: 'blue', dropChance: 0.25, type: 'elite', minLvl: 3 },
+            { name: 'Cortisol Storm', hp: 70, dmg: 12, rps: 'red', dropChance: 0.2, type: 'elite', minLvl: 3 },
             { name: 'Leaky Gut Boss', hp: 100, dmg: 12, rps: 'green', dropChance: 1.0, type: 'boss', minLvl: 5 },
             { name: 'Dysbiosis Dragon', hp: 150, dmg: 15, rps: 'blue', dropChance: 1.0, type: 'boss', minLvl: 10 },
         ];
@@ -235,8 +258,8 @@
                                     <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
                                         <div className="text-xs font-bold text-gray-300 uppercase mb-2 text-center">Post-Battle Loot</div>
                                         <ul className="text-xs text-gray-400 space-y-1">
-                                            <li><span className="text-green-400">Guaranteed:</span> 1 Food OR 1 Phage.</li>
-                                            <li><span className="text-yellow-400">Bonus:</span> Chance for random item.</li>
+                                            <li><span className="text-green-400">Common (50%):</span> 1 Food OR 1 Phage.</li>
+                                            <li><span className="text-yellow-400">Bonus:</span> Rare chance for item.</li>
                                             <li><span className="text-purple-400">Scavenge:</span> High risk. ABX, FMT, or Nothing.</li>
                                         </ul>
                                     </div>
@@ -289,8 +312,8 @@
                                 </div>
                             </div>
 
-                            {/* Card 5: Persistence */}
-                            <div className="glass-panel p-5 rounded-xl">
+                            {/* Card 5: Persistence (Now Full Width) */}
+                            <div className="glass-panel p-5 rounded-xl md:col-span-2">
                                 <h3 className="text-gray-300 font-bold mb-3 flex items-center gap-2">
                                     <i className="fa-solid fa-floppy-disk"></i> 5. Persistence
                                 </h3>
@@ -298,17 +321,49 @@
                                     The game <strong>Auto-Saves</strong> after every turn. You can close the tab and <strong>Continue</strong> later.
                                 </p>
                                 <p className="text-xs text-yellow-500 mt-2">
-                                    Note: Death (Septic Shock) wipes the save file (Permadeath).
+                                    Note: Death (Septic Shock or Organ Failure) wipes the save file (Permadeath).
                                 </p>
                             </div>
+                            
+                            {/* Card 6: Bacterial Mutations (Side-by-Side Left) */}
+                            <div className="glass-panel p-5 rounded-xl border-l-4 border-fuchsia-500">
+                                <h3 className="text-fuchsia-400 font-bold mb-3 flex items-center gap-2">
+                                    <i className="fa-solid fa-dna"></i> 6. Bacterial Strains
+                                </h3>
+                                <p className="text-sm text-gray-400 mb-2">
+                                    Your bacteria may spawn with personalities:
+                                </p>
+                                <div className="grid grid-cols-1 gap-2 text-[10px]">
+                                    <div className="bg-gray-800 p-1.5 rounded text-amber-400 flex items-center"><i className="fa-solid fa-bolt w-6 text-center mr-1"></i> <span><strong>Hasty:</strong> Atk++, but burns Abundance.</span></div>
+                                    <div className="bg-gray-800 p-1.5 rounded text-stone-400 flex items-center"><i className="fa-solid fa-weight-hanging w-6 text-center mr-1"></i> <span><strong>Bulky:</strong> Block++, but Atk--.</span></div>
+                                    <div className="bg-gray-800 p-1.5 rounded text-lime-400 flex items-center"><i className="fa-solid fa-biohazard w-6 text-center mr-1"></i> <span><strong>Toxic:</strong> Dmg+++, but hurts Host.</span></div>
+                                    <div className="bg-gray-800 p-1.5 rounded text-emerald-400 flex items-center"><i className="fa-solid fa-graduation-cap w-6 text-center mr-1"></i> <span><strong>Efficient:</strong> Gains XP +50% faster.</span></div>
+                                    <div className="bg-gray-800 p-1.5 rounded text-cyan-400 flex items-center"><i className="fa-solid fa-droplet w-6 text-center mr-1"></i> <span><strong>Pure:</strong> +25% Healing & Shielding.</span></div>
+                                </div>
+                            </div>
 
-                            {/* Card 6: Game Over */}
-                            <div className="glass-panel p-5 rounded-xl border-l-4 border-red-600 bg-red-900/10">
+                            {/* Card 7: Enemy Strains (Side-by-Side Right) */}
+                            <div className="glass-panel p-5 rounded-xl border-l-4 border-orange-500">
+                                <h3 className="text-orange-400 font-bold mb-3 flex items-center gap-2">
+                                    <i className="fa-solid fa-virus"></i> 7. Enemy Strains
+                                </h3>
+                                <p className="text-sm text-gray-400 mb-2">
+                                    Pathogens may also evolve to become deadlier:
+                                </p>
+                                <div className="space-y-2 text-[10px]">
+                                    <div className="bg-gray-800 p-1.5 rounded text-slate-400 flex items-center"><i className="fa-solid fa-shield-halved w-6 text-center mr-1"></i> <span><strong>Resistant:</strong> Takes 20% Less Damage.</span></div>
+                                    <div className="bg-gray-800 p-1.5 rounded text-red-400 flex items-center"><i className="fa-solid fa-fire w-6 text-center mr-1"></i> <span><strong>Aggressive:</strong> Deals +25% Damage.</span></div>
+                                    <div className="bg-gray-800 p-1.5 rounded text-orange-400 flex items-center"><i className="fa-solid fa-bomb w-6 text-center mr-1"></i> <span><strong>Volatile:</strong> Explodes on death (True Dmg).</span></div>
+                                </div>
+                            </div>
+
+                            {/* Card 8: Game Over (Full Width) */}
+                            <div className="glass-panel p-5 rounded-xl border-l-4 border-red-600 bg-red-900/10 md:col-span-2">
                                 <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2">
-                                    <i className="fa-solid fa-biohazard"></i> 6. Septic Shock
+                                    <i className="fa-solid fa-biohazard"></i> 8. Septic Shock
                                 </h3>
                                 <p className="text-sm text-gray-300">
-                                    If <strong>Pathogen Abundance</strong> reaches <strong>100%</strong>, the host enters septic shock.
+                                    If <strong>Pathogen Abundance</strong> reaches <strong>80%</strong>, the host enters septic shock.
                                 </p>
                                 <p className="text-xs font-mono text-red-300 mt-2 uppercase tracking-widest">
                                     Result: Instant Game Over
@@ -335,7 +390,10 @@
                             <div key={i} className="flex items-center justify-between bg-gray-900/50 p-2 rounded border border-gray-700">
                                 <div className="flex items-center gap-2">
                                     <div className={`w-3 h-3 rounded-full ${m.color}`}></div>
-                                    <span className={`text-sm font-bold ${m.type === 'pathogen' ? 'text-red-400' : 'text-gray-300'}`}>{m.name}</span>
+                                    <span className={`text-sm font-bold ${m.type === 'pathogen' ? 'text-red-400' : 'text-gray-300'}`}>
+                                        {m.modifier && <span className={`mr-1 ${MODIFIERS.commensal[m.modifier].color}`}><i className={`fa-solid ${MODIFIERS.commensal[m.modifier].icon}`}></i></span>}
+                                        {m.name}
+                                    </span>
                                 </div>
                                 <div className="flex flex-col items-end">
                                     <span className="text-sm font-mono text-gray-400">{m.abundance.toFixed(1)}%</span>
@@ -444,7 +502,15 @@
                                 </div>
                             </div>
                             <div className="leading-tight">
-                                <h3 className="font-bold text-xs md:text-sm">{microbe.name}</h3>
+                                <h3 className="font-bold text-xs md:text-sm">
+                                    {microbe.modifier && (
+                                        <span className={`block text-[10px] ${MODIFIERS.commensal[microbe.modifier].color}`}>
+                                            <i className={`fa-solid ${MODIFIERS.commensal[microbe.modifier].icon} mr-1`}></i>
+                                            {MODIFIERS.commensal[microbe.modifier].name}
+                                        </span>
+                                    )}
+                                    {microbe.name}
+                                </h3>
                                 {!isPathogen && (
                                     <div className="w-16 h-1 bg-gray-700 rounded-full mt-1">
                                         <div className="h-full bg-cyan-400" style={{width: `${(microbe.xp / xpThreshold) * 100}%`}}></div>
@@ -559,6 +625,9 @@
             const [frozenSample, setFrozenSample] = useState(null); 
             const [battlesSinceRest, setBattlesSinceRest] = useState(3); 
             
+            // New Tracking Stats
+            const [runStats, setRunStats] = useState({ itemsUsed: 0, battlesWon: 0, turnCount: 0, deathReason: '' });
+
             // New Targeting State
             const [targetingMode, setTargetingMode] = useState(null); // 'food', 'phage', null
 
@@ -566,13 +635,26 @@
             const [unreadLogs, setUnreadLogs] = useState(0);
             
             const logEndRef = useRef(null);
+
+            const createMicrobe = (template, id, abundance, forceMod = null) => {
+                const mod = forceMod || getRandomModifier('commensal');
+                return { 
+                    ...template, 
+                    id, 
+                    abundance, 
+                    active: true, 
+                    level: 1, 
+                    xp: 0,
+                    modifier: mod 
+                };
+            };
             
             const [microbes, setMicrobes] = useState(() => {
                 const starters = getRandomCommensals(3);
                 return [
-                    { ...starters[0], id: `start_1`, abundance: 40, active: true, level: 1, xp: 0 },
-                    { ...starters[1], id: `start_2`, abundance: 40, active: true, level: 1, xp: 0 },
-                    { ...starters[2], id: `start_3`, abundance: 20, active: true, level: 1, xp: 0 },
+                    createMicrobe(starters[0], `start_1`, 40, getRandomModifier('commensal', true)),
+                    createMicrobe(starters[1], `start_2`, 40, getRandomModifier('commensal', true)),
+                    createMicrobe(starters[2], `start_3`, 20, getRandomModifier('commensal', true)),
                 ];
             });
 
@@ -585,7 +667,7 @@
             // Save Function
             const saveGame = () => {
                 const stateToSave = {
-                    level, baseHP, playerHP, inventory, logs, microbes, battlesSinceRest, frozenSample, view
+                    level, baseHP, playerHP, inventory, logs, microbes, battlesSinceRest, frozenSample, view, runStats
                 };
                 localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
             };
@@ -595,7 +677,7 @@
                 if (view !== 'START' && view !== 'GAMEOVER') {
                     saveGame();
                 }
-            }, [level, playerHP, inventory, microbes, view]);
+            }, [level, playerHP, inventory, microbes, view, runStats]);
 
             const loadGame = () => {
                 const savedStr = localStorage.getItem(SAVE_KEY);
@@ -609,6 +691,7 @@
                     setMicrobes(saved.microbes);
                     setBattlesSinceRest(saved.battlesSinceRest);
                     setFrozenSample(saved.frozenSample);
+                    setRunStats(saved.runStats || { itemsUsed: 0, battlesWon: 0, turnCount: 0, deathReason: '' });
                     // If they saved inside a battle, reset them to map to avoid bugs with enemy state
                     setView(saved.view === 'BATTLE' ? 'MAP' : saved.view);
                     addLog("💾 Game loaded successfully.");
@@ -618,7 +701,8 @@
             // Sepsis Check
             useEffect(() => {
                 const pathogenLoad = microbes.filter(m => m.type === 'pathogen').reduce((acc, m) => acc + m.abundance, 0);
-                if (pathogenLoad >= 99.9 && view !== 'GAMEOVER' && view !== 'START') {
+                if (pathogenLoad >= 80 && view !== 'GAMEOVER' && view !== 'START') { // CAP AT 80%
+                    setRunStats(prev => ({...prev, deathReason: "Septic Shock: Pathogen Overrun"})); // FIX CAUSE UNKNOWN
                     setLogs(prev => ["☠️ CRITICAL SEPSIS. SYSTEM FAILURE.", ...prev]);
                     setView('GAMEOVER');
                     localStorage.removeItem(SAVE_KEY); // Clear save on death
@@ -673,6 +757,7 @@
                 if (targetingMode === 'food') {
                     if (inventory.food <= 0) return;
                     setInventory(prev => ({...prev, food: prev.food - 1}));
+                    setRunStats(prev => ({...prev, itemsUsed: prev.itemsUsed + 1}));
                     
                     setMicrobes(prev => {
                         let newM = prev.map(m => {
@@ -686,6 +771,7 @@
                 else if (targetingMode === 'phage') {
                     if (inventory.phage <= 0) return;
                     setInventory(prev => ({...prev, phage: prev.phage - 1}));
+                    setRunStats(prev => ({...prev, itemsUsed: prev.itemsUsed + 1}));
 
                     setMicrobes(prev => {
                         let killed = false;
@@ -728,6 +814,7 @@
             const thawSample = () => {
                 if (!frozenSample || inventory.fmt <= 0) return;
                 setInventory(prev => ({...prev, fmt: prev.fmt - 1}));
+                setRunStats(prev => ({...prev, itemsUsed: prev.itemsUsed + 1}));
                 
                 const scaledSample = frozenSample.map(m => ({
                     ...m,
@@ -760,10 +847,11 @@
 
                 shuffledAvailable.forEach((k, i) => {
                     const newLevel = getScaledLevel();
-                    newBiom.push({...SPECIES_DB[k], key: k, id: `donor_${i}_${Date.now()}`, abundance: 20, active: true, level: newLevel, xp: 0});
+                    newBiom.push(createMicrobe(SPECIES_DB[k], `donor_${i}_${Date.now()}`, 20, null));
                 });
 
                 setInventory(prev => ({...prev, fmt: prev.fmt - 1}));
+                setRunStats(prev => ({...prev, itemsUsed: prev.itemsUsed + 1}));
                 setMicrobes(normalizeAbundance(newBiom));
                 addLog("💩 Anonymous Donor Transplant received (Used 1 FMT Kit).");
             };
@@ -782,7 +870,9 @@
                     } else {
                         const types = ['cdiff', 'salmo', 'candida', 'pylori'];
                         const type = types[Math.floor(Math.random() * types.length)];
-                        const newInfection = { ...SPECIES_DB[type], key: type, id: `inf_${Date.now()}`, abundance: 10, active: true, level: level }; 
+                        // Infections also get modifiers!
+                        const newInfection = createMicrobe(SPECIES_DB[type], `inf_${Date.now()}`, 10);
+                        newInfection.level = level;
                         const newM = [...prev, newInfection];
                         logMsg = `⚠️ WARNING: ${newInfection.name} infection detected!`;
                         return normalizeAbundance(newM);
@@ -792,11 +882,12 @@
             };
 
             const startGame = () => {
+                setRunStats({ itemsUsed: 0, battlesWon: 0, turnCount: 0, deathReason: '' });
                 const starters = getRandomCommensals(3);
                 setMicrobes([
-                    { ...starters[0], id: `start_1_${Date.now()}`, abundance: 40, active: true, level: 1, xp: 0 },
-                    { ...starters[1], id: `start_2_${Date.now()}`, abundance: 40, active: true, level: 1, xp: 0 },
-                    { ...starters[2], id: `start_3_${Date.now()}`, abundance: 20, active: true, level: 1, xp: 0 },
+                    createMicrobe(starters[0], `start_1_${Date.now()}`, 40, getRandomModifier('commensal', true)),
+                    createMicrobe(starters[1], `start_2_${Date.now()}`, 40, getRandomModifier('commensal', true)),
+                    createMicrobe(starters[2], `start_3_${Date.now()}`, 20, getRandomModifier('commensal', true)),
                 ]);
                 setBaseHP(INITIAL_BASE_HP);
                 setPlayerHP(INITIAL_BASE_HP + (3 * HP_PER_SPECIES + 10));
@@ -837,22 +928,31 @@
                 if (potentialEnemies.length === 0) potentialEnemies = [ENEMIES[0]];
                 const template = potentialEnemies[Math.floor(Math.random() * potentialEnemies.length)];
                 
+                // Add Modifier
+                const modifier = getRandomModifier('enemy');
+
                 let scale = bossLevel ? 1 + (level * 0.25) : 1 + (level * 0.35);
                 if (isHazard && !bossLevel && template.type === 'basic') scale *= 1.3;
                 
+                let finalDmg = Math.floor(template.dmg * scale);
+                if (modifier === 'aggressive') finalDmg = Math.floor(finalDmg * 1.25);
+
                 setEnemy({ 
                     ...template, 
                     currentHp: Math.floor(template.hp * scale), 
                     maxHp: Math.floor(template.hp * scale),
-                    dmg: Math.floor(template.dmg * scale),
-                    dropChance: isHazard ? Math.min(1.0, template.dropChance * 1.5) : template.dropChance
+                    dmg: finalDmg,
+                    dropChance: isHazard ? Math.min(1.0, template.dropChance * 1.5) : template.dropChance,
+                    modifier: modifier
                 });
                 
+                const modLog = modifier ? ` (${MODIFIERS.enemy[modifier].name})` : '';
+
                 setShield(0); 
                 setEnemyShield(0);
                 setView('BATTLE');
                 setTurn(0);
-                addLog(`${isHazard ? '⚠️ HAZARD!' : '⚔️'} Approaching: ${template.name} (Lv.${level}). Stats x${scale.toFixed(1)}`);
+                addLog(`${isHazard ? '⚠️ HAZARD!' : '⚔️'} Approaching: ${template.name}${modLog} (Lv.${level}).`);
             };
 
             const performRest = () => {
@@ -875,9 +975,25 @@
                 let block = 0;
                 const lvlBonus = (microbe.level - 1) * 4; 
 
-                if (skill.dmg) dmg = skill.dmg + lvlBonus;
-                if (skill.heal) heal = skill.heal + lvlBonus;
-                if (skill.block) block = skill.block + lvlBonus; 
+                 // --- MODIFIER LOGIC: BASE STATS ---
+                const mod = microbe.modifier;
+                
+                if (skill.dmg) {
+                    dmg = skill.dmg + lvlBonus;
+                    if (mod === 'hasty') dmg = Math.floor(dmg * 1.5);
+                    if (mod === 'bulky') dmg = Math.floor(dmg * 0.6);
+                    if (mod === 'toxic') dmg = Math.floor(dmg * 1.8);
+                }
+                if (skill.heal) {
+                    heal = skill.heal + lvlBonus;
+                    if (mod === 'pure') heal = Math.floor(heal * 1.25);
+                }
+                if (skill.block) {
+                    block = skill.block + lvlBonus;
+                    if (mod === 'bulky') block = Math.floor(block * 1.4);
+                    if (mod === 'pure') block = Math.floor(block * 1.25);
+                }
+                // ----------------------------------
                 
                 if (activeSynergies.some(s => s.id === 'acid')) dmg += (3 + microbe.level);
                 if (activeSynergies.some(s => s.id === 'spore')) dmg = Math.floor(dmg * 1.1);
@@ -885,6 +1001,12 @@
 
                 const rpsMult = getRPSBonus(microbe.rps, enemy?.rps);
                 if (rpsMult > 1) dmg = Math.floor(dmg * rpsMult);
+
+                // Enemy Resistance Modifier
+                if (enemy?.modifier === 'resistant' && dmg > 0) {
+                    dmg = Math.floor(dmg * 0.8);
+                    addLog(`🛡️ Enemy is Resistant (-20% Dmg)`);
+                }
 
                 let isCrit = false;
                 if (dmg > 0) {
@@ -897,7 +1019,11 @@
 
                 if (block) heal += Math.floor(block * 0.5);
 
-                let newXp = microbe.xp + XP_PER_ACTION;
+                // --- MODIFIER LOGIC: XP & SIDE EFFECTS ---
+                let xpGain = XP_PER_ACTION;
+                if (mod === 'efficient') xpGain = Math.floor(xpGain * 1.5);
+
+                let newXp = microbe.xp + xpGain;
                 let newLevel = microbe.level;
                 let leveledUp = false;
                 const threshold = getXpThreshold(microbe.level);
@@ -908,20 +1034,40 @@
                     leveledUp = true;
                 }
 
-                let pathogenGrowth = 0;
+                let abundanceChange = 0;
                 if (microbe.type === 'pathogen') {
-                    pathogenGrowth = 12; 
+                    abundanceChange += 12; 
                     addLog(`⚠️ ${microbe.name} grows from activity!`);
+                }
+
+                // Hasty Side Effect: Burns itself out
+                if (mod === 'hasty') {
+                    abundanceChange -= 5;
+                    addLog(`⚡ ${microbe.name} is Hasty! Burns 5% Abundance.`);
+                }
+
+                // Toxic Side Effect: Hurts Player
+                if (mod === 'toxic') {
+                    setPlayerHP(prev => {
+                        const newVal = prev - 4;
+                        if (newVal <= 0) {
+                             setRunStats(s => ({...s, deathReason: `Betrayed by Toxic ${microbe.name}`}));
+                             setView('GAMEOVER');
+                        }
+                        return newVal;
+                    });
+                    addLog(`🤢 ${microbe.name} is Toxic! Host takes 4 Dmg.`);
                 }
 
                 setMicrobes(prev => {
                     let newM = prev.map(m => {
                         if (m.id === microbe.id) {
-                            return { ...m, xp: newXp, level: newLevel, abundance: m.abundance + pathogenGrowth };
+                            return { ...m, xp: newXp, level: newLevel, abundance: m.abundance + abundanceChange };
                         }
                         return m;
                     });
-                    if (pathogenGrowth > 0) return normalizeAbundance(newM);
+                    // Re-normalize if things changed
+                    if (abundanceChange !== 0) return normalizeAbundance(newM);
                     return newM;
                 });
 
@@ -970,14 +1116,40 @@
                     timer = setTimeout(() => {
                         const action = Math.random();
                         
+                        // ACTION 1: DEFEND (20%)
                         if (action < 0.2) {
                             const blockAmt = Math.floor(enemy.dmg * 1.5);
                             setEnemyShield(blockAmt);
                             addLog(`🛡️ ${enemy.name} raises defenses (+${blockAmt} Shield)`);
-                        } else if (action < 0.35 && enemy.type !== 'boss') {
+                        } 
+                        // ACTION 2: INFECT/PATHOGEN BOOST (20%)
+                        else if (action < 0.4 && enemy.type !== 'boss') {
                             triggerInfection();
-                            addLog(`☣️ ${enemy.name} released pathogens!`);
-                        } else {
+                            addLog(`☣️ ${enemy.name} accelerates Pathogen growth!`);
+                        } 
+                        // ACTION 3: MICROBIAL CULL (20%)
+                        else if (action < 0.6) {
+                            setMicrobes(prev => {
+                                // Find live commensals
+                                const commensals = prev.filter(m => m.type === 'commensal' && m.abundance > 5);
+                                if (commensals.length > 0) {
+                                    const target = commensals[Math.floor(Math.random() * commensals.length)];
+                                    addLog(`📉 ${enemy.name} CULLS your colony! ${target.name} takes heavy losses!`);
+                                    
+                                    const newM = prev.map(m => {
+                                        if (m.id === target.id) return { ...m, abundance: m.abundance * 0.7 }; // 30% loss
+                                        return m;
+                                    });
+                                    return normalizeAbundance(newM);
+                                } else {
+                                    addLog(`⚠️ ${enemy.name} tries to cull, but colony is too weak! Attacks host instead.`);
+                                    setPlayerHP(prev => Math.max(0, prev - 15));
+                                    return prev;
+                                }
+                            });
+                        }
+                        // ACTION 4: DIRECT DAMAGE (40%)
+                        else {
                             const dmg = enemy.dmg;
                             setShield(prevShield => {
                                 let damageToHp = 0;
@@ -993,7 +1165,11 @@
                                 if (damageToHp > 0) {
                                     setPlayerHP(prevHp => {
                                         const newVal = prevHp - damageToHp;
-                                        if (newVal <= 0) { setView('GAMEOVER'); localStorage.removeItem(SAVE_KEY); }
+                                        if (newVal <= 0) { 
+                                            setRunStats(s => ({...s, deathReason: `Killed by ${enemy.name}`}));
+                                            setView('GAMEOVER'); 
+                                            localStorage.removeItem(SAVE_KEY); 
+                                        }
                                         return newVal;
                                     });
                                 }
@@ -1001,8 +1177,10 @@
                             });
                         }
                         
+                        // Turn cleanup
                         setTimeout(() => {
                             setShield(0); 
+                            // ... keep your existing Regen logic here ...
                             let regen = Math.floor(currentEntropy * (level * 2));
                             if (activeSynergies.some(s => s.id === 'mucus')) {
                                 regen += (2 + level);
@@ -1021,6 +1199,24 @@
             }, [turn, view, enemy, microbes, maxHP, activeSynergies, level, currentEntropy]);
 
             const handleVictory = () => {
+                setRunStats(prev => ({ ...prev, battlesWon: prev.battlesWon + 1 }));
+
+                // Volatile Check
+                if (enemy.modifier === 'volatile') {
+                    const boom = 15 + (level * 2);
+                    setPlayerHP(prev => {
+                        const newVal = prev - boom;
+                        if (newVal <= 0) {
+                             setRunStats(s => ({...s, deathReason: `Killed by Volatile Explosion (${enemy.name})`}));
+                             setView('GAMEOVER');
+                        }
+                        return newVal;
+                    });
+                    addLog(`💥 ${enemy.name} EXPLODES! You take ${boom} damage.`);
+                }
+                
+                if (playerHP <= 0) return; // Stop if died from explosion
+
                 addLog(`Victory! ${enemy.name} defeated.`);
                 
                 if (level % 5 === 0) {
@@ -1029,21 +1225,25 @@
                     addLog("🏆 BOSS DEFEATED! Gained +20 Max HP and 1 FMT Kit.");
                 }
 
-                // 1. Guaranteed Drop (Food or Phage)
-                const guaranteed = Math.random() < 0.5 ? 'food' : 'phage';
-                setInventory(prev => ({ ...prev, [guaranteed]: prev[guaranteed] + 1 }));
-                addLog(`Victory Loot: 1 ${guaranteed.toUpperCase()}`);
+                // 1. Common Drop
+                if (Math.random() < 0.5) {
+                    const item = Math.random() < 0.6 ? 'food' : 'phage';
+                    setInventory(prev => ({ ...prev, [item]: prev[item] + 1 }));
+                    addLog(`Loot Found: 1 ${item.toUpperCase()}`);
+                } else {
+                    addLog("No common resources found.");
+                }
 
-                // 2. Bonus Drop (Any item or none)
+                // 2. Rare Drop
                 if (Math.random() < enemy.dropChance) {
                     const rand = Math.random();
                     let drop = 'food';
-                    if (rand > 0.75) drop = 'fmt';
-                    else if (rand > 0.50) drop = 'abx';
-                    else if (rand > 0.25) drop = 'phage';
+                    if (rand > 0.85) drop = 'fmt';
+                    else if (rand > 0.65) drop = 'abx';
+                    else if (rand > 0.35) drop = 'phage';
                     
                     setInventory(prev => ({ ...prev, [drop]: prev[drop] + 1 }));
-                    addLog(`Bonus Loot: 1 ${drop.toUpperCase()}`);
+                    addLog(`✨ Lucky Find: 1 ${drop.toUpperCase()}`);
                 }
 
                 // Leftovers Mechanic
@@ -1107,15 +1307,9 @@
                                 abundance: currentMicrobes[existingIndex].abundance + 5
                             };
                         } else {
-                            const bugToAdd = { 
-                                ...SPECIES_DB[newBug.key], 
-                                key: newBug.key,
-                                id: `bug_${Date.now()}_${Math.random()}`, 
-                                abundance: 5, 
-                                active: true, 
-                                level: level,
-                                xp: 0 
-                            };
+                            // Bug in Mix might also have modifiers if desired, but for now we keep them plain or random
+                            const bugToAdd = createMicrobe(SPECIES_DB[newBug.key], `bug_${Date.now()}_${Math.random()}`, 5);
+                            bugToAdd.level = level;
                             currentMicrobes.push(bugToAdd);
                         }
                     });
@@ -1131,6 +1325,7 @@
             const useABX = () => {
                 if (inventory.abx <= 0) return;
                 setInventory(prev => ({...prev, abx: prev.abx - 1}));
+                setRunStats(prev => ({...prev, itemsUsed: prev.itemsUsed + 1}));
                 setMicrobes(prev => {
                     let newM = prev.map(m => {
                         if (m.type === 'pathogen') return { ...m, abundance: m.abundance * 0.1 }; 
@@ -1281,14 +1476,66 @@
             }
 
             if (view === 'GAMEOVER') {
+                const shareRun = () => {
+                    const date = new Date().toISOString().split('T')[0];
+                    const teamStr = microbes
+                        .filter(m => m.abundance > 1)
+                        .map(m => `${m.modifier ? MODIFIERS.commensal[m.modifier].name + ' ' : ''}${m.name} (Lv.${m.level})`)
+                        .join(', ');
+                    
+                    const text = `🦠 MBIOTA RUN: FAILED\n💀 Cause: ${runStats.deathReason || 'Unknown'}\n🛡️ Level: ${level} | ⚔️ Wins: ${runStats.battlesWon}\n🧪 Items Used: ${runStats.itemsUsed}\n🧬 Team: ${teamStr}\nPlay Mbiota!`;
+                    
+                    navigator.clipboard.writeText(text);
+                    alert("Run summary copied to clipboard!");
+                };
+
                 return (
-                    <div className="h-screen flex items-center justify-center bg-red-900/90 text-center p-4">
-                        <div className="max-w-md w-full bg-gray-900 p-8 rounded-2xl border-2 border-red-500 animate-in fade-in zoom-in">
-                            <i className="fa-solid fa-skull-crossbones text-6xl text-red-500 mb-6"></i>
-                            <h1 className="text-4xl font-bold text-red-500 mb-4">Sepsis Failure</h1>
-                            <p className="text-xl mb-2 text-gray-300">Host Integrity Lost.</p>
-                            <p className="text-sm mb-6 font-mono text-gray-400">Level Reached: {level}</p>
-                            <button onClick={() => window.location.reload()} className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded text-white font-bold border border-gray-500">Re-Colonize</button>
+                    <div className="h-screen flex items-center justify-center bg-red-950/90 text-center p-4 overflow-y-auto">
+                        <div className="max-w-lg w-full bg-gray-900 p-8 rounded-2xl border-2 border-red-500 animate-in fade-in zoom-in shadow-2xl">
+                            <i className="fa-solid fa-skull-crossbones text-6xl text-red-500 mb-6 animate-pulse"></i>
+                            <h1 className="text-4xl font-bold text-red-500 mb-2">SEQUENCE TERMINATED</h1>
+                            <p className="text-xl font-mono text-white mb-6 bg-red-900/30 py-2 rounded border border-red-800">
+                                {runStats.deathReason || (microbes.some(m => m.type === 'pathogen' && m.abundance > 80) ? "Septic Shock: Pathogen Overrun" : "Organ Failure: HP Depleted")}
+                            </p>
+                            
+                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                <div className="bg-gray-800 p-3 rounded border border-gray-700">
+                                    <div className="text-gray-400 text-xs uppercase">Level</div>
+                                    <div className="text-2xl font-bold text-blue-400">{level}</div>
+                                </div>
+                                <div className="bg-gray-800 p-3 rounded border border-gray-700">
+                                    <div className="text-gray-400 text-xs uppercase">Wins</div>
+                                    <div className="text-2xl font-bold text-green-400">{runStats.battlesWon}</div>
+                                </div>
+                                <div className="bg-gray-800 p-3 rounded border border-gray-700">
+                                    <div className="text-gray-400 text-xs uppercase">Items</div>
+                                    <div className="text-2xl font-bold text-purple-400">{runStats.itemsUsed}</div>
+                                </div>
+                            </div>
+
+                            <div className="text-left mb-6">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase mb-2 border-b border-gray-700 pb-1">Final Strain Composition</h3>
+                                <div className="space-y-1 max-h-40 overflow-y-auto pr-2">
+                                    {microbes.sort((a,b) => b.abundance - a.abundance).map((m, i) => (
+                                        <div key={i} className="flex justify-between text-sm">
+                                            <span className={`${m.type === 'pathogen' ? 'text-red-400' : 'text-gray-300'}`}>
+                                                {m.modifier && <span className={`mr-1 ${MODIFIERS.commensal[m.modifier].color}`}><i className={`fa-solid ${MODIFIERS.commensal[m.modifier].icon}`}></i> {MODIFIERS.commensal[m.modifier].name}</span>}
+                                                {m.name} <span className="text-gray-600 text-xs">Lv.{m.level}</span>
+                                            </span>
+                                            <span className="font-mono text-gray-500">{m.abundance.toFixed(1)}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button onClick={() => { localStorage.removeItem(SAVE_KEY); window.location.reload(); }} className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 rounded text-white font-bold border border-gray-500 transition-all">
+                                    <i className="fa-solid fa-rotate-right mr-2"></i> Re-Colonize
+                                </button>
+                                <button onClick={shareRun} className="flex-1 py-3 bg-green-700 hover:bg-green-600 rounded text-white font-bold border border-green-500 transition-all">
+                                    <i className="fa-solid fa-share-nodes mr-2"></i> Share Run
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
@@ -1431,7 +1678,10 @@
                                             <i className="fa-solid fa-virus text-4xl text-red-200"></i>
                                         </div>
                                         <div className="flex flex-col items-center">
-                                            <h3 className="font-bold text-red-200 mb-2">{enemy?.name}</h3>
+                                            <h3 className="font-bold text-red-200 mb-2">
+                                                {enemy?.modifier && <span className={`text-[10px] block ${MODIFIERS.enemy[enemy.modifier].color}`}>{MODIFIERS.enemy[enemy.modifier].name}</span>}
+                                                {enemy?.name}
+                                            </h3>
                                             <span className={`text-[10px] px-2 py-0.5 rounded border mb-2 uppercase tracking-widest font-bold ${enemy?.rps === 'red' ? 'bg-red-900/50 border-red-500 text-red-400' : enemy?.rps === 'green' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-blue-900/50 border-blue-500 text-blue-400'}`}>
                                                 {enemy?.rps === 'red' ? 'Inflammatory' : enemy?.rps === 'green' ? 'Metabolic' : 'Chemical'}
                                             </span>
