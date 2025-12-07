@@ -137,12 +137,12 @@
         };
         
          const ENEMIES = [
-            { name: 'Inflammation', hp: 45, dmg: 8, rps: 'red', dropChance: 0.1, type: 'basic', minLvl: 1 },
-            { name: 'Sugar Spike', hp: 40, dmg: 10, rps: 'green', dropChance: 0.2, type: 'basic', minLvl: 1 },
-            { name: 'Antibiotic Residue', hp: 60, dmg: 6, rps: 'blue', dropChance: 0.25, type: 'elite', minLvl: 3 },
-            { name: 'Cortisol Storm', hp: 70, dmg: 12, rps: 'red', dropChance: 0.2, type: 'elite', minLvl: 3 },
-            { name: 'Leaky Gut Boss', hp: 100, dmg: 12, rps: 'green', dropChance: 1.0, type: 'boss', minLvl: 5 },
-            { name: 'Dysbiosis Dragon', hp: 150, dmg: 15, rps: 'blue', dropChance: 1.0, type: 'boss', minLvl: 10 },
+            { name: 'Inflammation', hp: 45, dmg: 10, rps: 'red', dropChance: 0.1, type: 'basic', minLvl: 1 }, // DMG 8->10
+            { name: 'Sugar Spike', hp: 40, dmg: 12, rps: 'green', dropChance: 0.2, type: 'basic', minLvl: 1 }, // DMG 10->12
+            { name: 'Antibiotic Residue', hp: 60, dmg: 8, rps: 'blue', dropChance: 0.25, type: 'elite', minLvl: 3 }, // DMG 6->8
+            { name: 'Cortisol Storm', hp: 70, dmg: 14, rps: 'red', dropChance: 0.2, type: 'elite', minLvl: 3 }, // DMG 12->14
+            { name: 'Leaky Gut Boss', hp: 100, dmg: 15, rps: 'green', dropChance: 1.0, type: 'boss', minLvl: 5 }, // DMG 12->15
+            { name: 'Dysbiosis Dragon', hp: 150, dmg: 18, rps: 'blue', dropChance: 1.0, type: 'boss', minLvl: 10 }, // DMG 15->18
         ];
 
         // --- UTILITY FUNCTIONS ---
@@ -847,7 +847,8 @@
 
                 shuffledAvailable.forEach((k, i) => {
                     const newLevel = getScaledLevel();
-                    newBiom.push(createMicrobe(SPECIES_DB[k], `donor_${i}_${Date.now()}`, 20, null));
+                    // SYNERGY FIX: Explicitly passing key 'k'
+                    newBiom.push(createMicrobe({ ...SPECIES_DB[k], key: k }, `donor_${i}_${Date.now()}`, 20, null));
                 });
 
                 setInventory(prev => ({...prev, fmt: prev.fmt - 1}));
@@ -870,8 +871,8 @@
                     } else {
                         const types = ['cdiff', 'salmo', 'candida', 'pylori'];
                         const type = types[Math.floor(Math.random() * types.length)];
-                        // Infections also get modifiers!
-                        const newInfection = createMicrobe(SPECIES_DB[type], `inf_${Date.now()}`, 10);
+                        // SYNERGY FIX: Explicitly passing key 'type' (good practice)
+                        const newInfection = createMicrobe({ ...SPECIES_DB[type], key: type }, `inf_${Date.now()}`, 10);
                         newInfection.level = level;
                         const newM = [...prev, newInfection];
                         logMsg = `⚠️ WARNING: ${newInfection.name} infection detected!`;
@@ -931,7 +932,8 @@
                 // Add Modifier
                 const modifier = getRandomModifier('enemy');
 
-                let scale = bossLevel ? 1 + (level * 0.25) : 1 + (level * 0.35);
+                // ENEMY BUFF: Increased scaling per level (0.35 -> 0.40)
+                let scale = bossLevel ? 1 + (level * 0.30) : 1 + (level * 0.40);
                 if (isHazard && !bossLevel && template.type === 'basic') scale *= 1.3;
                 
                 let finalDmg = Math.floor(template.dmg * scale);
@@ -1307,8 +1309,8 @@
                                 abundance: currentMicrobes[existingIndex].abundance + 5
                             };
                         } else {
-                            // Bug in Mix might also have modifiers if desired, but for now we keep them plain or random
-                            const bugToAdd = createMicrobe(SPECIES_DB[newBug.key], `bug_${Date.now()}_${Math.random()}`, 5);
+                            // SYNERGY FIX: Explicitly passing key 'newBug.key'
+                            const bugToAdd = createMicrobe({ ...SPECIES_DB[newBug.key], key: newBug.key }, `bug_${Date.now()}_${Math.random()}`, 5);
                             bugToAdd.level = level;
                             currentMicrobes.push(bugToAdd);
                         }
@@ -1483,7 +1485,7 @@
                         .map(m => `${m.modifier ? MODIFIERS.commensal[m.modifier].name + ' ' : ''}${m.name} (Lv.${m.level})`)
                         .join(', ');
                     
-                    const text = `🦠 MBIOTA RUN: FAILED\n💀 Cause: ${runStats.deathReason || 'Unknown'}\n🛡️ Level: ${level} | ⚔️ Wins: ${runStats.battlesWon}\n🧪 Items Used: ${runStats.itemsUsed}\n🧬 Team: ${teamStr}\nPlay Mbiota!`;
+                    const text = `🦠 Just died in MBIOTA ADVENTURES\n💀 Cause: ${runStats.deathReason || 'Unknown'}\n🛡️ Level: ${level} | ⚔️ Wins: ${runStats.battlesWon}\n🧪 Items Used: ${runStats.itemsUsed}\n🧬 Team: ${teamStr}\nPlay Mbiota!`;
                     
                     navigator.clipboard.writeText(text);
                     alert("Run summary copied to clipboard!");
