@@ -16,7 +16,7 @@ website:
         text: Publications
       - href: news_list.qmd
         text: Updates
-      - href: media/Carasso_Shaqed_CV_MAY2025.pdf
+      - href: media/Carasso_Shaqed_CV_2026.pdf
         text: CV
         target: _blank 
       - href: Game.qmd
