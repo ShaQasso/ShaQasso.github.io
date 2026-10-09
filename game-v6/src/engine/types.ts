@@ -6,6 +6,8 @@ export interface FlareSeg { t0: number; t1: number; angle: number; half: number;
 export interface Mod { id: string; left: number }
 export interface Held { id: string; charges: number }
 export interface GameEvent { kind: 'infect' | 'deflect' | 'coat' | 'lysis' | 'abx' | 'immune' | 'evade' | 'steroid' | 'burst' | 'turn' | 'patch'; x: number; y: number; mask?: number; c?: number }
+export interface Site { i: number; j: number; r: number; colour: number; left: number }
+export interface WallSite { sector: number; bonus: number; left: number }
 export type Phase = 'groom' | 'wave' | 'checkup';
 
 export interface CycleStats { lost: number; hits: number; peak: number; coats: number; abx: number; immune: number }
@@ -16,7 +18,8 @@ export interface State {
   cells: (Cell | null)[]; // (2R+1)^2 pixel grid in blob-fixed coordinates
   theta: number; omega: number; cmd: number;
   cycle: number; phase: Phase;
-  offer: string[]; picksLeft: number;
+  offer: string[]; picksLeft: number; pending: { id: string; target: 'blob' | 'wall' } | null;
+  sites: Site[]; wallSites: WallSite[];
   held: Held | null; mods: Mod[];
   phaseQueue: { colour: number; n: number } | null;
   waveT: number; waveLen: number;

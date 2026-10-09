@@ -1,17 +1,18 @@
 import balance from '../data/balance.json';
 import { NEIGH, TAU, angDiff, cellAt, eachCell, exposed } from '../engine/geometry';
-import { coatThreshold } from '../engine/sim';
+import { coatThreshold, immuneSpeed, phageSpeed } from '../engine/sim';
 import type { Cell, State } from '../engine/types';
 
 const B = balance;
-export const COLOUR_HEX = ['#fbbf24', '#22d3ee', '#a78bfa'];
-export const COLOUR_NAME = ['Amber', 'Cyan', 'Violet'];
+export const COLOUR_HEX = ['#fbbf24', '#a78bfa', '#38a8ff'];
+export const COLOUR_NAME = ['Yellow', 'Purple', 'Blue'];
 const WALL_R = B.wallR;
 const WU = 2.4; // wall features are drawn this many times bigger than a pixel
 const S = B.wallSectors;
 
 export interface View { W: number; H: number; cx: number; cy: number; U: number; dpr: number }
 export interface Pick { i: number; j: number }
+export interface Target { kind: 'blob' | 'wall'; i?: number; j?: number; sector?: number; colour?: number }
 interface Effect { x: number; y: number; t0: number; life: number; kind: 'pix' | 'pulse' | 'spark' | 'ring' | 'wedge' | 'cool'; colours: string[]; angle?: number; half?: number }
 
 function parse(hex: string): [number, number, number] { const n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
@@ -32,6 +33,7 @@ export class Renderer {
   private flash = new WeakMap<Cell, { c: number; t: number }>();
   private lastS: State | null = null;
   private theta = 0;
+  target: Target | null = null;
   time = 0;
 
   constructor(private canvas: HTMLCanvasElement) {
@@ -53,6 +55,8 @@ export class Renderer {
   private toScreen(i: number, j: number, theta: number): [number, number] { const c = Math.cos(theta), sn = Math.sin(theta); return [this.view.cx + this.view.U * (i * c - j * sn), this.view.cy + this.view.U * (i * sn + j * c)]; }
   private polar(r: number, a: number): [number, number] { return [this.view.cx + Math.cos(a) * r * this.view.U, this.view.cy + Math.sin(a) * r * this.view.U]; }
   angleOf(px: number, py: number): number { return Math.atan2(py - this.view.cy, px - this.view.cx); }
+  distOf(px: number, py: number): number { return Math.hypot(px - this.view.cx, py - this.view.cy) / this.view.U; }
+  sectorAt(px: number, py: number): number { const a = ((this.angleOf(px, py) % TAU) + TAU) % TAU; return Math.floor(a / (TAU / S)) % S; }
 
   pick(s: State, px: number, py: number): Pick | null {
     const dx = (px - this.view.cx) / this.view.U, dy = (py - this.view.cy) / this.view.U;
@@ -74,6 +78,7 @@ export class Renderer {
     this.drainEvents(s);
     if (s.phase === 'wave') this.drawTelegraphs(s);
     this.drawBlob(s, hover);
+    this.drawSites(s);
     this.drawFlight(s, acc);
     this.drawEffects();
     ctx.restore();
@@ -91,11 +96,10 @@ export class Renderer {
     ctx.fillStyle = 'rgba(120,150,200,0.035)';
     for (let i = 0; i < 36; i++) { const a = i * 2.399, r = (i % 7) * 1.3 + 1 + Math.sin(this.time * 0.2 + i) * 0.2; const [x, y] = this.polar(r, a + this.time * 0.01); ctx.beginPath(); ctx.arc(x, y, U * (0.15 + (i % 3) * 0.1), 0, TAU); ctx.fill(); }
   }
+  /** Healthy tissue is soft pink; inflammation deepens it to a saturated, darker red. */
   private wallColor(w: number, l = 0): string {
-    const stops: [number, number][] = [[0, 195], [0.3, 214], [0.5, 255], [0.68, 325], [0.85, 352], [1, 358]];
-    let hue = 358;
-    for (let i = 1; i < stops.length; i++) if (w <= stops[i][0]) { const [w0, h0] = stops[i - 1], [w1, h1] = stops[i]; hue = h0 + ((w - w0) / (w1 - w0)) * (h1 - h0); break; }
-    return `hsl(${hue} ${42 + 38 * w}% ${22 + 12 * w + l}%)`;
+    const hue = (350 + 14 * Math.min(1, w)) % 360;
+    return `hsl(${hue} ${40 + 46 * Math.min(1, w)}% ${64 - 24 * Math.min(1, w) + l}%)`;
   }
   private heartbeat(s: State): number { const p = (this.time * (0.8 + 1.7 * s.inflammation)) % 1; return Math.exp(-p * 7) + 0.6 * Math.exp(-Math.abs(p - 0.3) * 16); }
 
@@ -103,7 +107,7 @@ export class Renderer {
   private drawWall(s: State): void {
     const { ctx } = this; const { cx, cy, U } = this.view;
     const beat = this.heartbeat(s);
-    const N = 26; // villi per sector
+    const N = 9; // villi per sector (few, so the wall stays calm to look at)
     for (let j = 0; j < S; j++) {
       const w = s.wall[j];
       const a0 = (j / S) * TAU, a1 = ((j + 1) / S) * TAU + 0.004;
@@ -113,11 +117,11 @@ export class Renderer {
       // villi: slim fingers with rounded tips; blunted, shorter and sparser when inflamed (villous atrophy)
       for (let v = 0; v < N; v++) {
         const seed = j * 100 + v;
-        if (w > 0.72 && hash(seed) < (w - 0.72) * 2.2) continue; // lost villi
+        if (w > 0.7 && hash(seed) < (w - 0.7) * 2.4) continue; // lost villi
         const a = a0 + ((v + 0.5) / N) * (a1 - a0);
         const sway = Math.sin(this.time * (0.5 + 0.6 * w) + seed * 1.7) * (0.02 - 0.012 * w);
-        const len = (0.95 + 0.7 * hash(seed + 7)) * WU * (1 - 0.72 * w);
-        const wid = U * (0.34 + 0.34 * w) * WU * 0.55;
+        const len = (0.9 + 0.5 * hash(seed + 7)) * WU * (1 - 0.7 * w);
+        const wid = U * (0.55 + 0.4 * w) * WU * 0.5;
         const [x0, y0] = this.polar(WALL_R + 0.05, a), [x1, y1] = this.polar(WALL_R - len, a + sway);
         ctx.lineCap = 'round'; ctx.lineWidth = wid; ctx.strokeStyle = this.wallColor(w, 2);
         ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
@@ -125,7 +129,7 @@ export class Renderer {
         ctx.beginPath(); ctx.moveTo(x0 + (x1 - x0) * 0.35, y0 + (y1 - y0) * 0.35); ctx.lineTo(x1, y1); ctx.stroke();
       }
       // mucus layer in front of the villi, thinner when inflamed
-      ctx.strokeStyle = `rgba(110,200,190,${0.3 * (1 - w)})`; ctx.lineWidth = U * 0.3 * WU * (1 - 0.8 * w);
+      ctx.strokeStyle = `rgba(255,236,230,${0.22 * (1 - w)})`; ctx.lineWidth = U * 0.3 * WU * (1 - 0.8 * w);
       ctx.beginPath(); ctx.arc(cx, cy, (WALL_R - 1.35 * WU) * U, a0 + 0.02, a1 - 0.02); ctx.stroke();
       // the passive cooling facing this sector, as a gold halo behind the villi
       const f = s.cooling[j] ?? 0;
@@ -200,13 +204,13 @@ export class Renderer {
   private drawFlight(s: State, acc: number): void {
     const { ctx } = this; const { U } = this.view;
     for (const p of s.phages) {
-      const r = p.r - B.phage.speed * acc; if (r < 0) continue;
+      const r = p.r - phageSpeed(s) * acc; if (r < 0) continue;
       const [tx, ty] = this.polar(r + 3.2, p.angle), [x, y] = this.polar(r, p.angle), cols = maskColours(p.mask);
       ctx.strokeStyle = hexA(cols[0], 0.4); ctx.lineWidth = U * 0.28; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
       this.phageSprite(x, y, p.angle, cols);
     }
     for (const m of s.immune) {
-      const r = m.r - B.immune.speed * acc; if (r < 0) continue;
+      const r = m.r - immuneSpeed(s) * acc; if (r < 0) continue;
       const [tx, ty] = this.polar(r + 2.2, m.angle), [x, y] = this.polar(r, m.angle);
       ctx.strokeStyle = 'rgba(254,202,202,0.35)'; ctx.lineWidth = U * 0.3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
       ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 14;
@@ -254,7 +258,7 @@ export class Renderer {
       }
       ctx.fillStyle = SHADES[c.c][shade]; ctx.fillRect(i - 0.5 * sz, j - 0.5 * sz, sz + 0.04, sz + 0.04);
       if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${0.7 * flash})`; ctx.fillRect(i - 0.5 * sz, j - 0.5 * sz, sz + 0.04, sz + 0.04); }
-      if (c.m > 0) { ctx.fillStyle = `rgba(253,224,71,${0.5 * Math.min(1, c.m / 2) * (0.85 + 0.15 * Math.sin(tNow * 3 + i))})`; ctx.fillRect(i - 0.6, j - 0.6, 1.2, 1.2); }
+      if (c.m > 0) { ctx.fillStyle = `rgba(255,236,150,${0.62 * Math.min(1, c.m / 1.5) * (0.85 + 0.15 * Math.sin(tNow * 4 + i * 0.7 + j))})`; ctx.fillRect(i - 0.62, j - 0.62, 1.24, 1.24); }
       if (patch && patch.has(i * 1000 + j)) { ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fillRect(i - 0.5, j - 0.5, 1.04, 1.04); }
     });
     ctx.lineWidth = 0.16;
@@ -264,8 +268,47 @@ export class Renderer {
       else if (c.c === 2) { ctx.fillStyle = 'rgba(245,243,255,0.7)'; ctx.fillRect(i - 0.12, j - 0.12, 0.24, 0.24); }
       else { ctx.fillStyle = 'rgba(255,251,235,0.55)'; ctx.fillRect(i - 0.3, j - 0.35, 0.34, 0.2); }
     });
+    // the mucus coat: a bright gold line around every coated region, so the shell is easy to see
+    ctx.strokeStyle = `rgba(253,224,71,${0.85 + 0.15 * Math.sin(tNow * 5)})`; ctx.lineWidth = 0.34; ctx.lineCap = 'round';
+    ctx.beginPath();
+    eachCell(s, (c, i, j) => {
+      if (!(c.m > 0)) return;
+      const open = (di: number, dj: number) => { const n = cellAt(s, i + di, j + dj); return !n || !(n.m > 0); };
+      if (open(1, 0)) { ctx.moveTo(i + 0.62, j - 0.62); ctx.lineTo(i + 0.62, j + 0.62); }
+      if (open(-1, 0)) { ctx.moveTo(i - 0.62, j - 0.62); ctx.lineTo(i - 0.62, j + 0.62); }
+      if (open(0, 1)) { ctx.moveTo(i - 0.62, j + 0.62); ctx.lineTo(i + 0.62, j + 0.62); }
+      if (open(0, -1)) { ctx.moveTo(i - 0.62, j - 0.62); ctx.lineTo(i + 0.62, j - 0.62); }
+    });
+    ctx.stroke();
     if (hover) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.25; ctx.strokeRect(hover.i - 0.6, hover.j - 0.6, 1.2, 1.2); }
     ctx.restore();
+  }
+
+  // ---- feeding sites, wall treatments, and the placement preview ----------------------------------
+  private drawSites(s: State): void {
+    const { ctx } = this; const { cx, cy, U } = this.view;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(this.theta); ctx.scale(U, U);
+    for (const st of s.sites) {
+      ctx.strokeStyle = hexA(COLOUR_HEX[st.colour], 0.65); ctx.lineWidth = 0.22; ctx.setLineDash([0.9, 0.8]); ctx.lineDashOffset = -this.time * 1.5;
+      ctx.beginPath(); ctx.arc(st.i, st.j, st.r, 0, TAU); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    const t = this.target;
+    if (t && t.kind === 'blob' && t.i !== undefined && t.j !== undefined) {
+      const col = COLOUR_HEX[t.colour ?? 0];
+      ctx.fillStyle = hexA(col, 0.16); ctx.strokeStyle = hexA(col, 0.95); ctx.lineWidth = 0.28;
+      ctx.beginPath(); ctx.arc(t.i, t.j, B.site.blobR, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = hexA(col, 0.4); ctx.beginPath(); ctx.arc(t.i, t.j, B.site.coreR, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
+    // wall treatments and the wall placement preview
+    const arcs: { sector: number; alpha: number }[] = s.wallSites.map((w) => ({ sector: w.sector, alpha: 0.85 }));
+    if (t && t.kind === 'wall' && t.sector !== undefined) arcs.push({ sector: t.sector, alpha: 1 });
+    for (const a of arcs) {
+      const a0 = (a.sector / S) * TAU, a1 = ((a.sector + 1) / S) * TAU;
+      ctx.strokeStyle = `rgba(250,204,21,${a.alpha * (0.6 + 0.3 * Math.sin(this.time * 4))})`; ctx.lineWidth = U * 0.9; ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.arc(cx, cy, (WALL_R - 3.2) * U, a0 + 0.02, a1 - 0.02); ctx.stroke();
+    }
   }
 
   // ---- events -> effects -----------------------------------------------------------------------------------

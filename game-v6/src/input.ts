@@ -1,5 +1,5 @@
 import { angDiff, TAU } from './engine/geometry';
-import { nextCycle, pickCard, setRotation, useHeld } from './engine/sim';
+import { nextCycle, pickCard, placeTarget, setRotation, useHeld } from './engine/sim';
 import type { State } from './engine/types';
 import type { Renderer } from './render/draw';
 
@@ -29,6 +29,13 @@ export class Input {
   private waving(): State | null { const s = this.getState(); return s && s.status === 'run' && s.phase === 'wave' ? s : null; }
 
   private down(e: PointerEvent): void {
+    const g = this.getState();
+    if (g && g.status === 'run' && g.phase === 'groom' && g.pending) {
+      const [x, y] = this.rel(e);
+      if (g.pending.target === 'blob') { const p = this.renderer.pick(g, x, y); if (p) placeTarget(g, { i: p.i, j: p.j }); }
+      else if (this.renderer.distOf(x, y) > this.renderer.blobRadius(g) + 3) placeTarget(g, { sector: this.renderer.sectorAt(x, y) });
+      return;
+    }
     const s = this.waving(); if (!s) return;
     const [x, y] = this.rel(e);
     this.drag = { last: this.renderer.angleOf(x, y), target: s.theta }; this.target = null;

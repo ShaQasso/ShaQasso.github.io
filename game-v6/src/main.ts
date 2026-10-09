@@ -1,5 +1,6 @@
 import './style.css';
 import balance from './data/balance.json';
+import { CARD } from './engine/cards';
 import { count } from './engine/geometry';
 import { createState, nextCycle, pickCard, step } from './engine/sim';
 import { Input } from './input';
@@ -26,12 +27,12 @@ function titleScreen(): void {
     <h1>MBIOTA</h1>
     <h2>You are the <i>Bacteroides</i> of a patient with Crohn's disease. Keep the gut in remission for a year.</h2>
     <ul>
-      <li>Each month has two parts. <b>Grooming</b>: pick cards, calmly (a carb source, a way to turn better, or an IBD treatment). Then <b>the wave</b>: a real-time stretch where the disease attacks.</li>
-      <li><b>One control in a wave: turn the blob</b> (drag, scroll, or A/D). Phages come from every side, coloured like the pixels they hunt (<span class="sw" style="background:#fbbf24"></span>amber, <span class="sw" style="background:#22d3ee"></span>cyan, <span class="sw" style="background:#a78bfa"></span>violet). A bite spreads through same-colour neighbours, so staying mixed keeps bites small.</li>
-      <li><b>Cooling is passive and directional.</b> The wall is cooled by the anti-inflammatory pixels <i>facing</i> it, best at the edge, violet most (the gold halo shows it). When a flare heats an arc of the wall, turn violet toward it, and mind the phages.</li>
-      <li>A single-colour patch that is <b>really big</b> grows a gold <b>mucus coat</b> that soaks up hits. Big patches shield you, but a bite into one is large.</li>
-      <li>You can hold <b>one card</b> and use it with <b>Space</b> in a wave (a steroid, a mucus burst, or <b>Ring turn</b> to turn the outer band against the core and reshape the blob).</li>
-      <li>The disease is chronic: the baseline creeps up every month. Lose to a <b>flare-out</b> (sustained inflammation overload). Survive ${balance.cycles} months.</li>
+      <li>Each month has two parts. <b>Grooming</b>: pick two cards, calmly. Food cards and some drugs ask you to <b>click where</b> they work, on the blob or on the gut wall. Then <b>the wave</b>: real time, the disease attacks.</li>
+      <li><b>One control in a wave: turn the blob</b> (drag, scroll, or A/D). Phages come from every side, coloured like the pixels they hunt (<span class="sw" style="background:#fbbf24"></span>yellow, <span class="sw" style="background:#a78bfa"></span>purple, <span class="sw" style="background:#38a8ff"></span>blue). A bite spreads through same-colour neighbours, so staying mixed keeps bites small.</li>
+      <li><span class="sw" style="background:#38a8ff"></span><b>Blue treats flares.</b> Cooling is passive and directional: the wall is cooled by the blue pixels <i>facing</i> it, best at the edge (the gold halo shows it). When a flare heats an arc of the wall, turn blue toward it, and mind the phages.</li>
+      <li><span class="sw" style="background:#a78bfa"></span><b>Purple resists phages</b> (cascades barely spread through it). <span class="sw" style="background:#fbbf24"></span><b>Yellow makes mucus.</b> A single-colour patch that is <b>really big</b> grows a bright gold <b>mucus coat</b> that soaks up hits: yellow coats last longest. Hits chip the coat.</li>
+      <li>Hold <b>one card</b> and use it with <b>Space</b> in a wave (a steroid, a mucus burst, or <b>Ring turn</b>: turn the outer band against the core to reshape the blob).</li>
+      <li>The disease is chronic: the baseline creeps up every month, and phages get faster. Lose to a <b>flare-out</b> (sustained inflammation overload). Survive ${balance.cycles} months.</li>
     </ul>
     <button class="btn" id="go" type="button">Start</button> <span style="color:#7d8ba1;font-size:12px;margin-left:8px">Enter</span>`);
   document.getElementById('go')!.addEventListener('click', () => startRun());
@@ -71,6 +72,11 @@ function frame(now: number): void {
   } else acc = 0;
   if (state) {
     const hover = input.pointer.inside && !input.dragging ? renderer.pick(state, input.pointer.x, input.pointer.y) : null;
+    renderer.target = null;
+    if (state.pending && input.pointer.inside) {
+      if (state.pending.target === 'blob') { if (hover) renderer.target = { kind: 'blob', i: hover.i, j: hover.j, colour: CARD[state.pending.id].colour }; }
+      else if (renderer.distOf(input.pointer.x, input.pointer.y) > renderer.blobRadius(state) + 3) renderer.target = { kind: 'wall', sector: renderer.sectorAt(input.pointer.x, input.pointer.y) };
+    }
     renderer.draw(state, acc, hover);
     hud.update(state);
     hud.tooltip(state, hover, renderer, input.pointer.x, input.pointer.y);

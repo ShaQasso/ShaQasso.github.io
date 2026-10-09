@@ -8,6 +8,8 @@ const B = balance;
 export const COLOURS = B.colours;
 const S = B.wallSectors;
 const newCell = (c: number): Cell => ({ c, inf: 0, ph: 0, gen: 0, m: 0, mcd: 0 });
+export const phageSpeed = (s: State) => B.phage.speed * (1 + B.phage.speedGrow * (s.cycle - 1));
+export const immuneSpeed = (s: State) => B.immune.speed * (1 + B.immune.speedGrow * (s.cycle - 1));
 const emptyCyc = (): CycleStats => ({ lost: 0, hits: 0, peak: 0, coats: 0, abx: 0, immune: 0 });
 
 // ---- mods (what the cards do) ------------------------------------------------
@@ -25,7 +27,7 @@ export const inflammationOf = (wall: number[]) => Math.pow(wall.reduce((a, w) =>
 // ---- setup -----------------------------------------------------------------------
 export function createState(seed: number): State {
   const s: State = {
-    rng: seed >>> 0, t: 0, cells: new Array(W * W).fill(null), theta: 0, omega: 0, cmd: 0, cycle: 1, phase: 'groom', offer: [], picksLeft: B.picks,
+    rng: seed >>> 0, t: 0, cells: new Array(W * W).fill(null), theta: 0, omega: 0, cmd: 0, cycle: 1, phase: 'groom', offer: [], picksLeft: B.picks, pending: null, sites: [], wallSites: [],
     held: null, mods: [], phaseQueue: null, waveT: 0, waveLen: B.wave.len, abx: [], flares: [], phages: [], immune: [], phageAcc: 0, immuneAcc: 0,
     wall: Array(S).fill(B.wall.base), cooling: Array(S).fill(0), inflammation: B.wall.base, drift: 0, overloadT: 0, coatAcc: 0, coolAcc: 0,
     spawning: true, mutating: true, coating: true, cyc: emptyCyc(), history: [], status: 'run', reason: '',
@@ -58,15 +60,39 @@ export function drawOffer(s: State): void {
   }
 }
 
+function afterPick(s: State): void { s.picksLeft--; if (s.picksLeft <= 0) startWave(s); else drawOffer(s); }
+
+/** Choose a card. Cards that work on a site wait for you to choose the site (placeTarget). */
 export function pickCard(s: State, i: number): boolean {
-  if (s.status !== 'run' || s.phase !== 'groom' || !s.offer[i]) return false;
+  if (s.status !== 'run' || s.phase !== 'groom' || s.pending || !s.offer[i]) return false;
   const card = CARD[s.offer[i]];
   s.stats.cards++;
   if (card.held) s.held = { id: card.id, charges: card.held.charges };
   if (card.mods) s.mods.push({ id: card.id, left: card.cycles ?? 1 });
-  if (card.phase !== undefined) s.phaseQueue = { colour: card.phase, n: 3 };
-  s.picksLeft--;
-  if (s.picksLeft <= 0) startWave(s); else drawOffer(s);
+  if (card.target) { s.pending = { id: card.id, target: card.target }; return true; }
+  afterPick(s);
+  return true;
+}
+
+/** Say where a site card works: a pixel of the blob (food) or a sector of the wall (drug). */
+export function placeTarget(s: State, t: { i?: number; j?: number; sector?: number }): boolean {
+  if (!s.pending || s.phase !== 'groom') return false;
+  const card = CARD[s.pending.id];
+  if (s.pending.target === 'blob') {
+    if (t.i === undefined || t.j === undefined || !cellAt(s, t.i, t.j)) return false;
+    const colour = card.colour ?? 0;
+    for (let dj = -B.site.coreR; dj <= B.site.coreR; dj++) for (let di = -B.site.coreR; di <= B.site.coreR; di++) {
+      if (di * di + dj * dj > B.site.coreR ** 2) continue;
+      const c = cellAt(s, t.i + di, t.j + dj);
+      if (c && c.inf === 0) c.c = colour;
+    }
+    s.sites.push({ i: t.i, j: t.j, r: B.site.blobR, colour, left: B.site.waves });
+  } else {
+    if (t.sector === undefined) return false;
+    s.wallSites.push({ sector: ((t.sector % S) + S) % S, bonus: B.site.wallBonus, left: B.site.wallWaves });
+  }
+  s.pending = null;
+  afterPick(s);
   return true;
 }
 
@@ -114,7 +140,7 @@ export function nextCycle(s: State): void {
   const base = baseInflammation(s);
   s.wall = s.wall.map((w) => base + (w - base) * B.chronic.recover);
   s.inflammation = inflammationOf(s.wall);
-  s.phase = 'groom'; s.picksLeft = B.picks;
+  s.phase = 'groom'; s.picksLeft = B.picks; s.pending = null;
   eachCell(s, (c) => { c.m = 0; c.mcd = 0; });
   drawOffer(s);
 }
@@ -144,7 +170,9 @@ export function coolingFactors(s: State, theta = s.theta, depth = depthMap(s)): 
     }
   });
   const bonus = mod(s, 'coolBonus', 'add');
-  return sum.map((v) => Math.min(B.cool.max, 1 - Math.exp(-v / B.cool.K) + bonus));
+  const site = new Array<number>(S).fill(0);
+  for (const w of s.wallSites) for (let k = -1; k <= 1; k++) site[(w.sector + k + S) % S] += w.bonus * (k === 0 ? 1 : 0.5);
+  return sum.map((v, j) => Math.min(B.cool.max + 0.1, Math.min(B.cool.max, 1 - Math.exp(-v / B.cool.K) + bonus) + site[j]));
 }
 function refreshCooling(s: State): void { s.cooling = coolingFactors(s); }
 
@@ -231,6 +259,8 @@ function finishWave(s: State): void {
   s.cyc.peak = Math.max(s.cyc.peak, s.inflammation);
   s.history.push({ ...s.cyc });
   s.mods = s.mods.map((m) => ({ ...m, left: m.left - 1 })).filter((m) => m.left > 0);
+  s.sites = s.sites.map((x) => ({ ...x, left: x.left - 1 })).filter((x) => x.left > 0);
+  s.wallSites = s.wallSites.map((x) => ({ ...x, left: x.left - 1 })).filter((x) => x.left > 0);
   s.phages = []; s.immune = [];
   if (s.cycle >= B.cycles) { s.status = 'won'; s.reason = 'a year in remission'; return; }
   s.phase = 'checkup';
@@ -284,7 +314,7 @@ export function step(s: State, dt: number = B.dt): void {
   // phages hit the first pixel on their path; a coat soaks the hit and chips
   const alive: typeof s.phages = [];
   for (const p of s.phages) {
-    const r0 = p.r; p.r -= B.phage.speed * dt;
+    const r0 = p.r; p.r -= phageSpeed(s) * dt;
     const psi = p.angle - s.theta; let done = false;
     for (let rr = r0; rr > p.r && !done; rr -= 0.25) {
       const x = Math.round(rr * Math.cos(psi)), y = Math.round(rr * Math.sin(psi));
@@ -302,7 +332,7 @@ export function step(s: State, dt: number = B.dt): void {
   // immune cells bite (small chew) unless the pixel evades or is coated
   const aliveI: typeof s.immune = [];
   for (const m of s.immune) {
-    const r0 = m.r; m.r -= B.immune.speed * dt;
+    const r0 = m.r; m.r -= immuneSpeed(s) * dt;
     const psi = m.angle - s.theta; let done = false;
     for (let rr = r0; rr > m.r && !done; rr -= 0.25) {
       const x = Math.round(rr * Math.cos(psi)), y = Math.round(rr * Math.sin(psi));
@@ -357,7 +387,8 @@ export function step(s: State, dt: number = B.dt): void {
       for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) { if (di * di + dj * dj > rad * rad) continue; const nb = cellAt(s, i + di, j + dj); if (nb && nb.inf === 0) nb.c = pick; }
       s.stats.flips++;
     }
-    const g = (COLOURS[cell.c].growth / B.growthInterval) * gAll * mod(s, `growth${cell.c}`, 'mul') * room;
+    let g = (COLOURS[cell.c].growth / B.growthInterval) * gAll * mod(s, `growth${cell.c}`, 'mul') * room;
+    for (const st of s.sites) if ((i - st.i) ** 2 + (j - st.j) ** 2 <= st.r * st.r) { g *= B.site.growMul; break; }
     if (rand(s) < 1 - Math.exp(-dt * g)) parents.push([i, j]);
     if (cell.m > 0) { cell.m -= dt; if (cell.m <= 0) cell.mcd = B.coat.cooldown; } else if (cell.mcd > 0) cell.mcd -= dt;
   });
@@ -371,6 +402,7 @@ export function step(s: State, dt: number = B.dt): void {
     for (const [di, dj] of NEIGH) { const nb = cellAt(s, ei + di, ej + dj); if (nb && nb !== p && nb.inf === 0) votes[nb.c] += 1; }
     let x = rand(s) * (votes[0] + votes[1] + votes[2]), pick = p.c;
     for (let k = 0; k < 3; k++) { x -= votes[k]; if (x <= 0) { pick = k; break; } }
+    for (const st of s.sites) if ((ei - st.i) ** 2 + (ej - st.j) ** 2 <= st.r * st.r && rand(s) < B.site.newbornP) { pick = st.colour; break; }
     s.cells[idx(ei, ej)] = newCell(pick); s.stats.births++;
   }
 

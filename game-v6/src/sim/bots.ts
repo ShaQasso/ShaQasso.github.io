@@ -1,6 +1,6 @@
 import { TAU, angDiff, cellAt, eachCell, idx, wrap } from '../engine/geometry';
 import { CARD } from '../engine/cards';
-import { COLOURS, coolingFactors, depthMap, pickCard, setRotation, useHeld, baseInflammation } from '../engine/sim';
+import { COLOURS, baseInflammation, coolingFactors, depthMap, pickCard, placeTarget, setRotation, useHeld } from '../engine/sim';
 import type { State } from '../engine/types';
 
 export type Bot = (s: State, rnd: () => number) => void;
@@ -43,14 +43,31 @@ function steer(s: State, useCooling: boolean): void {
   setRotation(s, clamp(angDiff(s.theta, best) * 3 - s.omega * 0.9));
 }
 
-// ---- card drafting policies --------------------------------------------------------------------
-const SCORE: Record<string, number> = {
-  mesalamine: 9, antitnf: 8, immunomod: 6, steroid: 7, fibre: 6, mucin: 5, starch: 5, peristalsis: 4, anchor: 3, mucolytic: 5, ringturn: 2,
-  sugar: 1, phase_a: 2, phase_c: 2, phase_v: 4,
-};
-export function draftSmart(s: State): void { const i = s.offer.map((id) => SCORE[id] ?? 0).reduce((b, v, k, a) => (v > a[b] ? k : b), 0); pickCard(s, i); }
-export function draftRandom(s: State, rnd: () => number): void { pickCard(s, Math.floor(rnd() * s.offer.length)); }
-export function draftFirst(s: State): void { pickCard(s, 0); }
+// ---- card drafting policies ------------------------------------------------------------------------
+const SCORE: Record<string, number> = { mesalamine: 9, antitnf: 8, steroid: 7, fibre: 7, starch: 5, mucin: 4, peristalsis: 4, mucolytic: 5, ringturn: 2 };
+
+/** Places a pending site card. Smart: blue food faces the hottest part of the wall, a wall drug goes on the hottest sector. */
+function place(s: State, rnd: () => number, smart: boolean): void {
+  if (!s.pending) return;
+  if (s.pending.target === 'wall') {
+    let best = 0; s.wall.forEach((w, j) => { if (w + (smart ? 0 : rnd()) > s.wall[best] + (smart ? 0 : rnd())) best = j; });
+    placeTarget(s, { sector: smart ? s.wall.indexOf(Math.max(...s.wall)) : Math.floor(rnd() * s.wall.length) });
+    return;
+  }
+  const surf: [number, number][] = [];
+  eachCell(s, (_, i, j) => { const n = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([di, dj]) => !cellAt(s, i + di, j + dj)); if (n) surf.push([i, j]); });
+  let pick = surf[Math.floor(rnd() * surf.length)];
+  if (smart && s.pending.id === 'fibre') {
+    const hot = ((s.wall.indexOf(Math.max(...s.wall)) + 0.5) / s.wall.length) * TAU;
+    let bd = Infinity; for (const [i, j] of surf) { const d = Math.abs(angDiff(hot, wrap(Math.atan2(j, i) + s.theta))); if (d < bd) { bd = d; pick = [i, j]; } }
+  }
+  placeTarget(s, { i: pick[0], j: pick[1] });
+}
+function draft(s: State, rnd: () => number, smartCards: boolean, smartPlace: boolean): void {
+  if (s.pending) { place(s, rnd, smartPlace); return; }
+  const i = smartCards ? s.offer.map((id) => SCORE[id] ?? 0).reduce((b, v, k, a) => (v > a[b] ? k : b), 0) : Math.floor(rnd() * s.offer.length);
+  pickCard(s, i);
+}
 
 function useCards(s: State): void {
   if (!s.held) return;
@@ -61,10 +78,10 @@ function useCards(s: State): void {
 // ---- bots (they act every wave tick through `tick`; grooming through `groom`) ----------------------
 export interface BotDef { groom: (s: State, rnd: () => number) => void; tick: (s: State, rnd: () => number) => void }
 export const BOTS: Record<string, BotDef> = {
-  idle: { groom: draftFirst, tick: () => {} },
-  random: { groom: draftRandom, tick: (s, rnd) => { if (Math.floor(s.waveT * 20) % 30 === 0) setRotation(s, rnd() * 2 - 1); } },
-  dodge: { groom: draftSmart, tick: (s) => { steer(s, false); useCards(s); } },
-  smart: { groom: draftSmart, tick: (s) => { steer(s, true); useCards(s); } },
-  smartRandomCards: { groom: draftRandom, tick: (s) => { steer(s, true); useCards(s); } },
+  idle: { groom: (s, r) => draft(s, r, false, false), tick: () => {} },
+  random: { groom: (s, r) => draft(s, r, false, false), tick: (s, rnd) => { if (Math.floor(s.waveT * 20) % 30 === 0) setRotation(s, rnd() * 2 - 1); } },
+  dodge: { groom: (s, r) => draft(s, r, true, true), tick: (s) => { steer(s, false); useCards(s); } },
+  smart: { groom: (s, r) => draft(s, r, true, true), tick: (s) => { steer(s, true); useCards(s); } },
+  smartRandomCards: { groom: (s, r) => draft(s, r, false, false), tick: (s) => { steer(s, true); useCards(s); } },
 };
 void eachCell; void idx; void wrap; void CARD;

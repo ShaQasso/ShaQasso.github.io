@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import balance from '../src/data/balance.json';
 import { CARD, CARDS } from '../src/engine/cards';
 import { cellAt, count, eachCell, exposed, idx, R, TAU } from '../src/engine/geometry';
-import { COLOURS, baseInflammation, coatThreshold, coolingFactors, createState, mod, nextCycle, patches, pickCard, setRotation, step, turnBand, useHeld } from '../src/engine/sim';
+import { COLOURS, baseInflammation, coatThreshold, coolingFactors, createState, mod, nextCycle, patches, phageSpeed, pickCard, placeTarget, setRotation, step, turnBand, useHeld } from '../src/engine/sim';
 import { BOTS } from '../src/sim/bots';
 import type { State } from '../src/engine/types';
 
@@ -60,15 +60,49 @@ describe('the run loop and cards', () => {
     expect(s.held?.id).toBe('steroid'); // a new held card replaces the old one
   });
 
-  it('a food card makes its colour grow faster; the effect expires after its waves', () => {
-    const births = (card: string | null) => { const s = wave(5, () => 2); if (card) s.mods.push({ id: card, left: 2 }); run(s, 25); return s.stats.births; };
-    expect(births('fibre')).toBeGreaterThan(births(null) * 1.1);
-    const s = createState(5); s.offer = ['mesalamine', 'fibre', 'mucin']; pickCard(s, 0); s.offer = ['mesalamine', 'x', 'y']; pickCard(s, 0);
-    expect(mod(s, 'coolBonus', 'add')).toBeCloseTo(0.2);
-    s.waveLen = 5; s.waveT = 4.99; s.cycle = 1; step(s); step(s);
-    expect(s.phase).toBe('checkup');
-    for (let k = 0; k < 3; k++) { if (s.phase === 'checkup') { nextCycle(s); s.offer = []; s.mods = s.mods.slice(); } s.mods = s.mods.map((m) => ({ ...m, left: m.left - 1 })).filter((m) => m.left > 0); }
-    expect(mod(s, 'coolBonus', 'add')).toBe(0);
+  it('a food card waits for you to choose where on the blob it feeds, then converts that spot and keeps feeding it', () => {
+    const s = wave(11, mixed); s.phase = 'groom'; s.picksLeft = 5; s.offer = ['fibre', 'mucin', 'starch'];
+    pickCard(s, 0);
+    expect(s.pending).toEqual({ id: 'fibre', target: 'blob' }); expect(s.picksLeft).toBe(5); // still choosing
+    expect(pickCard(s, 1)).toBe(false); // can't pick another card while placing
+    expect(placeTarget(s, { i: 99, j: 99 })).toBe(false); // must be on the blob
+    expect(placeTarget(s, { i: 4, j: 0 })).toBe(true);
+    expect(s.pending).toBeNull(); expect(s.picksLeft).toBe(4); expect(s.sites.length).toBe(1);
+    for (let dj = -2; dj <= 2; dj++) for (let di = -2; di <= 2; di++) if (di * di + dj * dj <= 4) expect(cellAt(s, 4 + di, dj)?.c).toBe(2);
+  });
+
+  it('a feeding site grows its colour: blue pixels near the site spread, and the effect fades after its waves', () => {
+    const share = (withSite: boolean) => {
+      let t = 0;
+      for (const seed of [1, 2, 3]) {
+        const s = wave(11, (i, j) => (i * i + j * j < 16 ? 2 : mixed(i, j) === 2 ? 2 : 1), seed);
+        s.sites = withSite ? [{ i: 6, j: 0, r: 7, colour: 2, left: 2 }] : [];
+        run(s, 70); let blue = 0, all = 0;
+        eachCell(s, (c, i, j) => { if ((i - 6) ** 2 + j * j <= 49) { all++; if (c.c === 2) blue++; } });
+        t += blue / all;
+      }
+      return t / 3;
+    };
+    expect(share(true)).toBeGreaterThan(share(false) + 0.05);
+    const s = wave(10, () => 1); s.sites = [{ i: 0, j: 0, r: 7, colour: 2, left: 1 }]; s.waveLen = 5; s.waveT = 4.99; step(s); step(s);
+    expect(s.sites.length).toBe(0);
+  });
+
+  it('a drug site on the wall cools that stretch of the wall strongly for a few waves', () => {
+    const s = wave(12, () => 1); const before = coolingFactors(s);
+    s.phase = 'groom'; s.picksLeft = 5; s.offer = ['mesalamine', 'x', 'y']; pickCard(s, 0);
+    expect(s.pending).toEqual({ id: 'mesalamine', target: 'wall' });
+    expect(placeTarget(s, { sector: 3 })).toBe(true);
+    const after = coolingFactors(s);
+    expect(after[3]).toBeGreaterThan(before[3] + 0.25); expect(after[0]).toBeCloseTo(before[0]);
+    expect(after[2]).toBeGreaterThan(before[2]); // neighbours get half
+    s.phase = 'wave'; s.waveLen = 5; s.waveT = 4.99; step(s); step(s);
+    expect(s.wallSites[0].left).toBe(balance.site.wallWaves - 1);
+  });
+
+  it('card effects expire after their waves', () => {
+    const s = wave(12, () => 2); s.mods = [{ id: 'antitnf', left: 1 }]; s.waveLen = 5; s.waveT = 4.99; step(s); step(s);
+    expect(s.phase).toBe('checkup'); expect(s.mods.length).toBe(0);
   });
 
   it('chronic disease: every cycle the baseline drifts up, the wall only partly recovers, and a new offer is drawn', () => {
@@ -121,6 +155,23 @@ describe('real-time wave basics', () => {
   });
 });
 
+describe('time to react', () => {
+  it('phages start far from the blob and get faster every month', () => {
+    const a = wave(14, () => 1); a.cycle = 1; const b = wave(14, () => 1); b.cycle = 12;
+    expect(phageSpeed(b)).toBeGreaterThan(phageSpeed(a) * 1.5);
+    // in month 1 a phage needs a couple of seconds to cross from its spawn to the blob
+    const t = wave(14, () => 1); t.cycle = 1; t.phages.push({ r: balance.phage.spawnR, angle: west, mask: 1 });
+    let steps = 0; while (t.phages.length && steps < 400) { step(t); steps++; }
+    expect(steps / 20).toBeGreaterThan(1.8);
+    const u = wave(14, () => 1); u.cycle = 12; u.phages.push({ r: balance.phage.spawnR, angle: west, mask: 1 });
+    let s2 = 0; while (u.phages.length && s2 < 400) { step(u); s2++; }
+    expect(s2).toBeLessThan(steps * 0.7);
+  });
+  it('there is real distance between the blob and the wall', () => {
+    expect(balance.wallR - 18).toBeGreaterThan(10); // a full-size blob (radius about 18) still leaves 10+ pixels
+  });
+});
+
 describe('bites and bet hedging', () => {
   const lysed = (colour: (i: number, j: number) => number, c0 = 0) => { let t = 0; for (const seed of [1, 2, 3, 4]) { const s = wave(12, colour, seed); infect(s, 6, 0, 1 << c0); run(s, 8); t += s.stats.lysed; } return t / 4; };
   it('one hit on a uniform amber blob takes a real bite; on a mixed blob almost nothing; cyan damps it', () => {
@@ -134,10 +185,6 @@ describe('bites and bet hedging', () => {
     expect(s.stats.lysed).toBeGreaterThan(10);
     let rightLost = 0; for (let j = -R; j <= R; j++) for (let i = 1; i <= R; i++) if (i * i + j * j <= 144 && s.cells[idx(i, j)]?.c !== 1) rightLost++;
     expect(rightLost).toBe(0);
-  });
-  it('the anchor card damps cascades; resistant starch damps them further', () => {
-    const l = (card: string | null) => { let t = 0; for (const seed of [1, 2, 3, 4]) { const s = wave(12, () => 0, seed); if (card) s.mods.push({ id: card, left: 2 }); infect(s, 6, 0, 1); run(s, 8); t += s.stats.lysed; } return t / 4; };
-    expect(l('anchor')).toBeLessThan(l(null));
   });
   it('survivors regrow into a gap and take it over', () => {
     const s = wave(4, () => 2); run(s, 240);
@@ -167,10 +214,9 @@ describe('mucus coats on big patches', () => {
     expect(after).toBeLessThan(before); expect(cooling).toBeGreaterThan(3);
   });
 
-  it('amber coats last much longer than cyan ones, and the mucin card lengthens them', () => {
-    const dur = (colour: number, card?: string) => { const s = wave(13, () => colour); s.coating = true; if (card) s.mods.push({ id: card, left: 2 }); run(s, 1.2); let m = 0; eachCell(s, (c) => { m = Math.max(m, c.m); }); return m; };
+  it('yellow (mucus) coats last much longer than purple ones', () => {
+    const dur = (colour: number) => { const s = wave(13, () => colour); s.coating = true; run(s, 1.2); let m = 0; eachCell(s, (c) => { m = Math.max(m, c.m); }); return m; };
     expect(dur(0)).toBeGreaterThan(dur(1) * 1.5);
-    expect(dur(0, 'mucin')).toBeGreaterThan(dur(0) * 1.3);
   });
 
   it('the mucus secretagogue (held card) coats the whole surface at once', () => {
@@ -211,11 +257,9 @@ describe('passive cooling and inflammation', () => {
     const s = wave(14, () => 1); s.wall.fill(0.95); step(s); expect(s.status).toBe('run');
     run(s, balance.overloadSecs + 1); expect(s.status).toBe('lost'); expect(s.reason).toContain('flare-out');
   });
-  it('the steroid cools the wall now and the gut rebounds later; sugar and the rebound raise the baseline', () => {
+  it('the steroid cools the wall now and the gut rebounds later (the baseline rises)', () => {
     const s = wave(10, () => 0); s.wall.fill(0.7); s.held = { id: 'steroid', charges: 1 }; useHeld(s);
     expect(s.wall[0]).toBeCloseTo(0.4); expect(mod(s, 'baseAdd', 'add')).toBeGreaterThan(0.05);
-    const t = wave(10, () => 0); t.mods.push({ id: 'sugar', left: 1 });
-    expect(baseInflammation(t)).toBeGreaterThan(balance.wall.base + 0.05);
   });
 });
 

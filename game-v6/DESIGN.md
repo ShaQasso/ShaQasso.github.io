@@ -54,3 +54,9 @@ Waves are real time, so a blob that does not turn takes every hit. The wall is n
 
 ## Not done yet
 Sound, a tutorial run, more cards and relics, bosses (a bad flare month, a gut infection), unlocks between runs, mobile polish, and balance by human play (the bots do not use ring turn).
+
+## Iteration 2 (looks + simpler cards)
+- Colours: blue treats flares / evades immune cells, yellow mucus, purple phage-resistant. Wall is pink tissue, deepening to red when inflamed.
+- Wall radius 37 (spawn 44): more room to react, smaller pixels. Phage/immune speed grows each month.
+- Far fewer villi (9 per sector). Coats get a bright gold outline.
+- Cards: pick a carb card, then click a site on the blob; drug cards can target a wall sector.

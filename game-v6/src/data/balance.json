@@ -3,7 +3,7 @@
   "capacity": 1000,
   "startRadius": 15,
   "seedPatches": 7,
-  "wallR": 22.5,
+  "wallR": 37,
   "wallSectors": 8,
   "colours": [
     {
@@ -40,7 +40,7 @@
     "maxOmega": 1.6
   },
   "phage": {
-    "speed": 16,
+    "speed": 12,
     "infectTime": 0.3,
     "burst": [
       0.97,
@@ -55,12 +55,14 @@
       0
     ],
     "resistFactor": 0.55,
-    "spawnR": 28
+    "spawnR": 44,
+    "speedGrow": 0.07
   },
   "immune": {
-    "speed": 13,
+    "speed": 8,
     "evadeFactor": 0.85,
-    "bite": 0.55
+    "bite": 0.55,
+    "speedGrow": 0.04
   },
   "abx": {
     "depth": 7,
@@ -154,5 +156,14 @@
   "picks": 2,
   "lose": {
     "minCells": 40
+  },
+  "site": {
+    "blobR": 7,
+    "coreR": 3,
+    "growMul": 2.2,
+    "newbornP": 0.85,
+    "waves": 2,
+    "wallBonus": 0.32,
+    "wallWaves": 3
   }
 }
