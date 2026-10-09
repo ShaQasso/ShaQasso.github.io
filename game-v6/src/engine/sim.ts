@@ -117,8 +117,8 @@ function planWave(s: State): void {
       ];
       s.flares.push(...segs);
     };
-    section(randRange(s, 3, 9), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 1);
-    if (c >= B.flare.secondFrom && rand(s) < 0.6) section(randRange(s, 14, 20), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 0.8);
+    section(randRange(s, 2, 6), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 1);
+    if (c >= B.flare.secondFrom && rand(s) < 0.6) section(randRange(s, 10, 14), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 0.8);
   }
 }
 
@@ -342,8 +342,16 @@ export function step(s: State, dt: number = B.dt): void {
       if (cell.m > 0) { s.stats.blocked++; s.events?.push({ kind: 'coat', x, y }); chipCoat(s, x, y); }
       else if (rand(s) < COLOURS[cell.c].evade * B.immune.evadeFactor) { s.stats.immuneEvaded++; s.events?.push({ kind: 'evade', x, y, c: cell.c }); }
       else {
-        kill(s, x, y, 'immune'); s.stats.immuneKilled++; s.cyc.immune++;
-        for (const [di, dj] of NEIGH) if (cellAt(s, x + di, y + dj) && rand(s) < B.immune.bite) { kill(s, x + di, y + dj, 'immune'); s.stats.immuneKilled++; s.cyc.immune++; }
+        // the cell scrapes a strip: a few pixels wide, a few deep along its path; coats and evasive pixels survive
+        const ux = Math.cos(psi), uy = Math.sin(psi), H = B.immune.stripHalf, D = B.immune.stripDepth;
+        const seen = new Set<number>();
+        for (let d = 0; d <= D; d++) for (let w = -H; w <= H; w++) {
+          const px = Math.round(x - ux * d - uy * w), py = Math.round(y - uy * d + ux * w);
+          const k = px * 1000 + py; if (seen.has(k)) continue; seen.add(k);
+          const t = cellAt(s, px, py); if (!t || t.m > 0) continue;
+          if (rand(s) < COLOURS[t.c].evade * B.immune.evadeFactor) { s.stats.immuneEvaded++; continue; }
+          kill(s, px, py, 'immune'); s.stats.immuneKilled++; s.cyc.immune++;
+        }
       }
     }
     if (!done && m.r > 0) aliveI.push(m);

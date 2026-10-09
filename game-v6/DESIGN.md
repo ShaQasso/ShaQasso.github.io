@@ -60,3 +60,8 @@ Sound, a tutorial run, more cards and relics, bosses (a bad flare month, a gut i
 - Wall radius 37 (spawn 44): more room to react, smaller pixels. Phage/immune speed grows each month.
 - Far fewer villi (9 per sector). Coats get a bright gold outline.
 - Cards: pick a carb card, then click a site on the blob; drug cards can target a wall sector.
+
+## Iteration 3
+- Flares: magenta arc + glowing wedge, bigger label. More villi (14 per sector).
+- Immune cells are large and scrape a strip (3 wide, 5 deep) along their path; coats and evasive (blue) pixels survive. Fewer cells per flare.
+- Waves are 36 s (was 45); flare segments shortened to fit. Chronic drift and flare heat raised to keep it hard.

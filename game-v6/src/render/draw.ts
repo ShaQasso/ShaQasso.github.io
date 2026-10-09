@@ -107,7 +107,7 @@ export class Renderer {
   private drawWall(s: State): void {
     const { ctx } = this; const { cx, cy, U } = this.view;
     const beat = this.heartbeat(s);
-    const N = 9; // villi per sector (few, so the wall stays calm to look at)
+    const N = 14; // villi per sector (few, so the wall stays calm to look at)
     for (let j = 0; j < S; j++) {
       const w = s.wall[j];
       const a0 = (j / S) * TAU, a1 = ((j + 1) / S) * TAU + 0.004;
@@ -166,11 +166,13 @@ export class Renderer {
       if (s.waveT >= f.t1 || f.t0 - s.waveT > 14) continue;
       const live = s.waveT >= f.t0, strong = f.kind === 'flare' && live;
       const name = f.kind === 'pre' ? 'pre-flare' : f.kind === 'flare' ? 'FLARE' : 'after-flare';
-      ctx.strokeStyle = `rgba(248,113,113,${live ? (strong ? 0.85 : 0.55) * (0.75 + 0.25 * Math.sin(this.time * (strong ? 7 : 3))) : 0.35})`;
-      ctx.lineWidth = U * (strong ? 0.5 : 0.3); ctx.lineCap = 'round'; ctx.setLineDash(live && strong ? [] : [U * 0.6, U * 0.7]);
-      ctx.beginPath(); ctx.arc(cx, cy, (WALL_R + 4.6) * U, f.angle - f.half, f.angle + f.half); ctx.stroke(); ctx.setLineDash([]);
+      if (live) { ctx.fillStyle = `rgba(217,70,239,${(strong ? 0.16 : 0.08) * (0.7 + 0.3 * Math.sin(this.time * 4))})`; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, (WALL_R + 0.3) * U, f.angle - f.half, f.angle + f.half); ctx.closePath(); ctx.fill(); }
+      ctx.strokeStyle = `rgba(232,121,249,${live ? (strong ? 1 : 0.7) * (0.75 + 0.25 * Math.sin(this.time * (strong ? 7 : 3))) : 0.55})`;
+      ctx.shadowColor = '#d946ef'; ctx.shadowBlur = strong ? 16 : 6;
+      ctx.lineWidth = U * (strong ? 0.9 : 0.55); ctx.lineCap = 'round'; ctx.setLineDash(live && strong ? [] : [U * 0.6, U * 0.7]);
+      ctx.beginPath(); ctx.arc(cx, cy, (WALL_R + 4.6) * U, f.angle - f.half, f.angle + f.half); ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur = 0;
       const [x, y] = this.polar(WALL_R + 6.4, f.angle);
-      this.label(live ? `${name} · ${Math.ceil(f.t1 - s.waveT)}s` : `${name} in ${Math.ceil(f.t0 - s.waveT)}s`, x, y, '#fca5a5');
+      this.label(live ? `${name} · ${Math.ceil(f.t1 - s.waveT)}s` : `${name} in ${Math.ceil(f.t0 - s.waveT)}s`, x, y, '#f0abfc', 1.5);
     }
     for (const a of s.abx) {
       const left = a.t0 - s.waveT;
@@ -211,12 +213,14 @@ export class Renderer {
     }
     for (const m of s.immune) {
       const r = m.r - immuneSpeed(s) * acc; if (r < 0) continue;
-      const [tx, ty] = this.polar(r + 2.2, m.angle), [x, y] = this.polar(r, m.angle);
-      ctx.strokeStyle = 'rgba(254,202,202,0.35)'; ctx.lineWidth = U * 0.3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
-      ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 14;
-      const g = ctx.createRadialGradient(x, y, 0, x, y, U * 0.95); g.addColorStop(0, '#ffffff'); g.addColorStop(0.7, '#fecaca'); g.addColorStop(1, '#f87171');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, U * 0.85, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
-      ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.arc(x + U * 0.15, y - U * 0.1, U * 0.22, 0, TAU); ctx.fill();
+      const [tx, ty] = this.polar(r + 3, m.angle), [x, y] = this.polar(r, m.angle);
+      const hw = (B.immune.stripHalf + 0.5) * U, ca = Math.cos(m.angle), sa = Math.sin(m.angle);
+      ctx.fillStyle = 'rgba(254,202,202,0.12)'; ctx.beginPath();
+      ctx.moveTo(x - sa * hw, y + ca * hw); ctx.lineTo(x + sa * hw, y - ca * hw); ctx.lineTo(tx + sa * hw, ty - ca * hw); ctx.lineTo(tx - sa * hw, ty + ca * hw); ctx.closePath(); ctx.fill();
+      ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 18;
+      const R = U * 1.7, g = ctx.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, '#ffffff'); g.addColorStop(0.65, '#fecaca'); g.addColorStop(1, '#f87171');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.arc(x + R * 0.18, y - R * 0.12, R * 0.26, 0, TAU); ctx.fill();
     }
   }
 

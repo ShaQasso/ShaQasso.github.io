@@ -43,7 +43,7 @@ export class Hud {
     if (wave && s.cycle !== this.lastCycle) {
       this.lastCycle = s.cycle;
       if (s.cycle === 1) this.banner('MONTH 1', 'Phages come from every side, each hunting one colour. Drag to turn the blob so they meet the wrong one. Big same-colour patches grow a gold mucus coat.', 8);
-      else if (s.flares.length && !this.seen.has('flare')) { this.seen.add('flare'); this.banner('A FLARE IS COMING', 'The red arc on the wall will heat up and fire white immune cells. Violet pixels facing the hot spot cool it (gold halo). Turn violet toward it.', 8); }
+      else if (s.flares.length && !this.seen.has('flare')) { this.seen.add('flare'); this.banner('A FLARE IS COMING', 'The magenta arc on the wall will heat up and fire big white immune cells that scrape a strip off the blob. Blue pixels facing the hot spot cool it and evade the scrape. Turn blue toward it.', 8); }
       else if (s.abx.length && !this.seen.has('abx')) { this.seen.add('abx'); this.banner('ANTIBIOTIC COURSE', 'A yellow wedge kills the outer layers inside it, whatever the colour. Turn weak spots away, or coat them.', 7); }
     }
     if (s.stats.coats > 0 && !this.seen.has('coat')) { this.seen.add('coat'); this.banner('MUCUS COAT', 'A really big patch coated itself (gold outline). Hits chip the coat, and a chipped coat takes a while to regrow. Big patches shield you, but a bite into one is large.', 7); }

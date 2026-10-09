@@ -62,7 +62,9 @@
     "speed": 8,
     "evadeFactor": 0.85,
     "bite": 0.55,
-    "speedGrow": 0.04
+    "speedGrow": 0.04,
+    "stripHalf": 1,
+    "stripDepth": 4
   },
   "abx": {
     "depth": 7,
@@ -70,7 +72,7 @@
     "warn": 3
   },
   "wave": {
-    "len": 45,
+    "len": 36,
     "base": 0.5,
     "growth": 1.12,
     "ramp": [
@@ -84,20 +86,20 @@
   },
   "flare": {
     "from": 2,
-    "heat": 0.105,
-    "immunePerSec": 0.45,
+    "heat": 0.13,
+    "immunePerSec": 0.32,
     "immuneGrow": 0.08,
     "pre": [
-      5,
-      7
+      4,
+      5
     ],
     "main": [
-      8,
-      11
+      7,
+      9
     ],
     "after": [
-      6,
-      8
+      5,
+      6
     ],
     "intensity": {
       "pre": 0.35,
@@ -124,7 +126,7 @@
     "lysisPulse": 0.0015
   },
   "chronic": {
-    "perCycle": 0.025,
+    "perCycle": 0.035,
     "recover": 0.35
   },
   "overload": 0.78,
