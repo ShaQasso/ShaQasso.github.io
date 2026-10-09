@@ -149,3 +149,14 @@ Open balance questions: (1) Sponge is still below dodge with the current bot, so
 (real players will tell us). (2) Pathogens only reach ~7 per run, so infections are present but not yet a strong second front; the
 later-act invaders may need more weight. (3) Inflammation ends near 1.0 in runs that are lost, so the health bar is the real clock and
 moves quickly once it tips. A recovery mechanic (calming meals, a "rest" gap) may be needed. (4) Colony size sits around 30 cells.
+
+## 15. Decisions after balance pass 1
+- Sponge vs. dodge gap: leave for now (judge with real players).
+- Pathogens/invaders: leave as is, will be expanded later.
+- Colony size 20–30 cells is fine.
+- **Recovery (open):** we need a way to tip inflammation back down. Options considered:
+  A. *Host-wall hot spots*: the wall has 12 sectors with their own local inflammation; calming cells under a sector cool it, red cells/pathogens heat it.
+     Rotation becomes the recovery lever. Pairs with the gut-wall stress visuals. Moderate engine change.
+  B. *Resolution pulse*: panic button (cooldown, costs cells). Simple, less elegant.
+  C. *Passive recovery*: calm gaps heal health a little; calming species grow faster under high inflammation ("resolution response"); mucin meal stronger.
+  Recommended: A + C.
