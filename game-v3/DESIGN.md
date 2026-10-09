@@ -105,7 +105,7 @@ Acts: ~6 acts of ~90 s, ~9 min per run, with a final act that stacks all three w
 - First-run tutorial is 60 s: one phage hits a pure ◆ colony, it collapses; you learn diversity by playing.
 
 ## 10. Tech (see previous plan)
-Vite + TypeScript. Pure engine (fixed-timestep, seeded RNG, JSON state) + **Canvas 2D** renderer (PixiJS if we need more effects; ~200 cells is easy) + tiny UI layer. Inputs: drag/scroll/keys for ring rotation; touch drag on mobile.
+Vite + TypeScript (engine built; renderer next). Pure engine (fixed-timestep, seeded RNG, JSON state) + **Canvas 2D** renderer (PixiJS if we need more effects; ~200 cells is easy) + tiny UI layer. Inputs: drag/scroll/keys for ring rotation; touch drag on mobile.
 All numbers in `data/*.json`. A headless **simulator** plays thousands of runs to find overpowered species/strategies.
 
 ## 11. MVP scope (the first thing we build)
@@ -114,10 +114,22 @@ All numbers in `data/*.json`. A headless **simulator** plays thousands of runs t
 - Reporter view, wave warning, gut-wall stress visuals, win/lose screen. No roguelite layer yet.
 
 ## 12. Open questions
-Decided: independent rings; sacrifice comes from rotation; blue = calming, red = inflammatory; gut wall shows stress; real-time with slow-mo.
+Decided: independent rings; sacrifice comes from rotation; blue = calming, red = inflammatory; gut wall shows stress;
+real-time with slow-mo; **cells are rods**; rotation is drag on touch / scroll+keys on desktop; **short runs first (~3.5 min: 4 acts)**;
+the player is **"the colony"** (science-first tone).
 
-Still open:
-1. How do you see species (silhouette vs. label)? Rod shapes, banana shapes, size?
-2. Rotation controls: drag around the ring, or select a ring and use keys/scroll?
-3. Run length: ~9 min OK, or shorter arcade runs (3–4 min)?
-4. Name for the player role: "the bubble"? "the consortium"?
+## 13. Engine status (headless, no graphics yet)
+`src/engine` is a pure fixed-timestep (20 Hz) sim with a seeded RNG and JSON-serialisable state; `src/sim` has scripted bots;
+`npm test` and `npm run sim -- 100` run everything. First balance pass (100 seeds per bot):
+
+| bot | win % | notes |
+|---|---|---|
+| idle (never rotates) | ~23 | passive survival is possible but fragile |
+| spin (random rotation) | ~5 | careless rotation is worse than none |
+| dodge (keep matching shapes out of the arc) | ~37 | a simple strategy already helps |
+| sponge (feed matching cells to the rim) | ~15 | **naive sponging backfires**: a matching rim block lets the cascade spread to neighbours |
+
+Findings to act on: (1) dysbiosis is the top loss reason, so the colony is small and one species takes over easily; we need
+either gentler growth or a bigger starting colony. (2) Sponging needs support (a different-shape buffer between the sponge and the rest)
+before it feels like the clever play it should be. (3) Skill gap is modest: wave pressure and cascade rules need another pass
+once people can actually play it.

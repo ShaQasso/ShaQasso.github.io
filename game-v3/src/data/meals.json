@@ -1,0 +1,6 @@
+{
+  "fibre":   { "name": "Fibre",       "dur": 25, "growthDefault": 0.85, "growthBySpecies": { "hungry": 1.8 }, "flipMult": 1.0, "flipBias": { "species": "hungry", "coat": 2, "strength": 4 } },
+  "sugar":   { "name": "Simple sugar", "dur": 25, "growthDefault": 1.4,  "inflAdd": 0.12 },
+  "mucin":   { "name": "Mucin",       "dur": 25, "growthDefault": 0.75, "flipBias": { "coat": "calm", "strength": 3 } },
+  "fasting": { "name": "Fasting",     "dur": 25, "growthDefault": 0.3,  "flipMult": 0.3, "phageSpeedMult": 0.6 }
+}

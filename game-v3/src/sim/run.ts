@@ -1,0 +1,35 @@
+import { createState, diversity, step } from '../engine/sim';
+import { allCells } from '../engine/geometry';
+import { BOTS } from './bots';
+
+const N = Number(process.argv[2] ?? 100);
+const only = process.argv[3];
+
+function play(botName: string, seed: number) {
+  const s = createState(seed);
+  const bot = BOTS[botName];
+  let tick = 0;
+  while (s.status === 'run') {
+    if (tick % 5 === 0) bot(s);
+    step(s);
+    tick++;
+  }
+  return { s, div: diversity(s), cells: allCells(s).length };
+}
+
+console.log('bot      win%   avg t(s)  cells  diversity  lysed  reasons');
+for (const name of Object.keys(BOTS)) {
+  if (only && name !== only) continue;
+  let wins = 0, t = 0, cells = 0, div = 0, lysed = 0;
+  const reasons: Record<string, number> = {};
+  for (let seed = 1; seed <= N; seed++) {
+    const r = play(name, seed);
+    if (r.s.status === 'won') wins++;
+    t += r.s.t; cells += r.cells; div += r.div; lysed += r.s.stats.lysed;
+    reasons[r.s.reason] = (reasons[r.s.reason] ?? 0) + 1;
+  }
+  console.log(
+    name.padEnd(8), (100 * wins / N).toFixed(0).padStart(4), t / N > 0 ? (t / N).toFixed(0).padStart(9) : '',
+    (cells / N).toFixed(0).padStart(6), (div / N).toFixed(2).padStart(9), (lysed / N).toFixed(0).padStart(7), JSON.stringify(reasons),
+  );
+}
