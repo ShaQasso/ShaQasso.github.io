@@ -40,6 +40,16 @@ export function buildSchedule(s: State): void {
         mixA: mixOf(s, a), mixB: mixOf(s, b),
       });
     }
+    if (act >= balance.director.invaderFirstAct) {
+      const nInv = act - balance.director.invaderFirstAct + 1;
+      for (let i = 0; i < nInv; i++) {
+        waves.push({
+          kind: 'invader', t0: start + 8 + (i / nInv) * (d.actLen - 24) + randRange(s, 0, 4), dur: randRange(s, 8, 12),
+          center: rand(s) * TAU, half: randRange(s, 0.6, 1.0), drift: 0,
+          rate: randRange(s, 1.0, 1.6), mixA: mixOf(s, 'd'), mixB: mixOf(s, 'd'),
+        });
+      }
+    }
     if (act >= balance.director.antibioticAct) {
       const n = last ? 2 : 1;
       for (let i = 0; i < n; i++) {

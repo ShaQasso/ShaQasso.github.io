@@ -118,18 +118,34 @@ Decided: independent rings; sacrifice comes from rotation; blue = calming, red =
 real-time with slow-mo; **cells are rods**; rotation is drag on touch / scroll+keys on desktop; **short runs first (~3.5 min: 4 acts)**;
 the player is **"the colony"** (science-first tone).
 
-## 13. Engine status (headless, no graphics yet)
+## 13. Rules changed in balance pass 1
+- **Phage containment.** An infected cell only releases into its *immediate neighbours* (at most 2, same shape only), with a chance that shrinks each
+  generation (60% -> 25% -> 0). A cascade can't run across the colony any more, so a sponge costs a few cells, not a ring.
+- **Immune balance is the real fight.** Losing = host health reaching 0 (long-run inflammation, low diversity) or the colony collapsing (< 4 commensals).
+  The monoculture instant-loss rule is gone.
+- **Dysbiosis makes inflammation worse** instead of ending the run: if one species is above 50% of the commensals, the inflammation target
+  rises (up to +0.2 at 100%). It is a pressure, not a cliff.
+- **Infections (from act 2).** Invader waves arrive like phages but implant a *pathogen* in an empty slot:
+  - A dense colony blocks them (colonisation resistance); holes left by phages and antibiotics are the way in.
+  - Pathogens have no phage receptor, are immune to inflammation damage, grow *faster* when inflammation is high, take up space,
+    push inflammation up, and don't count toward diversity.
+  - The only way to remove them is an **antibiotic sweep**. The sweep also kills your own non-armored cells in the arc, so you rotate the pathogens
+    into the arc and your sensitive cells out (armored cells survive).
+
+## 14. Engine status (headless, no graphics yet)
 `src/engine` is a pure fixed-timestep (20 Hz) sim with a seeded RNG and JSON-serialisable state; `src/sim` has scripted bots;
-`npm test` and `npm run sim -- 100` run everything. First balance pass (100 seeds per bot):
+`npm test` (14 tests) and `npm run sim -- 200` run everything.
 
-| bot | win % | notes |
+Balance pass 1 (200 seeds per bot, rateScale 1.7, growthScale 1.3):
+
+| bot | win % | main way it loses |
 |---|---|---|
-| idle (never rotates) | ~23 | passive survival is possible but fragile |
-| spin (random rotation) | ~5 | careless rotation is worse than none |
-| dodge (keep matching shapes out of the arc) | ~37 | a simple strategy already helps |
-| sponge (feed matching cells to the rim) | ~15 | **naive sponging backfires**: a matching rim block lets the cascade spread to neighbours |
+| idle (never rotates) | 23 | immune balance (117/200), collapse (37) |
+| spin (random rotation) | 1 | immune balance (120), collapse (79) |
+| dodge (keep matching shapes out of the arc; line pathogens up for antibiotics) | 58 | immune balance (65), collapse (19) |
+| sponge (sacrifice common cell types on the rim; dodge the rest) | 47 | immune balance (69), collapse (38) |
 
-Findings to act on: (1) dysbiosis is the top loss reason, so the colony is small and one species takes over easily; we need
-either gentler growth or a bigger starting colony. (2) Sponging needs support (a different-shape buffer between the sponge and the rest)
-before it feels like the clever play it should be. (3) Skill gap is modest: wave pressure and cascade rules need another pass
-once people can actually play it.
+Open balance questions: (1) Sponge is still below dodge with the current bot, so either the sponge payoff is too small or the bot is too naive
+(real players will tell us). (2) Pathogens only reach ~7 per run, so infections are present but not yet a strong second front; the
+later-act invaders may need more weight. (3) Inflammation ends near 1.0 in runs that are lost, so the health bar is the real clock and
+moves quickly once it tips. A recovery mechanic (calming meals, a "rest" gap) may be needed. (4) Colony size sits around 30 cells.

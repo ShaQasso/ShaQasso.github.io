@@ -24,8 +24,8 @@ function makeCell(s: State, sp: string, coat?: number): Cell {
 export function createState(seed: number): State {
   const s: State = {
     t: 0, rng: seed >>> 0, rings: [], particles: [], waves: [], waveAcc: [], antibiotics: [], gaps: [],
-    offer: null, meal: null, inflammation: B.inflammation.base, health: B.health.start, monoTimer: 0, endT: 0,
-    status: 'run', reason: '', stats: { lysed: 0, flips: 0, births: 0, killed: 0 },
+    offer: null, meal: null, inflammation: B.inflammation.base, health: B.health.start, dysbiosis: 0, endT: 0,
+    status: 'run', reason: '', stats: { lysed: 0, flips: 0, births: 0, killed: 0, invaded: 0, blocked: 0, cleared: 0 },
   };
   for (let k = 0; k < B.startRings; k++) {
     const ring = newRing(B.ringSize[k]);
@@ -58,6 +58,7 @@ export function diversity(s: State): number {
   const counts = new Map<string, number>();
   let n = 0;
   for (const { cell } of allCells(s)) {
+    if (SPECIES[cell.sp].pathogen) continue;
     const key = `${cell.sp}:${cell.coat}`;
     counts.set(key, (counts.get(key) ?? 0) + 1);
     n++;
@@ -83,8 +84,8 @@ function killAt(s: State, ring: number, slot: number): void {
   s.rings[ring].cells[slot] = null;
 }
 
-function infect(cell: Cell): void {
-  if (cell.inf === 0) cell.inf = B.phage.infectTime;
+function infect(cell: Cell, gen = 0): void {
+  if (cell.inf === 0) { cell.inf = B.phage.infectTime; cell.gen = gen; }
 }
 
 function mealFlipBias(s: State, cell: Cell): number[] {
@@ -108,7 +109,8 @@ function growthMult(s: State, cell: Cell): number {
   const m = s.meal ? MEALS[s.meal.id] : null;
   let g = coatOf(cell).growth;
   if (m) g *= m.growthBySpecies?.[cell.sp] ?? m.growthDefault ?? 1;
-  return g * Math.max(0.3, 1 - 0.5 * s.inflammation);
+  // commensals are slowed by inflammation; pathogens thrive on it
+  return g * (SPECIES[cell.sp].pathogen ? 1 + s.inflammation : Math.max(0.3, 1 - 0.5 * s.inflammation));
 }
 
 // ---- the step ---------------------------------------------------------------
@@ -148,7 +150,7 @@ export function step(s: State, dt: number = B.dt): void {
       let x = rand(s), shape: Shape = 'd';
       for (const sh of ['d', 'c', 't', 's'] as Shape[]) { x -= mix[sh]; if (x <= 0) { shape = sh; break; } }
       const centre = w.center + w.drift * (s.t - w.t0);
-      s.particles.push({ r: s.rings.length + 2, angle: wrap(centre + (rand(s) * 2 - 1) * w.half), shape });
+      s.particles.push({ r: s.rings.length + 2, angle: wrap(centre + (rand(s) * 2 - 1) * w.half), shape, kind: w.kind ?? 'phage' });
     }
   });
 
@@ -159,7 +161,10 @@ export function step(s: State, dt: number = B.dt): void {
     s.rings.forEach((r, k) => r.cells.forEach((c, i) => {
       if (!c) return;
       const ang = wrap(r.n === 1 ? a.center : r.off + (i + 0.5) * (TAU / r.n));
-      if ((r.n === 1 || Math.abs(angDiff(a.center, ang)) <= a.half) && !coatOf(c).armored) { killAt(s, k, i); s.stats.killed++; }
+      if ((r.n === 1 || Math.abs(angDiff(a.center, ang)) <= a.half) && !coatOf(c).armored) {
+        killAt(s, k, i);
+        if (SPECIES[c.sp].pathogen) s.stats.cleared++; else s.stats.killed++;
+      }
     }));
   }
 
@@ -174,6 +179,17 @@ export function step(s: State, dt: number = B.dt): void {
       if (k > r0 || k <= p.r) continue; // ring radius k crossed this tick: r0 >= k > p.r
       const slot = slotAt(s, k, p.angle);
       const cell = s.rings[k].cells[slot];
+      if (p.kind === 'invader') {
+        // colonisation resistance: a dense colony blocks invaders; holes are the way in
+        if (!cell) {
+          if (rand(s) < B.invader.landProb) {
+            s.rings[k].cells[slot] = { sp: 'pathogen', coat: 0, inf: 0, cd: SPECIES.pathogen.interval };
+            s.stats.invaded++;
+          }
+          consumed = true;
+        } else if (rand(s) < B.invader.resist) { consumed = true; s.stats.blocked++; }
+        continue;
+      }
       if (!cell) continue;
       if (cell.inf > 0) { consumed = true; continue; } // wasted on an already infected cell
       if (coatOf(cell).shape === p.shape) { infect(cell); consumed = true; }
@@ -183,17 +199,23 @@ export function step(s: State, dt: number = B.dt): void {
   s.particles = alive;
 
   // lysis
-  const lysing: { ring: number; slot: number; shape: Shape }[] = [];
+  const lysing: { ring: number; slot: number; shape: Shape; gen: number }[] = [];
   for (const { ring, slot, cell } of allCells(s)) {
-    if (cell.inf > 0) { cell.inf -= dt; if (cell.inf <= 0) lysing.push({ ring, slot, shape: coatOf(cell).shape }); }
+    if (cell.inf > 0) { cell.inf -= dt; if (cell.inf <= 0) lysing.push({ ring, slot, shape: coatOf(cell).shape, gen: cell.gen ?? 0 }); }
   }
   for (const l of lysing) {
     killAt(s, l.ring, l.slot);
     s.stats.lysed++;
     s.inflammation = Math.min(1, s.inflammation + B.phage.lysisInflammation);
-    for (const [nr, ns] of neighbours(s, l.ring, l.slot)) {
+    // containment: only immediate neighbours, at most burstMax, with chance shrinking each generation
+    const pBurst = B.phage.burst[Math.min(l.gen, B.phage.burst.length - 1)];
+    const hosts = neighbours(s, l.ring, l.slot).filter(([nr, ns]) => {
       const n = s.rings[nr].cells[ns];
-      if (n && n.inf === 0 && coatOf(n).shape === l.shape && rand(s) < B.phage.burstProb) infect(n);
+      return n && n.inf === 0 && coatOf(n).shape === l.shape;
+    });
+    for (let i = hosts.length - 1; i > 0; i--) { const j = Math.floor(rand(s) * (i + 1)); [hosts[i], hosts[j]] = [hosts[j], hosts[i]]; }
+    for (const [nr, ns] of hosts.slice(0, B.phage.burstMax)) {
+      if (rand(s) < pBurst) infect(s.rings[nr].cells[ns]!, l.gen + 1);
     }
   }
 
@@ -212,8 +234,8 @@ export function step(s: State, dt: number = B.dt): void {
       s.stats.flips++;
     }
     const imm = coatOf(cell).immune;
-    if (imm < 0 && rand(s) < 1 - Math.exp(-s.inflammation * -imm * damageRate * dt)) { killAt(s, ring, slot); s.stats.killed++; continue; }
-    cell.cd -= dt * growthMult(s, cell);
+    if (imm < 0 && !def.pathogen && rand(s) < 1 - Math.exp(-s.inflammation * -imm * damageRate * dt)) { killAt(s, ring, slot); s.stats.killed++; continue; }
+    cell.cd -= dt * growthMult(s, cell) * B.growthScale;
     if (cell.cd <= 0) births.push({ ring, slot });
   }
   for (const b of births) {
@@ -233,12 +255,20 @@ export function step(s: State, dt: number = B.dt): void {
     s.rings.push(newRing(B.ringSize[s.rings.length]));
   }
 
-  // host mood
+  // host mood: immune balance is the real fight
   const cells = allCells(s);
-  const n = cells.length;
-  const avgImm = n ? cells.reduce((a, c) => a + coatOf(c.cell).immune, 0) / n : 0;
+  const commensals = cells.filter((c) => !SPECIES[c.cell.sp].pathogen);
+  const nPath = cells.length - commensals.length;
+  const n = commensals.length;
+  const avgImm = cells.length ? cells.reduce((a, c) => a + coatOf(c.cell).immune, 0) / cells.length : 0;
+  // dysbiosis (one species dominating the commensals) makes inflammation worse instead of ending the run
+  const bySp = new Map<string, number>();
+  for (const c of commensals) bySp.set(c.cell.sp, (bySp.get(c.cell.sp) ?? 0) + 1);
+  const top = n ? Math.max(...bySp.values()) / n : 1;
+  s.dysbiosis = Math.max(0, (top - 0.5) / 0.5);
   const target = Math.max(0, Math.min(1, B.inflammation.base - B.inflammation.immuneWeight * avgImm
-    + B.inflammation.particleWeight * s.particles.length + (meal?.inflAdd ?? 0)));
+    + B.inflammation.particleWeight * s.particles.length + B.inflammation.pathogenWeight * nPath
+    + B.inflammation.dysbiosisWeight * s.dysbiosis + (meal?.inflAdd ?? 0)));
   s.inflammation += (target - s.inflammation) * B.inflammation.relax * dt;
   s.inflammation = Math.max(0, Math.min(1, s.inflammation));
   const div = diversity(s);
@@ -246,12 +276,7 @@ export function step(s: State, dt: number = B.dt): void {
   s.health = Math.max(0, Math.min(100, s.health));
 
   // end conditions
-  const bySp = new Map<string, number>();
-  for (const c of cells) bySp.set(c.cell.sp, (bySp.get(c.cell.sp) ?? 0) + 1);
-  const top = n ? Math.max(...bySp.values()) / n : 1;
-  s.monoTimer = top >= B.lose.monoFraction ? s.monoTimer + dt : 0;
   if (n < B.lose.minCells) { s.status = 'lost'; s.reason = 'colony collapsed'; }
-  else if (s.monoTimer >= B.lose.monoSeconds) { s.status = 'lost'; s.reason = 'dysbiosis (monoculture)'; }
-  else if (s.health <= 0) { s.status = 'lost'; s.reason = 'host health failed'; }
+  else if (s.health <= 0) { s.status = 'lost'; s.reason = 'immune balance lost'; }
   else if (s.t >= s.endT) { s.status = 'won'; s.reason = 'survived'; }
 }

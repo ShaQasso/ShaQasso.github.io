@@ -1,28 +1,152 @@
 {
-  "start": ["cool", "funny", "spicy"],
+  "start": [
+    "cool",
+    "funny",
+    "spicy"
+  ],
   "species": {
-    "cool":   { "name": "B. cool",   "interval": 9,  "flip": 0.02, "coats": [
-      { "shape": "c", "immune":  2, "growth": 0.8 },
-      { "shape": "t", "immune":  1, "growth": 1.0 },
-      { "shape": "d", "immune":  0, "growth": 1.0 } ] },
-    "funny":  { "name": "B. funny",  "interval": 6,  "flip": 0.08, "coats": [
-      { "shape": "d", "immune":  0, "growth": 1.0 },
-      { "shape": "s", "immune": -1, "growth": 1.3 },
-      { "shape": "c", "immune":  1, "growth": 1.0 } ] },
-    "spicy":  { "name": "B. spicy",  "interval": 7,  "flip": 0.03, "coats": [
-      { "shape": "s", "immune": -2, "growth": 1.0, "armored": true },
-      { "shape": "t", "immune": -1, "growth": 1.0 },
-      { "shape": "d", "immune":  0, "growth": 1.0 } ] },
-    "sneaky": { "name": "B. sneaky", "interval": 7,  "flip": 0.06, "coats": [
-      { "shape": "t", "immune":  0, "growth": 0.7 },
-      { "shape": "c", "immune":  0, "growth": 1.0 },
-      { "shape": "d", "immune":  1, "growth": 1.0 } ] },
-    "hungry": { "name": "B. hungry", "interval": 7,  "flip": 0.04, "coats": [
-      { "shape": "s", "immune":  0, "growth": 1.0 },
-      { "shape": "d", "immune":  1, "growth": 1.0 },
-      { "shape": "c", "immune":  0, "growth": 1.2 } ] },
-    "chonky": { "name": "B. chonky", "interval": 12, "flip": 0.01, "coats": [
-      { "shape": "d", "immune":  1, "growth": 1.0, "armored": true },
-      { "shape": "t", "immune":  0, "growth": 1.0, "armored": true } ] }
+    "cool": {
+      "name": "B. cool",
+      "interval": 9,
+      "flip": 0.02,
+      "coats": [
+        {
+          "shape": "c",
+          "immune": 2,
+          "growth": 0.8
+        },
+        {
+          "shape": "t",
+          "immune": 1,
+          "growth": 1.0
+        },
+        {
+          "shape": "d",
+          "immune": 0,
+          "growth": 1.0
+        }
+      ]
+    },
+    "funny": {
+      "name": "B. funny",
+      "interval": 6,
+      "flip": 0.08,
+      "coats": [
+        {
+          "shape": "d",
+          "immune": 0,
+          "growth": 1.0
+        },
+        {
+          "shape": "s",
+          "immune": -1,
+          "growth": 1.3
+        },
+        {
+          "shape": "c",
+          "immune": 1,
+          "growth": 1.0
+        }
+      ]
+    },
+    "spicy": {
+      "name": "B. spicy",
+      "interval": 7,
+      "flip": 0.03,
+      "coats": [
+        {
+          "shape": "s",
+          "immune": -2,
+          "growth": 1.0,
+          "armored": true
+        },
+        {
+          "shape": "t",
+          "immune": -1,
+          "growth": 1.0
+        },
+        {
+          "shape": "d",
+          "immune": 0,
+          "growth": 1.0
+        }
+      ]
+    },
+    "sneaky": {
+      "name": "B. sneaky",
+      "interval": 7,
+      "flip": 0.06,
+      "coats": [
+        {
+          "shape": "t",
+          "immune": 0,
+          "growth": 0.7
+        },
+        {
+          "shape": "c",
+          "immune": 0,
+          "growth": 1.0
+        },
+        {
+          "shape": "d",
+          "immune": 1,
+          "growth": 1.0
+        }
+      ]
+    },
+    "hungry": {
+      "name": "B. hungry",
+      "interval": 7,
+      "flip": 0.04,
+      "coats": [
+        {
+          "shape": "s",
+          "immune": 0,
+          "growth": 1.0
+        },
+        {
+          "shape": "d",
+          "immune": 1,
+          "growth": 1.0
+        },
+        {
+          "shape": "c",
+          "immune": 0,
+          "growth": 1.2
+        }
+      ]
+    },
+    "chonky": {
+      "name": "B. chonky",
+      "interval": 12,
+      "flip": 0.01,
+      "coats": [
+        {
+          "shape": "d",
+          "immune": 1,
+          "growth": 1.0,
+          "armored": true
+        },
+        {
+          "shape": "t",
+          "immune": 0,
+          "growth": 1.0,
+          "armored": true
+        }
+      ]
+    },
+    "pathogen": {
+      "name": "Pathogen",
+      "interval": 14,
+      "flip": 0,
+      "pathogen": true,
+      "coats": [
+        {
+          "shape": "x",
+          "immune": -2,
+          "growth": 1.0
+        }
+      ]
+    }
   }
 }

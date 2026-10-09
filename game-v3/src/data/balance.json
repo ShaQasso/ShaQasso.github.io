@@ -1,13 +1,66 @@
 {
   "dt": 0.05,
-  "ringSize": [1, 6, 12, 18],
+  "ringSize": [
+    1,
+    6,
+    12,
+    18
+  ],
   "startRings": 3,
-  "startFill": [1, 0.8, 0.7],
+  "startFill": [
+    1,
+    0.8,
+    0.7
+  ],
   "expandFill": 0.85,
-  "ring": { "accel": 8, "friction": 3, "maxOmega": 3.2, "innerDrag": 0.5 },
-  "phage": { "speed": 2.5, "infectTime": 2.0, "burstProb": 0.7, "lysisInflammation": 0.02 },
-  "inflammation": { "base": 0.45, "immuneWeight": 0.25, "relax": 0.3, "particleWeight": 0.004, "damage": 0.02 },
-  "health": { "start": 70, "inflWeight": 6, "inflCenter": 0.45, "divWeight": 4, "divCenter": 0.4 },
-  "lose": { "minCells": 6, "monoFraction": 0.85, "monoSeconds": 10 },
-  "director": { "acts": 4, "actLen": 50, "gapLen": 8, "warn": 3, "antibioticAct": 2, "rateScale": 1.5 }
+  "ring": {
+    "accel": 8,
+    "friction": 3,
+    "maxOmega": 3.2,
+    "innerDrag": 0.5
+  },
+  "phage": {
+    "speed": 2.5,
+    "infectTime": 2.0,
+    "burst": [
+      0.6,
+      0.25,
+      0
+    ],
+    "burstMax": 2,
+    "lysisInflammation": 0.02
+  },
+  "inflammation": {
+    "base": 0.45,
+    "immuneWeight": 0.25,
+    "relax": 0.3,
+    "particleWeight": 0.004,
+    "damage": 0.02,
+    "dysbiosisWeight": 0.2,
+    "pathogenWeight": 0.012
+  },
+  "health": {
+    "start": 70,
+    "inflWeight": 6,
+    "inflCenter": 0.45,
+    "divWeight": 4,
+    "divCenter": 0.4
+  },
+  "lose": {
+    "minCells": 4
+  },
+  "director": {
+    "acts": 4,
+    "actLen": 50,
+    "gapLen": 8,
+    "warn": 3,
+    "antibioticAct": 1,
+    "rateScale": 1.7,
+    "invaderFirstAct": 1
+  },
+  "invader": {
+    "landProb": 0.7,
+    "resist": 0.6
+  },
+  "growthScale": 1.3
 }

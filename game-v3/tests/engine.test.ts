@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chooseMeal, coatOf, createState, diversity, setRotation, step } from '../src/engine/sim';
+import balance from '../src/data/balance.json';
 import { allCells } from '../src/engine/geometry';
 import { BOTS } from '../src/sim/bots';
 
@@ -96,4 +97,61 @@ describe('engine', () => {
     }
     expect(dodge).toBeGreaterThan(spin);
   }, 60000);
+});
+
+describe('containment, infections and immune balance', () => {
+  const ringOf = (s: ReturnType<typeof createState>, k: number) => s.rings[k].cells;
+
+  it('a lysing cell only reaches immediate neighbours, and the chain fades', () => {
+    // full rim of 12 same-shape cells, first one infected: far cells must survive a while
+    const s = sandbox(); s.endT = 1e9;
+    s.rings[2].cells = s.rings[2].cells.map(() => ({ sp: 'cool', coat: 0, inf: 0, cd: 999 })); // all shape 'c'
+    s.rings[2].cells[0]!.inf = 0.05;
+    for (let i = 0; i < 12; i++) step(s); // first lysis happens, ~0.6s
+    const infected = ringOf(s, 2).filter((c) => c && c.inf > 0).length;
+    expect(infected).toBeLessThanOrEqual(balance.phage.burstMax);
+    expect(ringOf(s, 2)[6]?.inf).toBe(0); // opposite side untouched
+  });
+
+  it('chain generations stop eventually (burst probability reaches zero)', () => {
+    expect(balance.phage.burst[balance.phage.burst.length - 1]).toBe(0);
+  });
+
+  it('invaders are blocked by a dense colony but land in holes', () => {
+    const s = sandbox(); s.endT = 1e9;
+    s.rings[2].cells = s.rings[2].cells.map(() => ({ sp: 'cool', coat: 0, inf: 0, cd: 999 }));
+    for (let i = 0; i < 400; i++) s.particles.push({ r: 4, angle: (i % 12 + 0.5) * Math.PI * 2 / 12, shape: 'd', kind: 'invader' });
+    for (let i = 0; i < 60; i++) step(s);
+    const landedFull = ringOf(s, 2).filter((c) => c?.sp === 'pathogen').length;
+    expect(landedFull).toBeLessThan(2);
+    s.rings[2].cells[3] = null;
+    for (let i = 0; i < 400; i++) s.particles.push({ r: 4, angle: 3.5 * Math.PI * 2 / 12, shape: 'd', kind: 'invader' });
+    for (let i = 0; i < 60; i++) step(s);
+    expect(ringOf(s, 2)[3]?.sp === 'pathogen' || ringOf(s, 1).some((c) => c?.sp === 'pathogen')).toBe(true);
+  });
+
+  it('pathogens ignore phages and inflammation damage but die to antibiotics', () => {
+    const s = sandbox(); s.endT = 1e9;
+    s.rings[2].cells[0] = { sp: 'pathogen', coat: 0, inf: 0, cd: 999 };
+    s.inflammation = 1;
+    s.particles.push({ r: 4, angle: 0.5 * Math.PI * 2 / 12, shape: 'd' });
+    for (let i = 0; i < 60; i++) { s.inflammation = 1; step(s); }
+    expect(ringOf(s, 2)[0]?.sp).toBe('pathogen');
+    s.antibiotics = [{ t0: s.t + 0.1, center: 0.5 * Math.PI * 2 / 12, half: 0.3, fired: false }];
+    for (let i = 0; i < 10; i++) step(s);
+    expect(ringOf(s, 2)[0]).toBeNull();
+    expect(s.stats.cleared).toBe(1);
+  });
+
+  it('dysbiosis raises inflammation but does not end the run by itself', () => {
+    const s = sandbox(); s.endT = 1e9;
+    const mono = sandbox(); mono.endT = 1e9;
+    // 1 species only (dysbiotic) vs mixed, same immune values (coat 2 = neutral for all three)
+    s.rings[2].cells = s.rings[2].cells.map(() => ({ sp: 'cool', coat: 2, inf: 0, cd: 999 }));
+    mono.rings[2].cells = mono.rings[2].cells.map((_, i) => ({ sp: ['cool', 'funny', 'spicy'][i % 3], coat: 2, inf: 0, cd: 999 }));
+    for (let i = 0; i < 400; i++) { step(s); step(mono); }
+    expect(s.dysbiosis).toBeGreaterThan(mono.dysbiosis);
+    expect(s.inflammation).toBeGreaterThan(mono.inflammation);
+    expect(s.status).toBe('run');
+  });
 });
