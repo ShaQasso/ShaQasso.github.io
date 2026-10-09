@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pack": "vite build && python3 pack.py"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
