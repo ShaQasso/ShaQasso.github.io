@@ -92,9 +92,9 @@ export function diversity(s: State): number {
 }
 
 // ---- helpers ----------------------------------------------------------------
-function kill(s: State, i: number, j: number, why: 'abx' | 'immune' | 'starve' | 'lysis'): void {
+function kill(s: State, i: number, j: number, why: 'abx' | 'immune' | 'starve' | 'lysis', mask?: number): void {
   s.cells[idx(i, j)] = null;
-  s.events?.push({ kind: why, x: i, y: j });
+  s.events?.push({ kind: why, x: i, y: j, mask });
 }
 
 function pickColour(s: State, parent: Cell, ei: number, ej: number): number {
@@ -186,7 +186,7 @@ export function step(s: State, dt: number = B.dt): void {
   const lysing: { i: number; j: number; c: Cell }[] = [];
   eachCell(s, (c, i, j) => { if (c.inf > 0) { c.inf -= dt; if (c.inf <= 0) lysing.push({ i, j, c }); } });
   for (const { i, j, c } of lysing) {
-    kill(s, i, j, 'lysis');
+    kill(s, i, j, 'lysis', c.ph);
     s.stats.lysed++;
     const sec = sectorOfAngle(worldAngle(s, i, j), B.wall.sectors);
     s.wall[sec] = Math.min(1, s.wall[sec] + B.wall.lysisPulse);

@@ -7,7 +7,8 @@
     "sim": "tsx src/sim/run.ts",
     "typecheck": "tsc --noEmit",
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "pack": "vite build && python3 pack.py"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

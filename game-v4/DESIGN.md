@@ -62,3 +62,12 @@ Reading: rotation skill matters a lot, Space timing matters (mashing is worse th
 uniform outer layer, so the mucus + bet-hedging tension is only proven in unit tests, not exercised by play. A human (or a smarter bot) will show whether it is fun.
 
 Known rough edges: diversity drifts to about 0.7 because chip-and-regrow favours big patches; flips are rare (about 4 a minute); no meals/diets yet; no renderer.
+
+## 9. Renderer status (playable build)
+`npm run dev`, or `npm run pack` for a single-file page (`play/mbiota.html`).
+- Blocks in a rotating lattice with a soft membrane glow so they read as one body; capsule decoration shows what each colour is for (amber: glossy slime, cyan: armour plating, violet: ghostly dashed edge).
+- Phages are drawn in the colour(s) they hunt (two-colour phages are split), fly in from the telegraphed arc and stop at the first block. Infection shows a countdown ring, bursts throw colour particles, mucus-blocked and deflected shots spark.
+- Space button shows a live preview of what you'd get right now (shield seconds, cooling %, composition of the outer layer), a cooldown bar, and a gold shield around the blob while it lasts.
+- Hover a block: its colour's role, the size of the same-colour patch it belongs to (and a warning when a hit would spread far), and that patch is outlined.
+- Controls: drag (or scroll, A/D) to turn the heavy blob, Space to secrete, hold Shift for slow-mo, Enter to start.
+- Gut wall, flares, antibiotics wedge and stress effects carry over from v3.
