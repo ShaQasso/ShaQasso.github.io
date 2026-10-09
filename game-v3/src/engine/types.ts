@@ -35,10 +35,11 @@ export interface State {
   wall: number[]; // local inflammation per gut-wall sector (0..1)
   health: number;
   dysbiosis: number;
+  rimFullT: number; // how long the rim has been (nearly) full; the bubble grows a ring after a hold
   endT: number;
   /** Only filled when a renderer sets it to []; the renderer drains it each frame. */
   events?: GameEvent[];
   status: 'run' | 'won' | 'lost';
   reason: string;
-  stats: { lysed: number; flips: number; births: number; killed: number; invaded: number; blocked: number; cleared: number; deflected: number };
+  stats: { lysed: number; flips: number; births: number; killed: number; invaded: number; blocked: number; cleared: number; deflected: number; hits: number; expandAt: number[] };
 }

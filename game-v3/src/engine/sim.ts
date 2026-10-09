@@ -24,8 +24,8 @@ function makeCell(s: State, sp: string, coat?: number): Cell {
 export function createState(seed: number): State {
   const s: State = {
     t: 0, rng: seed >>> 0, rings: [], particles: [], waves: [], waveAcc: [], antibiotics: [], flares: [], gaps: [],
-    offer: null, meal: null, inflammation: B.inflammation.base, wall: Array(B.wall.sectors).fill(B.inflammation.base), health: B.health.start, dysbiosis: 0, endT: 0,
-    status: 'run', reason: '', stats: { lysed: 0, flips: 0, births: 0, killed: 0, invaded: 0, blocked: 0, cleared: 0, deflected: 0 },
+    offer: null, meal: null, inflammation: B.inflammation.base, wall: Array(B.wall.sectors).fill(B.inflammation.base), health: B.health.start, dysbiosis: 0, rimFullT: 0, endT: 0,
+    status: 'run', reason: '', stats: { lysed: 0, flips: 0, births: 0, killed: 0, invaded: 0, blocked: 0, cleared: 0, deflected: 0, hits: 0, expandAt: [] },
   };
   for (let k = 0; k < B.startRings; k++) {
     const ring = newRing(B.ringSize[k]);
@@ -38,8 +38,32 @@ export function createState(seed: number): State {
     ring.off = rand(s) * TAU;
     s.rings.push(ring);
   }
+  seedPatches(s);
   buildSchedule(s);
   return s;
+}
+
+/** The starting colony is made of clonal patches (a few seed cells; everyone takes the type of the nearest seed). */
+function seedPatches(s: State): void {
+  const cells: { cell: Cell; x: number; y: number }[] = [];
+  s.rings.forEach((r, k) => r.cells.forEach((cell, i) => {
+    if (!cell) return;
+    const a = k === 0 ? 0 : r.off + (i + 0.5) * (TAU / r.n);
+    cells.push({ cell, x: k * Math.cos(a), y: k * Math.sin(a) });
+  }));
+  if (cells.length < 4) return;
+  const seeds: { x: number; y: number; sp: string; coat: number }[] = [];
+  const pool = cells.slice();
+  for (let i = 0; i < B.seedPatches && pool.length; i++) {
+    const c = pool.splice(Math.floor(rand(s) * pool.length), 1)[0];
+    const sp = speciesData.start[i % speciesData.start.length];
+    seeds.push({ x: c.x, y: c.y, sp, coat: Math.floor(rand(s) * SPECIES[sp].coats.length) });
+  }
+  for (const c of cells) {
+    let best = seeds[0], bd = Infinity;
+    for (const sd of seeds) { const d = (sd.x - c.x) ** 2 + (sd.y - c.y) ** 2; if (d < bd) { bd = d; best = sd; } }
+    c.cell.sp = best.sp; c.cell.coat = best.coat;
+  }
 }
 
 // ---- player actions --------------------------------------------------------
@@ -209,7 +233,7 @@ export function step(s: State, dt: number = B.dt): void {
       // a phage meets the outermost cell in its path: it infects on a matching receptor and is otherwise spent
       consumed = true;
       if (cell.inf > 0) continue;
-      if (coatOf(cell).shape === p.shape) { infect(cell); s.events?.push({ kind: 'infect', ring: k, slot, shape: p.shape }); }
+      if (coatOf(cell).shape === p.shape) { infect(cell); s.stats.hits++; s.events?.push({ kind: 'infect', ring: k, slot, shape: p.shape }); }
       else { s.stats.deflected++; s.events?.push({ kind: 'deflect', ring: k, slot, shape: p.shape }); }
     }
     if (!consumed && p.r > -0.5) alive.push(p);
@@ -247,7 +271,7 @@ export function step(s: State, dt: number = B.dt): void {
     if (cell.inf > 0) continue;
     const def = SPECIES[cell.sp];
     const local = localInflammation(s, ring, slot);
-    const lambda = def.flip * (1 + 2 * local) * (meal?.flipMult ?? 1);
+    const lambda = def.flip * (1 + B.flipInflammation * local) * (meal?.flipMult ?? 1);
     if (rand(s) < 1 - Math.exp(-lambda * dt)) {
       const w = mealFlipBias(s, cell);
       let x = rand(s) * w.reduce((a, b) => a + b, 0), pick = 0;
@@ -266,15 +290,32 @@ export function step(s: State, dt: number = B.dt): void {
     const empties = neighbours(s, b.ring, b.slot).filter(([r, i]) => !s.rings[r].cells[i]);
     if (empties.length === 0) { cell.cd = 0.5; continue; }
     const [er, ei] = empties[Math.floor(rand(s) * empties.length)];
-    s.rings[er].cells[ei] = { sp: cell.sp, coat: cell.coat, inf: 0, cd: SPECIES[cell.sp].interval * (0.5 + rand(s)) };
+    // the child takes after the cells around its slot (the parent counts double), so colonies grow in clonal batches
+    let child = { sp: cell.sp, coat: cell.coat };
+    if (!SPECIES[cell.sp].pathogen) {
+      const votes = new Map<string, number>();
+      votes.set(`${cell.sp}:${cell.coat}`, B.parentWeight);
+      for (const [nr, ns] of neighbours(s, er, ei)) {
+        const n = s.rings[nr].cells[ns];
+        if (n && n.inf === 0 && !SPECIES[n.sp].pathogen && n !== cell) votes.set(`${n.sp}:${n.coat}`, (votes.get(`${n.sp}:${n.coat}`) ?? 0) + 1);
+      }
+      let x = rand(s) * [...votes.values()].reduce((a, v) => a + v, 0);
+      for (const [key, v] of votes) { x -= v; if (x <= 0) { const [sp2, c2] = key.split(':'); child = { sp: sp2, coat: Number(c2) }; break; } }
+    }
+    s.rings[er].cells[ei] = { sp: child.sp, coat: child.coat, inf: 0, cd: SPECIES[child.sp].interval * (0.5 + rand(s)) };
     cell.cd = SPECIES[cell.sp].interval;
     s.stats.births++;
   }
 
-  // the bubble expands when the rim is full
+  // the bubble expands only after the rim has stayed (nearly) full for a while
   const rim = s.rings[s.rings.length - 1];
-  if (s.rings.length < B.ringSize.length && rim.cells.filter(Boolean).length / rim.n >= B.expandFill) {
+  const rimFull = rim.cells.filter(Boolean).length / rim.n >= B.expandFill;
+  s.rimFullT = rimFull ? s.rimFullT + dt : 0;
+  const nextMin = B.expandMinT[s.rings.length - B.startRings] ?? Infinity;
+  if (s.rings.length < B.ringSize.length && s.rimFullT >= B.expandHold && s.t >= nextMin) {
     s.rings.push(newRing(B.ringSize[s.rings.length]));
+    s.rimFullT = 0;
+    s.stats.expandAt.push(Math.round(s.t));
   }
 
   // host mood: the gut wall is 12 sectors with their own inflammation; rotation decides who sits under which

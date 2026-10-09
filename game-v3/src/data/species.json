@@ -8,7 +8,7 @@
     "cool": {
       "name": "B. cool",
       "interval": 9,
-      "flip": 0.02,
+      "flip": 0.0012,
       "coats": [
         {
           "shape": "c",
@@ -30,7 +30,7 @@
     "funny": {
       "name": "B. funny",
       "interval": 6,
-      "flip": 0.08,
+      "flip": 0.005,
       "coats": [
         {
           "shape": "d",
@@ -52,7 +52,7 @@
     "spicy": {
       "name": "B. spicy",
       "interval": 7,
-      "flip": 0.03,
+      "flip": 0.002,
       "coats": [
         {
           "shape": "s",
@@ -75,7 +75,7 @@
     "sneaky": {
       "name": "B. sneaky",
       "interval": 7,
-      "flip": 0.06,
+      "flip": 0.003,
       "coats": [
         {
           "shape": "t",
@@ -97,7 +97,7 @@
     "hungry": {
       "name": "B. hungry",
       "interval": 7,
-      "flip": 0.04,
+      "flip": 0.002,
       "coats": [
         {
           "shape": "s",
@@ -119,7 +119,7 @@
     "chonky": {
       "name": "B. chonky",
       "interval": 12,
-      "flip": 0.01,
+      "flip": 0.0008,
       "coats": [
         {
           "shape": "d",

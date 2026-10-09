@@ -212,3 +212,11 @@ Feedback: phages came as a stream and flowed through the first ring; they should
 - Health drain from inflammation is stronger (inflWeight 16) so a neglected flare matters.
 
 Bots (60 seeds, rateScale 3.0): idle 45%, random spin 18%, dodge 48%, cooling bot 52%; the main loss is "immune balance lost". The skill gap among simple bots is small; real players should do better than the bots, which is the thing to check.
+
+## 20. Playtest round 2 changes (pace and batches)
+Feedback: cells flip too fast, phages no longer cascade, rings are added too fast, new cells should come from their neighbours in batches.
+- **Flips slowed ~15x**: base rates 0.0008-0.012 per second, inflammation effect 1.5x (was 2x). A calm colony flips about 4 times a minute.
+- **Batches.** A new cell takes after the cells around its slot (parent counts double), so colonies grow in clonal patches. The starting colony is also built from 4 patches. Patches are what make cascades lethal.
+- **Cascades back**: burst chance per generation 95% / 65% / 35% / 0, still immediate neighbours of the same receptor only (max 2). In the sim each direct hit now lyses about 2.7 cells (it was about 2.0 with random neighbours).
+- **Rings:** the bubble needs the rim 95% full for 30 s and cannot add its 4th ring before 90 s (it happens around 125-130 s in sims). Growth speed is back to 1.0.
+- Balance sim (120 seeds, rateScale 0.85 for the shipped build, 1.0 measured): idle 16%, random spin 18%, dodge 38%, cooling 30%. The remaining weak spot is that my bots don't use patches deliberately (e.g. offering a spare patch as a phage sponge); a human can.

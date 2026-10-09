@@ -8,29 +8,30 @@ const only = process.argv[3];
 function play(botName: string, seed: number) {
   const s = createState(seed);
   const bot = BOTS[botName];
-  let tick = 0, inflSum = 0;
+  let tick = 0, inflSum = 0, cellSum = 0;
   while (s.status === 'run') {
     if (tick % 5 === 0) bot(s);
     step(s);
     inflSum += s.inflammation;
+    if (tick % 20 === 0) cellSum += allCells(s).length;
     tick++;
   }
-  return { s, div: diversity(s), cells: allCells(s).length, avgInfl: inflSum / tick };
+  return { s, div: diversity(s), cells: allCells(s).length, avgInfl: inflSum / tick, avgCells: cellSum / Math.max(1, tick / 20) };
 }
 
-console.log('bot      win%   avg t(s)  cells  diversity  lysed  invaded cleared  infl  mean-infl  reasons');
+console.log('bot      win%   avg t(s)  cells  avg-cells diversity  lysed  hits  casc  flips/min rings(t1,t2)  infl  mean-infl  reasons');
 for (const name of Object.keys(BOTS)) {
   if (only && name !== only) continue;
-  let avgI = 0, wins = 0, t = 0, cells = 0, div = 0, lysed = 0, inv = 0, clr = 0, infl = 0;
+  let avgC = 0, exp1 = 0, nExp1 = 0, exp2 = 0, nExp2 = 0, flipsPm = 0, ringsEnd = 0, hitsSum = 0, avgI = 0, wins = 0, t = 0, cells = 0, div = 0, lysed = 0, inv = 0, clr = 0, infl = 0;
   const reasons: Record<string, number> = {};
   for (let seed = 1; seed <= N; seed++) {
     const r = play(name, seed);
     if (r.s.status === 'won') wins++;
-    t += r.s.t; cells += r.cells; div += r.div; lysed += r.s.stats.lysed; inv += r.s.stats.invaded; clr += r.s.stats.cleared; infl += r.s.inflammation; avgI += r.avgInfl;
+    t += r.s.t; cells += r.cells; div += r.div; lysed += r.s.stats.lysed; flipsPm += r.s.stats.flips / (r.s.t / 60); ringsEnd += r.s.rings.length; hitsSum += r.s.stats.hits; if (r.s.stats.expandAt[0] !== undefined) { exp1 += r.s.stats.expandAt[0]; nExp1++; } if (r.s.stats.expandAt[1] !== undefined) { exp2 += r.s.stats.expandAt[1]; nExp2++; } inv += r.s.stats.invaded; clr += r.s.stats.cleared; infl += r.s.inflammation; avgI += r.avgInfl; avgC += r.avgCells;
     reasons[r.s.reason] = (reasons[r.s.reason] ?? 0) + 1;
   }
   console.log(
     name.padEnd(8), (100 * wins / N).toFixed(0).padStart(4), t / N > 0 ? (t / N).toFixed(0).padStart(9) : '',
-    (cells / N).toFixed(0).padStart(6), (div / N).toFixed(2).padStart(9), (lysed / N).toFixed(0).padStart(7), (inv / N).toFixed(0).padStart(8), (clr / N).toFixed(0).padStart(7), (infl / N).toFixed(2).padStart(6), (avgI / N).toFixed(2).padStart(10), JSON.stringify(reasons),
+    (cells / N).toFixed(0).padStart(6), (avgC / N).toFixed(0).padStart(9), (div / N).toFixed(2).padStart(9), (lysed / N).toFixed(0).padStart(7), (hitsSum / N).toFixed(0).padStart(5), (lysed / Math.max(1, hitsSum)).toFixed(2).padStart(5), (flipsPm / N).toFixed(1).padStart(9), `${(ringsEnd / N).toFixed(1)}(${nExp1 ? Math.round(exp1 / nExp1) : '-'},${nExp2 ? Math.round(exp2 / nExp2) : '-'})`.padStart(14), (infl / N).toFixed(2).padStart(6), (avgI / N).toFixed(2).padStart(10), JSON.stringify(reasons),
   );
 }

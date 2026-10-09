@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { chooseMeal, coatOf, createState, diversity, setRotation, step } from '../src/engine/sim';
 import balance from '../src/data/balance.json';
-import { allCells } from '../src/engine/geometry';
+import { allCells, neighbours } from '../src/engine/geometry';
 import { BOTS } from '../src/sim/bots';
 
 const run = (seed: number, bot = 'idle', secs = 300) => {
@@ -90,12 +90,12 @@ describe('engine', () => {
   });
 
   it('smart play beats random spinning (balance sanity)', () => {
-    let dodge = 0, spin = 0;
+    let smart = 0, spin = 0;
     for (let seed = 1; seed <= 30; seed++) {
-      if (run(seed, 'dodge').status === 'won') dodge++;
+      if (run(seed, 'cool').status === 'won') smart++;
       if (run(seed, 'spin').status === 'won') spin++;
     }
-    expect(dodge).toBeGreaterThan(spin);
+    expect(smart).toBeGreaterThan(spin);
   }, 60000);
 });
 
@@ -263,5 +263,51 @@ describe('inflammation flares', () => {
       return s.wall[0];
     };
     expect(run(true)).toBeLessThan(run(false) - 0.05);
+  });
+});
+
+describe('batches: growth follows the neighbourhood', () => {
+  it('a new cell takes after the cells around its slot, never a type nobody nearby has', () => {
+    const s = sandbox(); s.endT = 1e9; s.waves = []; s.flares = []; s.antibiotics = [];
+    s.rings[2].cells[0] = { sp: 'cool', coat: 0, inf: 0, cd: 0.01 };
+    s.rings[2].cells[1] = { sp: 'funny', coat: 1, inf: 0, cd: 999 };
+    const allowed = new Set(['cool:0', 'funny:1', 'cool:2']);
+    for (let i = 0; i < 400; i++) step(s);
+    const kids = s.rings[2].cells.concat(s.rings[1].cells).filter(Boolean);
+    expect(s.stats.births).toBeGreaterThan(0);
+    for (const c of kids) expect(allowed.has(`${c!.sp}:${c!.coat}`)).toBe(true);
+  });
+
+  it('the starting colony is made of patches, not a random speckle', () => {
+    let same = 0, pairs = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      const s = createState(seed);
+      s.rings.forEach((r, k) => r.cells.forEach((c, i) => {
+        if (!c) return;
+        for (const [nr, ns] of neighbours(s, k, i)) {
+          const n = s.rings[nr].cells[ns];
+          if (!n) continue;
+          pairs++;
+          if (n.sp === c.sp && n.coat === c.coat) same++;
+        }
+      }));
+    }
+    expect(same / pairs).toBeGreaterThan(0.55);
+  });
+
+  it('the bubble does not grow a new ring before its minimum time, even with a full rim', () => {
+    const s = createState(4); s.endT = 1e9; s.waves = []; s.flares = []; s.antibiotics = []; s.gaps = [];
+    s.rings.forEach((r) => { r.cells = r.cells.map(() => ({ sp: 'chonky', coat: 0, inf: 0, cd: 999 })); });
+    let ringsAt60 = 0;
+    for (let i = 0; i < 20 * 140 && s.rings.length < 4; i++) { step(s); if (i === 20 * 60) ringsAt60 = s.rings.length; }
+    expect(ringsAt60).toBe(3);
+    expect(s.rings.length).toBe(4);
+    expect(s.stats.expandAt[0]).toBeGreaterThanOrEqual(balance.expandMinT[0]);
+  });
+
+  it('flips are rare: a calm colony flips a few times a minute, not constantly', () => {
+    const s = createState(9); s.endT = 1e9; s.waves = []; s.flares = []; s.antibiotics = []; s.gaps = [];
+    for (let i = 0; i < 20 * 60; i++) step(s);
+    expect(s.stats.flips).toBeLessThan(15);
   });
 });
