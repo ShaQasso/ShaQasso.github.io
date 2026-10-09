@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>MBIOTA — the colony</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='6' y='11' width='20' height='10' rx='5' fill='%233b82f6'/></svg>" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game"></canvas>
+    <div id="hud">
+      <div class="top">
+        <div class="brand">MBIOTA <span>the colony</span></div>
+        <div class="act" id="act"></div>
+        <div class="bars">
+          <label>Host health<div class="bar"><i id="b-health"></i></div></label>
+          <label>Inflammation<div class="bar infl"><i id="b-infl"></i></div></label>
+          <label>Diversity<div class="bar div"><i id="b-div"></i></div></label>
+        </div>
+      </div>
+      <div id="banner"></div>
+      <div id="meals"></div>
+      <div class="bottom">
+        <div class="legend">
+          <span><b class="dot calm"></b>calming</span>
+          <span><b class="dot neutral"></b>neutral</span>
+          <span><b class="dot hot"></b>inflammatory</span>
+          <span><b class="dot path"></b>pathogen</span>
+          <span class="shapes">phage receptors: ◆ ● ▲ ■</span>
+        </div>
+        <div class="focus"><button id="slow" type="button">SLOW-MO <u>space</u></button><div class="bar"><i id="b-focus"></i></div></div>
+        <div id="meal-chip"></div>
+      </div>
+    </div>
+    <div id="screen"></div>
+    <div id="tip"></div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

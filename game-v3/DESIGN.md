@@ -185,3 +185,18 @@ Balance pass 2 (150 seeds, rateScale 2.5):
 
 Note for the renderer: constantly rotating rings is bad play (spin 0%), because stirring exposes every cell to the wave. The UI shouldn't make
 wild rotation the default; rings should feel heavy and deliberate.
+
+## 17. Backlog / later stages
+- **Radial row flips (later stages):** besides rotating rings around, let the player cycle a *spoke* (a column of cells from core to rim): the rim cell
+  moves to the core and everything shifts out one step, or the reverse. It lets you pull a protected cell to the front, or hide a damaged one,
+  without disturbing the rings. Needs: spoke selection UI (click/drag along the radius), a cooldown or focus cost so it doesn't trivialise rotation,
+  and neighbour/sector updates in the engine (cells change ring, so depth weights and adjacency change).
+
+## 18. Renderer status (playable build)
+`npm run dev` (or `npm run build` -> `dist/`, 32 KB of JS, no CDN dependencies) runs the game on Canvas 2D.
+- Rod cells coloured by immune value (blue / grey / red) with a white receptor glyph; armored cells have a bright outline; infected cells pulse purple with a lysis timer; pathogens are dark green with spikes.
+- Gut wall: 12 sectors that swell, redden and lose mucus as local inflammation rises; villi sway when healthy; debris, a heartbeat vignette and screen shake as things get bad.
+- Wave telegraphs: dotted arc with countdown, then a solid arc showing the *current* dominant receptor so you can watch it morph; antibiotic wedge with countdown across the colony.
+- Controls: drag a ring (it keeps moving to where you dragged it), scroll to step a ring one slot, Up/Down + Left/Right (or WASD) for keys, Space for slow-mo (limited meter), 1/2 or click for meals.
+- Hover any cell for species, coat, immune value and local inflammation. Title, end screen with stats, copy-result button.
+Not done yet: sound, a guided tutorial, daily seed, radial spoke flips (see section 17), mobile layout polish.
