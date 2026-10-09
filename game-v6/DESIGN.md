@@ -1,4 +1,4 @@
-# MBIOTA v6 — "Remission" (design proposal, not built)
+# MBIOTA v6 — "Remission" (built: first playable)
 
 Plan + act. A roguelike run in which you **groom** between waves (turn-based, calm, cards) and **survive** the waves (real time, few controls).
 Setting: an **IBD patient** (Crohn's or ulcerative colitis). The blob is their *Bacteroides* community; the wall is the inflamed gut; flares are the disease.
@@ -40,8 +40,17 @@ Waves are real time, so a blob that does not turn takes every hit. The wall is n
 3. Bots for balance: idle, rotate-only, planner (cards and rotation), checking that idle loses, collapse is rare, and card choices matter.
 4. Renderer: new villi, card UI, check-up screen.
 
-## Open decisions
-1. One control (rotation) plus an optional held card, or also a separate aimed effort?
-2. Passive cooling by facing (proposed), or keep the aimed effort from v5?
-3. Bring back independently turnable rings as a card ("Ring turn")?
-4. Run size: 12 cycles of about 1.5 minutes (about 18 minutes), or shorter?
+## Decisions taken
+1. Rotation only in a wave, plus one held card (Space).
+2. Cooling is passive, by facing.
+3. Ring turn exists as a held card: it turns the outer band of the blob against the core (Space, Shift+Space for the other way), to shape the blob.
+4. A run is 12 cycles; a wave is 45 s, grooming is untimed.
+
+## What is built (game-v6/)
+- **Engine** (`src/engine`): pixel blob with cascades; real-time wave with a phage stream from all sides that builds through the wave and across months; antibiotic arcs; flare sections (pre, flare, after) that heat an arc of the wall and fire immune cells; **passive directional cooling** with diminishing returns and a proximity-to-the-lumen weighting (violet 1.0, amber 0.35, cyan 0.15; never 100%); **mucus coats on really big patches** (at least 120 px and 10% of the blob; amber coats last longest; a hit chips a hole and the chipped pixels go on cooldown); chronic baseline drift; grooming with 15 cards and the run loop; held card slot (Ring turn, Corticosteroid, Mucus secretagogue); microcolony colour switches and "phase shift" cards.
+- **Renderer**: a denser, gut-like wall (26 fine villi per sector, blunted, sparser and redder when inflamed, with a mucus layer and a gold cooling halo), coats as a gold shell, flare and antibiotic telegraphs, card hand, check-up screen.
+- **Bots and balance** (10 seeds each): doing nothing 0% wins, random turning 0%, turning away from phages (dodge) 40%, turning toward the cooling as well 40%, same with random card picks 10%. Losing is nearly always a flare-out (inflammation), population collapse never happened in the sims. So doing nothing hurts and cards matter (good picks 40% vs random picks 10%).
+- **Tests** (30): coats only on big patches and chip when hit, cooling is directional, has diminishing returns and counts the edge more, flares heat and violet cools them, sustained overload loses, cards expire, chronic drift, ring turn keeps the blob, bet hedging (a mono-colour blob loses a big bite, a mixed one almost none).
+
+## Not done yet
+Sound, a tutorial run, more cards and relics, bosses (a bad flare month, a gut infection), unlocks between runs, mobile polish, and balance by human play (the bots do not use ring turn).

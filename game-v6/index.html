@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>MBIOTA — remission</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='5' y='5' width='10' height='10' rx='3' fill='%23fbbf24'/><rect x='17' y='5' width='10' height='10' rx='3' fill='%2322d3ee'/><rect x='11' y='17' width='10' height='10' rx='3' fill='%23a78bfa'/></svg>" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game"></canvas>
+    <div id="hud">
+      <div class="top">
+        <div class="brand">MBIOTA <span>remission</span></div>
+        <div class="turn"><b id="turn">MONTH 1 / 12</b><span id="phase">grooming</span></div>
+        <div class="bars">
+          <label>Wave<div class="bar timer"><i id="b-timer"></i></div></label>
+          <label>Inflammation<div class="bar infl"><i id="b-infl"></i><u id="m-over"></u></div></label>
+          <label><span id="pop-label">Blob</span><div class="bar pop"><i id="b-pop"></i><u id="m-min"></u></div></label>
+        </div>
+      </div>
+      <div id="banner"></div>
+      <div class="bottom">
+        <div class="legend">
+          <span><i style="background:#fbbf24"></i><b>Amber</b> mucus</span>
+          <span><i style="background:#22d3ee"></i><b>Cyan</b> phage-resistant</span>
+          <span><i style="background:#a78bfa"></i><b>Violet</b> evades immune cells, cools</span>
+          <span><i style="background:#fecaca;border-radius:50%"></i><b>White</b> immune cell</span>
+        </div>
+        <div class="actions">
+          <div id="chips"></div>
+          <button id="held" type="button"><span id="held-name">no held card</span> <u>Space</u></button>
+        </div>
+      </div>
+    </div>
+    <div id="screen"></div>
+    <div id="tip"></div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
