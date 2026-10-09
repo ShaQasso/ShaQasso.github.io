@@ -1,6 +1,6 @@
 import { angDiff, sectorOf, TAU, wrap } from '../engine/geometry';
 import balance from '../data/balance.json';
-import { activeWaves, chooseMeal, coatOf, setRotation, SPECIES, warnings } from '../engine/sim';
+import { activeFlares, activeWaves, chooseMeal, coatOf, setRotation, SPECIES, warnings } from '../engine/sim';
 import { mixAt } from '../engine/director';
 import type { Shape, State } from '../engine/types';
 
@@ -39,6 +39,9 @@ function steer(s: State, ring: number, cost: (off: number) => number, margin = 0
   // simple PD controller on a ring with momentum
   setRotation(s, ring, Math.max(-1, Math.min(1, err * 3 - r.omega * 0.8)));
 }
+
+/** Phages stop at the outermost cell in their path, so rim matches matter most; inner rings only matter behind holes. */
+function depthW(s: State, k: number) { return k === s.rings.length - 1 ? 1 : 0.35; }
 
 function inArc(angle: number, c: number, half: number) {
   return Math.abs(angDiff(c, angle)) <= half;
@@ -96,7 +99,7 @@ export const dodgeBot: Bot = (s) => {
   if (antibioticPlan(s)) return;
   const th = threat(s);
   if (!th) { s.rings.forEach((_, k) => setRotation(s, k, 0)); return; }
-  s.rings.forEach((_, k) => steer(s, k, (off) => cellsInArc(s, k, off, th).match));
+  s.rings.forEach((_, k) => steer(s, k, (off) => depthW(s, k) * cellsInArc(s, k, off, th).match));
 };
 
 /** Sponge: a couple of matching cells on the rim soak the stream; every inner ring dodges. */
@@ -120,7 +123,7 @@ export const spongeBot: Bot = (s) => {
         return -Math.min(spongeOK, 2) + 1.5 * bad + 0.5 * Math.max(0, spongeOK - 2);
       });
     }
-    else steer(s, k, (off) => cellsInArc(s, k, off, th).match);
+    else steer(s, k, (off) => depthW(s, k) * cellsInArc(s, k, off, th).match);
   });
 };
 
@@ -132,7 +135,11 @@ function coolingCost(s: State, ring: number, off: number): number {
   let cost = 0;
   r.cells.forEach((c, i) => {
     if (!c) return;
-    const hot = s.wall[sectorOf(off + (i + 0.5) * (TAU / r.n), balance.wall.sectors)];
+    const ang = off + (i + 0.5) * (TAU / r.n);
+    const j = sectorOf(ang, balance.wall.sectors);
+    // anticipate flares: an announced or burning arc counts as hot
+    let hot = s.wall[j];
+    for (const f of [...activeFlares(s), ...warnings(s).flares]) if (inArc(wrap(ang), f.center, f.half + 0.3)) hot = Math.max(hot, 0.45 + f.power * 2);
     const imm = SPECIES[c.sp].pathogen ? -3 : coatOf(c).immune;
     cost -= imm * w * (hot - 0.3);
   });
@@ -147,7 +154,7 @@ export const coolBot: Bot = (s) => {
   const rim = s.rings.length - 1;
   s.rings.forEach((_, k) => {
     // the rim is busy dodging; inner rings (protected) do most of the cooling
-    const dodge = (off: number) => (th ? 3 * cellsInArc(s, k, off, th).match : 0);
+    const dodge = (off: number) => (th ? 3 * depthW(s, k) * cellsInArc(s, k, off, th).match : 0);
     if (k === rim && th) steer(s, k, dodge, 0.5);
     else steer(s, k, (off) => dodge(off) + coolingCost(s, k, off), 2.5);
   });

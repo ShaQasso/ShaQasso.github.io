@@ -1,5 +1,5 @@
 import balance from '../data/balance.json';
-import { SPECIES, activeWaves, coatOf, warnings } from '../engine/sim';
+import { SPECIES, activeFlares, activeWaves, coatOf, warnings } from '../engine/sim';
 import { mixAt } from '../engine/director';
 import { TAU, wrap } from '../engine/geometry';
 import type { Cell, Shape, State } from '../engine/types';
@@ -21,6 +21,9 @@ const LOOK: Record<string, { len: number; wid: number }> = {
   pathogen: { len: 0.84, wid: 0.36 },
 };
 
+/** Each phage receptor has its own colour: the capsule ring on a cell and the phage hunting it share it. */
+export const SHAPE_COLOR: Record<Shape, string> = { d: '#fbbf24', c: '#a78bfa', t: '#22d3ee', s: '#f472b6', x: '#86efac' };
+
 export function drawGlyph(ctx: CanvasRenderingContext2D, shape: Shape, x: number, y: number, r: number): void {
   ctx.beginPath();
   if (shape === 'c') ctx.arc(x, y, r, 0, TAU);
@@ -30,13 +33,13 @@ export function drawGlyph(ctx: CanvasRenderingContext2D, shape: Shape, x: number
   else { ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r); }
 }
 
-interface Effect { x: number; y: number; t0: number; life: number; kind: 'burst' | 'puff' | 'strike'; color: string; angle?: number; half?: number }
+interface Effect { x: number; y: number; t0: number; life: number; kind: 'burst' | 'puff' | 'strike' | 'spark' | 'pulse'; color: string; angle?: number; half?: number }
 
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
   view: View = { W: 0, H: 0, cx: 0, cy: 0, U: 1, dpr: 1 };
   private effects: Effect[] = [];
-  private prev = new Map<Cell, { x: number; y: number; inf: number }>();
+  private prev = new Map<Cell, { x: number; y: number; inf: number; color: string }>();
   private born = new WeakMap<Cell, number>();
   private seeds = new WeakMap<Cell, number>();
   private coats = new WeakMap<Cell, { coat: number; flash: number }>();
@@ -113,6 +116,7 @@ export class Renderer {
     this.drawWarnings(s);
     this.drawRingGuides(s, selectedRing);
     this.drawCells(s, acc, hover);
+    this.drainEvents(s, acc);
     this.drawParticles(s, acc);
     this.drawEffects();
     ctx.restore();
@@ -171,7 +175,7 @@ export class Renderer {
       const n = 7;
       for (let v = 0; v < n; v++) {
         const a = a0 + ((v + 0.5) / n) * (a1 - a0);
-        const sway = Math.sin(this.time * (1 + 2.5 * w) + j * 3 + v) * (0.09 - 0.05 * w);
+        const sway = Math.sin(this.time * (0.35 + 0.8 * w) + j * 3 + v) * (0.035 - 0.02 * w);
         const len = (0.36 - 0.18 * w) * (0.85 + 0.3 * ((v * 7 + j) % 3) / 2);
         const [x0, y0] = this.pt(inner, a);
         const [x1, y1] = this.pt(inner - len, a + sway);
@@ -245,7 +249,9 @@ export class Renderer {
     for (const w of activeWaves(s)) {
       const c = w.center + w.drift * (s.t - w.t0);
       const inv = w.kind === 'invader';
-      ctx.strokeStyle = inv ? 'rgba(74,222,128,0.55)' : 'rgba(192,132,252,0.55)';
+      const mixNow = mixAt(w, s.t);
+      const domNow = (Object.keys(mixNow) as Shape[]).reduce((a, b) => (mixNow[b] > mixNow[a] ? b : a));
+      ctx.strokeStyle = inv ? 'rgba(74,222,128,0.55)' : hexA(SHAPE_COLOR[domNow], 0.6);
       ctx.lineWidth = U * 0.1; ctx.lineCap = 'round';
       this.arcPath(edge, c - w.half, c + w.half); ctx.stroke();
       const [x, y] = this.pt(edge + 0.55, c);
@@ -253,19 +259,34 @@ export class Renderer {
       else {
         const mix = mixAt(w, s.t);
         const dom = (Object.keys(mix) as Shape[]).reduce((a, b) => (mix[b] > mix[a] ? b : a));
-        ctx.fillStyle = '#d8b4fe'; drawGlyph(ctx, dom, x, y, U * 0.2); ctx.fill();
+        ctx.fillStyle = SHAPE_COLOR[dom]; drawGlyph(ctx, dom, x, y, U * 0.2); ctx.fill();
       }
     }
     // upcoming waves: pulsing dotted arc with a countdown
     for (const w of warnings(s).waves) {
       const left = w.t0 - s.t;
-      ctx.strokeStyle = w.kind === 'invader' ? `rgba(74,222,128,${0.35 * tPulse})` : `rgba(192,132,252,${0.45 * tPulse})`;
+      const mixW = mixAt(w, w.t0);
+      const domW = (Object.keys(mixW) as Shape[]).reduce((a, b) => (mixW[b] > mixW[a] ? b : a));
+      ctx.strokeStyle = w.kind === 'invader' ? `rgba(74,222,128,${0.35 * tPulse})` : hexA(SHAPE_COLOR[domW], 0.5 * tPulse);
       ctx.lineWidth = U * 0.08; ctx.setLineDash([U * 0.15, U * 0.2]);
       this.arcPath(edge, w.center - w.half, w.center + w.half); ctx.stroke(); ctx.setLineDash([]);
       const [x, y] = this.pt(edge + 0.6, w.center);
-      ctx.fillStyle = 'rgba(220,200,255,0.9)'; ctx.font = `600 ${U * 0.36}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = w.kind === 'invader' ? 'rgba(187,247,208,0.9)' : SHAPE_COLOR[domW]; ctx.font = `600 ${U * 0.36}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(w.kind === 'invader' ? `invaders ${left.toFixed(0)}` : `phages ${left.toFixed(0)}`, x, y);
     }
+    // inflammation flares: a hot patch on the wall itself
+    const drawFlare = (f: { center: number; half: number; t0: number }, live: boolean) => {
+      const left = f.t0 - s.t;
+      ctx.strokeStyle = live ? `rgba(248,113,113,${0.55 + 0.3 * Math.sin(this.time * 6)})` : `rgba(248,113,113,${0.5 * tPulse})`;
+      ctx.lineWidth = U * 0.16; ctx.lineCap = 'round';
+      if (!live) ctx.setLineDash([U * 0.2, U * 0.22]);
+      this.arcPath(this.wallR + 1.25, f.center - f.half, f.center + f.half); ctx.stroke(); ctx.setLineDash([]);
+      const [x, y] = this.pt(this.wallR + 1.75, f.center);
+      ctx.fillStyle = '#fca5a5'; ctx.font = `600 ${U * 0.34}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(live ? 'flare' : `flare ${Math.max(0, left).toFixed(0)}`, x, y);
+    };
+    for (const f of warnings(s).flares) drawFlare(f, false);
+    for (const f of activeFlares(s)) drawFlare(f, true);
     // antibiotic: a wedge across the whole colony
     for (const a of warnings(s).antibiotics) {
       const left = Math.max(0, a.t0 - s.t);
@@ -289,6 +310,18 @@ export class Renderer {
     });
   }
 
+  private drainEvents(s: State, acc: number): void {
+    if (!s.events) { s.events = []; return; }
+    for (const e of s.events) {
+      const ring = s.rings[e.ring];
+      if (!ring) continue;
+      const [x, y] = e.ring === 0 ? [this.view.cx, this.view.cy] : this.pt(e.ring, this.cellAngle(s, e.ring, e.slot, acc));
+      const color = e.shape ? SHAPE_COLOR[e.shape] : '#86efac';
+      this.effects.push({ x, y, t0: this.time, life: e.kind === 'deflect' ? 0.35 : 0.6, kind: e.kind === 'deflect' ? 'spark' : 'pulse', color });
+    }
+    s.events.length = 0;
+  }
+
   private seedOf(c: Cell): number {
     let v = this.seeds.get(c);
     if (v === undefined) { v = Math.random(); this.seeds.set(c, v); }
@@ -298,13 +331,13 @@ export class Renderer {
   private drawCells(s: State, acc: number, hover: Hover | null): void {
     const { ctx } = this;
     const { cx, cy, U } = this.view;
-    const now = new Map<Cell, { x: number; y: number; inf: number }>();
+    const now = new Map<Cell, { x: number; y: number; inf: number; color: string }>();
 
     s.rings.forEach((ring, k) => ring.cells.forEach((c, i) => {
       if (!c) return;
       const a = k === 0 ? 0 : this.cellAngle(s, k, i, acc);
       const [x, y] = k === 0 ? [cx, cy] : this.pt(k, a);
-      now.set(c, { x, y, inf: c.inf });
+      now.set(c, { x, y, inf: c.inf, color: SHAPE_COLOR[coatOf(c).shape] });
       this.drawCell(s, c, x, y, a, k === 0, hover?.ring === k && hover.slot === i);
     }));
 
@@ -312,7 +345,7 @@ export class Renderer {
     for (const [c, p] of this.prev) {
       if (!now.has(c)) {
         this.effects.push(p.inf > 0
-          ? { x: p.x, y: p.y, t0: this.time, life: 0.7, kind: 'burst', color: '#c084fc' }
+          ? { x: p.x, y: p.y, t0: this.time, life: 0.7, kind: 'burst', color: p.color }
           : { x: p.x, y: p.y, t0: this.time, life: 0.5, kind: 'puff', color: '#94a3b8' });
       }
     }
@@ -353,7 +386,7 @@ export class Renderer {
     // soft glow
     const glowR = U * (0.62 + 0.5 * flash);
     const gl = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
-    gl.addColorStop(0, hexA(infected ? '#a855f7' : col, 0.28 + 0.5 * flash));
+    gl.addColorStop(0, hexA(infected ? SHAPE_COLOR[coat.shape] : col, 0.28 + 0.5 * flash));
     gl.addColorStop(1, hexA(col, 0));
     ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, glowR, 0, TAU); ctx.fill();
 
@@ -363,9 +396,12 @@ export class Renderer {
     const body = ctx.createLinearGradient(0, -wid / 2, 0, wid / 2);
     body.addColorStop(0, lighten(col, 0.28)); body.addColorStop(1, lighten(col, -0.18));
     ctx.fillStyle = body; ctx.fill();
-    ctx.lineWidth = coat.armored ? 2.4 : 1.2;
-    ctx.strokeStyle = hovered ? '#fde68a' : coat.armored ? '#e5e7eb' : 'rgba(0,0,0,0.5)';
-    ctx.stroke();
+    if (path) { ctx.lineWidth = 1.2; ctx.strokeStyle = hovered ? '#fde68a' : 'rgba(0,0,0,0.55)'; ctx.stroke(); }
+    else {
+      // the capsule: a ring in the receptor colour (armored cells get a bright outer rim)
+      if (coat.armored) { ctx.lineWidth = 5; ctx.strokeStyle = '#e5e7eb'; ctx.stroke(); }
+      ctx.lineWidth = 2.4; ctx.strokeStyle = hovered ? '#fde68a' : SHAPE_COLOR[coat.shape]; ctx.stroke();
+    }
 
     if (path) { // spikes
       ctx.strokeStyle = '#86efac'; ctx.lineWidth = 1.4;
@@ -379,17 +415,17 @@ export class Renderer {
     // phage receptor glyph
     if (!path) {
       ctx.save(); ctx.translate(x + wob, y);
-      ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 1;
-      drawGlyph(ctx, coat.shape, 0, 0, U * 0.1 * scale); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = SHAPE_COLOR[coat.shape]; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 1;
+      drawGlyph(ctx, coat.shape, 0, 0, U * 0.11 * scale); ctx.fill(); ctx.stroke();
       ctx.restore();
     }
     if (infected) {
       ctx.save(); ctx.translate(x + wob, y);
       const f = c.inf / balance.phage.infectTime;
-      ctx.fillStyle = `rgba(168,85,247,${0.35 + 0.35 * Math.sin(this.time * 14 * (1.5 - f))})`;
+      ctx.fillStyle = hexA(SHAPE_COLOR[coat.shape], 0.25 + 0.25 * Math.sin(this.time * 14 * (1.5 - f)));
       ctx.beginPath(); ctx.arc(0, 0, U * 0.38, 0, TAU); ctx.fill();
-      ctx.strokeStyle = '#e9d5ff'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(0, 0, U * 0.44, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - f)); ctx.stroke();
+      ctx.strokeStyle = SHAPE_COLOR[coat.shape]; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(0, 0, U * 0.46, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - f)); ctx.stroke();
       ctx.restore();
     }
     if (flash > 0) {
@@ -411,7 +447,8 @@ export class Renderer {
       const [x, y] = this.pt(r, p.angle);
       const [tx, ty] = this.pt(r + 0.5, p.angle);
       const inv = p.kind === 'invader';
-      ctx.strokeStyle = inv ? 'rgba(74,222,128,0.5)' : 'rgba(192,132,252,0.55)';
+      const pc = SHAPE_COLOR[p.shape];
+      ctx.strokeStyle = inv ? 'rgba(74,222,128,0.5)' : hexA(pc, 0.6);
       ctx.lineWidth = U * 0.05;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
       if (inv) {
@@ -419,8 +456,10 @@ export class Renderer {
         ctx.strokeStyle = '#bbf7d0'; ctx.lineWidth = 1;
         for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + this.time * 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * U * 0.2, y + Math.sin(a) * U * 0.2); ctx.stroke(); }
       } else {
-        ctx.fillStyle = '#a855f7'; ctx.strokeStyle = '#f3e8ff'; ctx.lineWidth = 1.2;
-        drawGlyph(ctx, p.shape, x, y, U * 0.16); ctx.fill(); ctx.stroke();
+        ctx.shadowColor = pc; ctx.shadowBlur = 10;
+        ctx.fillStyle = pc; ctx.strokeStyle = '#0b1020'; ctx.lineWidth = 1.5;
+        drawGlyph(ctx, p.shape, x, y, U * 0.17); ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0;
       }
     }
   }
@@ -438,6 +477,17 @@ export class Renderer {
         continue;
       }
       ctx.strokeStyle = hexA(e.color, 0.8 * (1 - f)); ctx.fillStyle = hexA(e.color, 0.8 * (1 - f)); ctx.lineWidth = 2;
+      if (e.kind === 'pulse') {
+        ctx.beginPath(); ctx.arc(e.x, e.y, U * (0.3 + 0.7 * f), 0, TAU); ctx.stroke();
+        continue;
+      }
+      if (e.kind === 'spark') {
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * TAU + 0.5, d = U * (0.15 + 0.45 * f);
+          ctx.beginPath(); ctx.moveTo(e.x + Math.cos(a) * d * 0.6, e.y + Math.sin(a) * d * 0.6); ctx.lineTo(e.x + Math.cos(a) * d, e.y + Math.sin(a) * d); ctx.stroke();
+        }
+        continue;
+      }
       if (e.kind === 'burst') {
         ctx.beginPath(); ctx.arc(e.x, e.y, U * (0.3 + 0.9 * f), 0, TAU); ctx.stroke();
         for (let i = 0; i < 9; i++) {

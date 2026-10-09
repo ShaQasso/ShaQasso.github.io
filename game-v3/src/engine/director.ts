@@ -1,7 +1,7 @@
 import balance from '../data/balance.json';
 import { rand, randRange } from './rng';
 import { TAU } from './geometry';
-import type { AntibioticSpec, Mix, Shape, State, WaveSpec } from './types';
+import type { AntibioticSpec, FlareSpec, Mix, Shape, State, WaveSpec } from './types';
 
 const SHAPES: Shape[] = ['d', 'c', 't', 's'];
 
@@ -20,6 +20,7 @@ export function buildSchedule(s: State): void {
   const d = balance.director;
   const waves: WaveSpec[] = [];
   const antibiotics: AntibioticSpec[] = [];
+  const flares: FlareSpec[] = [];
   const gaps: State['gaps'] = [];
   for (let act = 0; act < d.acts; act++) {
     const start = act * (d.actLen + d.gapLen);
@@ -36,17 +37,29 @@ export function buildSchedule(s: State): void {
         center: rand(s) * TAU,
         half: randRange(s, 0.45, 0.85),
         drift: randRange(s, -0.15, 0.15),
-        rate: (0.6 + 0.25 * act + randRange(s, 0, 0.3)) * balance.director.rateScale,
+        // attacks start as single phages every few seconds and build up act by act
+        rate: balance.director.baseRate * Math.pow(balance.director.actGrowth, act) * (1 + randRange(s, 0, 0.4)) * balance.director.rateScale,
         mixA: mixOf(s, a), mixB: mixOf(s, b),
       });
     }
-    if (act >= balance.director.invaderFirstAct) {
+    // infections (pathogen invaders) are switched off for now: set director.invaders to 1 to bring them back
+    if (balance.director.invaders && act >= balance.director.invaderFirstAct) {
       const nInv = act - balance.director.invaderFirstAct + 1;
       for (let i = 0; i < nInv; i++) {
         waves.push({
           kind: 'invader', t0: start + 8 + (i / nInv) * (d.actLen - 24) + randRange(s, 0, 4), dur: randRange(s, 8, 12),
           center: rand(s) * TAU, half: randRange(s, 0.6, 1.0), drift: 0,
           rate: randRange(s, 1.0, 1.6), mixA: mixOf(s, 'd'), mixB: mixOf(s, 'd'),
+        });
+      }
+    }
+    // inflammation flares: a hot patch on the wall that has to be cooled by rotating calming cells under it
+    if (act >= balance.flare.firstAct) {
+      const n = act - balance.flare.firstAct + 1;
+      for (let i = 0; i < n; i++) {
+        flares.push({
+          t0: start + 10 + ((i + 0.3) / n) * (d.actLen - 26), dur: balance.flare.dur, center: rand(s) * TAU,
+          half: randRange(s, 0.45, 0.7), power: balance.flare.power * (1 + 0.15 * (act - balance.flare.firstAct)),
         });
       }
     }
@@ -64,6 +77,7 @@ export function buildSchedule(s: State): void {
   s.waves = waves;
   s.waveAcc = waves.map(() => 0);
   s.antibiotics = antibiotics;
+  s.flares = flares;
   s.gaps = gaps;
   s.endT = d.acts * d.actLen + (d.acts - 1) * d.gapLen;
 }

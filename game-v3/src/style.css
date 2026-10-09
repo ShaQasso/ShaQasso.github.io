@@ -52,3 +52,4 @@ canvas.dragging { cursor: grabbing; }
 #tip { position: absolute; pointer-events: none; background: #0b1329f2; border: 1px solid #2c4170; border-radius: 10px; padding: 8px 10px; font-size: 12px; line-height: 1.45; display: none; z-index: 5; max-width: 220px; }
 #tip b { font-size: 13px; }
 @media (max-width: 640px) { .bars { grid-template-columns: repeat(3, 1fr); width: 100%; } .legend { display: none; } #banner { font-size: 17px; } }
+.legend i { font-style: normal; }

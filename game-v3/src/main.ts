@@ -36,9 +36,9 @@ function titleScreen(): void {
     <ul>
       <li><b>Drag a ring</b> to rotate it (or scroll, or ↑↓ to pick a ring and ←→ to turn it). Rings are heavy, so move with intent.</li>
       <li>Cells flip their coats <b>at random</b>. You can't choose a coat, only who faces what.</li>
-      <li>A <b>phage</b> only infects cells wearing its receptor shape ◆ ● ▲ ■. Same-shape neighbours get hit next. Diversity is your firewall, and a spare block of one shape can soak up a wave.</li>
+      <li>A <b>phage</b> only infects cells wearing its receptor ring colour <i style="color:#fbbf24">◆</i> <i style="color:#a78bfa">●</i> <i style="color:#22d3ee">▲</i> <i style="color:#f472b6">■</i> and hits the first cell in its path. Same-shape neighbours get hit next. Diversity is your firewall, and a spare block of one shape can soak up a wave.</li>
       <li><span class="b">Blue</span> cells calm the gut wall, <span class="r">red</span> cells inflame it. Park calming cells under the glowing patches.</li>
-      <li>Pathogens slip in through holes. Antibiotics clear them, and your own cells too, so rotate them into the beam.</li>
+      ${balance.director.invaders ? '<li>Pathogens slip in through holes. Antibiotics clear them, and your own cells too, so rotate them into the beam.</li>' : '<li>Antibiotic sweeps (yellow wedge) kill every cell that is not armored. Rotate your cells out of the beam.</li>'}
       <li>Hold <b>Space</b> for slow-mo. Survive ${balance.director.acts} acts.</li>
     </ul>
     <button class="btn" id="go" type="button">Start</button> <span style="color:#7d8ba1;font-size:12px;margin-left:8px">Enter</span>`);
@@ -107,6 +107,7 @@ function frame(now: number): void {
 }
 
 let demo: State | null = null;
+if (!balance.director.invaders) document.querySelector('.legend span:nth-child(4)')?.remove();
 titleScreen();
 requestAnimationFrame(frame);
 

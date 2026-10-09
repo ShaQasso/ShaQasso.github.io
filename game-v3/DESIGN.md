@@ -200,3 +200,15 @@ wild rotation the default; rings should feel heavy and deliberate.
 - Controls: drag a ring (it keeps moving to where you dragged it), scroll to step a ring one slot, Up/Down + Left/Right (or WASD) for keys, Space for slow-mo (limited meter), 1/2 or click for meals.
 - Hover any cell for species, coat, immune value and local inflammation. Title, end screen with stats, copy-result button.
 Not done yet: sound, a guided tutorial, daily seed, radial spoke flips (see section 17), mobile layout polish.
+
+## 19. Playtest round 1 changes
+Feedback: phages came as a stream and flowed through the first ring; they should be leveled, one-by-one early, and match the colour of what they hunt; fewer wall sections; calmer villi; remove infections for now.
+- **Phages stop at the first cell they meet.** A matching receptor infects it; a mismatched phage is deflected and spent (spark effect). Only holes let a phage through, so the rim is the shield and inner rings are a reserve.
+- **Leveled waves.** Rate = 0.14 x 2^act x jitter x rateScale. Act 1 is a lone phage every few seconds; act 4 is roughly 8x denser.
+- **Receptor colours.** Each receptor has one colour (amber diamond, violet circle, cyan triangle, pink square). The capsule ring on a cell, its glyph, the phage hunting it, and the wave arc all use it. Infected cells pulse in the colour of the phage that got them.
+- **Wall has 6 sectors** (was 12) and the villi sway about a third as much.
+- **Infections (pathogen invaders) are off** (`director.invaders = 0`); code, art and tests are still there. Antibiotic sweeps stay as a plain hazard for now.
+- **Inflammation flares (new, from act 2).** A telegraphed hot patch on the wall (3 s warning, dotted arc, countdown) that heats its sectors for 10 s. Rotating calming cells under it is the answer. This is what makes immune balance the main way to lose now that phage damage is gentler.
+- Health drain from inflammation is stronger (inflWeight 16) so a neglected flare matters.
+
+Bots (60 seeds, rateScale 3.0): idle 45%, random spin 18%, dodge 48%, cooling bot 52%; the main loss is "immune balance lost". The skill gap among simple bots is small; real players should do better than the bots, which is the thing to check.

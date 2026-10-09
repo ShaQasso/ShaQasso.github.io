@@ -14,9 +14,10 @@ const MEAL_TEXT: Record<string, string> = {
 const SHAPE_NAME: Record<string, string> = { d: 'diamond', c: 'circle', t: 'triangle', s: 'square', x: 'none' };
 const SHAPE_CH: Record<string, string> = { d: '◆', c: '●', t: '▲', s: '■', x: '✚' };
 
+const INFECTIONS = !!balance.director.invaders;
 const ACT_NOTES = [
   ['ACT 1', 'Phages hunt one receptor shape at a time'],
-  ['ACT 2', 'Pathogens slip in through holes. Antibiotics can clear them, and your own cells too'],
+  ['ACT 2', INFECTIONS ? 'Pathogens slip in through holes. Antibiotics can clear them, and your own cells too' : 'Antibiotic sweeps hit everything that is not armored. Rotate sensitive cells out of the beam'],
   ['ACT 3', 'Waves overlap and the host runs hotter'],
   ['FINAL ACT', 'Everything at once. Hold on'],
 ];

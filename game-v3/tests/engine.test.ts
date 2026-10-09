@@ -33,7 +33,7 @@ describe('engine', () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 
-  it('a phage of the right shape infects, and wrong shapes pass through', () => {
+  it('a phage of the right shape infects; a wrong shape is deflected', () => {
     const s = sandbox();
     s.rings[2].cells[0] = { sp: 'cool', coat: 0, inf: 0, cd: 999 }; // shape 'c'
     const ang = 0.5 * (Math.PI * 2 / 12); // column of rim slot 0
@@ -158,8 +158,8 @@ describe('containment, infections and immune balance', () => {
 describe('gut wall hot spots and recovery', () => {
   const settle = (calmOffset: number) => {
     const s = sandbox(); s.endT = 1e9;
-    s.rings[2].cells[1] = { sp: 'pathogen', coat: 0, inf: 0, cd: 999 }; // immune -2 at the rim (doesn't die to inflammation), 45 deg -> sector 1
-    s.rings[1].cells[0] = { sp: 'cool', coat: 0, inf: 0, cd: 999 };  // immune +2, 30 deg -> sector 1 when aligned
+    s.rings[2].cells[1] = { sp: 'pathogen', coat: 0, inf: 0, cd: 999 }; // immune -2 at the rim (doesn't die to inflammation), 45 deg -> sector 0
+    s.rings[1].cells[0] = { sp: 'cool', coat: 0, inf: 0, cd: 999 };  // immune +2, 30 deg -> sector 0 when aligned
     s.rings[1].off = calmOffset;
     for (let i = 0; i < 20 * 40; i++) {
       step(s);
@@ -171,19 +171,19 @@ describe('gut wall hot spots and recovery', () => {
 
   it('a hot cell heats its own sector of the wall', () => {
     const s = settle(Math.PI);
-    expect(s.wall[1]).toBeGreaterThan(s.wall[6]);
+    expect(s.wall[0]).toBeGreaterThan(s.wall[3]);
   });
 
   it('putting calming cells under the hot sector cools it and lowers overall inflammation', () => {
     const aligned = settle(0);
     const misplaced = settle(Math.PI);
-    expect(aligned.wall[1]).toBeLessThan(misplaced.wall[1] - 0.1);
+    expect(aligned.wall[0]).toBeLessThan(misplaced.wall[0] - 0.05);
     expect(aligned.inflammation).toBeLessThan(misplaced.inflammation);
   });
 
   it('heat spreads a little to neighbouring sectors', () => {
     const s = settle(Math.PI);
-    expect(s.wall[2]).toBeGreaterThan(s.wall[6]);
+    expect(s.wall[1]).toBeGreaterThan(s.wall[3]);
   });
 
   it('calm gaps heal a little, but only a little', () => {
@@ -196,5 +196,72 @@ describe('gut wall hot spots and recovery', () => {
     const diff = mk(true) - mk(false);
     expect(diff).toBeGreaterThan(1);
     expect(diff).toBeLessThan(5);
+  });
+});
+
+describe('phages hit the first cell in their path', () => {
+  const col = 0.5 * Math.PI * 2 / 12; // column of rim slot 0 / ring-1 slot 0 region
+
+  it('a mismatched phage is spent on the outer cell and never reaches the cell behind it', () => {
+    const s = sandbox(); s.endT = 1e9;
+    s.rings[2].cells[0] = { sp: 'cool', coat: 0, inf: 0, cd: 999 };  // shape 'c' at the rim
+    s.rings[1].cells[0] = { sp: 'cool', coat: 1, inf: 0, cd: 999 };  // shape 't' right behind it
+    s.particles.push({ r: 4, angle: col, shape: 't' });              // would infect the inner cell if it flowed through
+    for (let i = 0; i < 60; i++) { step(s); s.rings[1].cells.forEach((c, j) => { if (c && j === 0) c.coat = 1; }); }
+    expect(s.rings[1].cells[0]?.inf).toBe(0);
+    expect(s.rings[2].cells[0]?.inf).toBe(0);
+    expect(s.stats.deflected).toBeGreaterThanOrEqual(1);
+    expect(s.particles.length).toBe(0);
+  });
+
+  it('a hole in the rim lets the phage through to the cell behind', () => {
+    const s = sandbox(); s.endT = 1e9;
+    s.rings[2].cells[0] = null;
+    s.rings[1].cells[0] = { sp: 'cool', coat: 1, inf: 0, cd: 999 }; // 't'
+    s.particles.push({ r: 4, angle: col, shape: 't' });
+    for (let i = 0; i < 30; i++) step(s);
+    expect(s.rings[1].cells[0]?.inf).toBeGreaterThan(0);
+  });
+
+  it('events are only recorded when a renderer asks for them', () => {
+    const s = sandbox(); s.endT = 1e9;
+    s.rings[2].cells[0] = { sp: 'cool', coat: 0, inf: 0, cd: 999 };
+    s.particles.push({ r: 4, angle: col, shape: 't' });
+    for (let i = 0; i < 40; i++) step(s);
+    expect(s.events).toBeUndefined();
+    s.events = [];
+    s.particles.push({ r: 4, angle: col, shape: 'c' });
+    for (let i = 0; i < 40; i++) step(s);
+    expect(s.events.some((e) => e.kind === 'infect')).toBe(true);
+  });
+});
+
+describe('inflammation flares', () => {
+  /** Sandbox with mixed species (so dysbiosis doesn't add heat) and neutral coats. */
+  const mixed = () => {
+    const s = sandbox(); s.endT = 1e9;
+    s.rings[1].cells = s.rings[1].cells.map((_, i) => ({ sp: ['cool', 'funny', 'spicy'][i % 3], coat: 2, inf: 0, cd: 999 }));
+    return s;
+  };
+  const pin = (s: ReturnType<typeof sandbox>) => s.rings[1].cells.forEach((c) => { if (c) c.coat = 2; });
+
+  it('heat the sectors inside their arc only while active, and are announced first', () => {
+    const s = mixed();
+    s.flares = [{ t0: 3, dur: 10, center: 0.5 * Math.PI * 2 / 6, half: 0.3, power: 0.3 }]; // sector 0
+    for (let i = 0; i < 20; i++) { step(s); pin(s); } // 1s: only the warning is up
+    expect(Math.abs(s.wall[0] - s.wall[3])).toBeLessThan(0.03);
+    for (let i = 0; i < 20 * 12; i++) { step(s); pin(s); }
+    expect(s.wall[0]).toBeGreaterThan(s.wall[3] + 0.1);
+  });
+
+  it('calming cells under the flare reduce it', () => {
+    const run = (calm: boolean) => {
+      const s = mixed();
+      s.flares = [{ t0: 0.1, dur: 12, center: 0.5 * Math.PI * 2 / 6, half: 0.3, power: 0.2 }];
+      if (calm) s.rings[2].cells[1] = { sp: 'cool', coat: 0, inf: 0, cd: 999 }; // +2 at the rim, sector 0
+      for (let i = 0; i < 20 * 10; i++) { step(s); pin(s); const c = s.rings[2].cells[1]; if (c) c.coat = 0; }
+      return s.wall[0];
+    };
+    expect(run(true)).toBeLessThan(run(false) - 0.05);
   });
 });

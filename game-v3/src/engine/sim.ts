@@ -23,9 +23,9 @@ function makeCell(s: State, sp: string, coat?: number): Cell {
 
 export function createState(seed: number): State {
   const s: State = {
-    t: 0, rng: seed >>> 0, rings: [], particles: [], waves: [], waveAcc: [], antibiotics: [], gaps: [],
+    t: 0, rng: seed >>> 0, rings: [], particles: [], waves: [], waveAcc: [], antibiotics: [], flares: [], gaps: [],
     offer: null, meal: null, inflammation: B.inflammation.base, wall: Array(B.wall.sectors).fill(B.inflammation.base), health: B.health.start, dysbiosis: 0, endT: 0,
-    status: 'run', reason: '', stats: { lysed: 0, flips: 0, births: 0, killed: 0, invaded: 0, blocked: 0, cleared: 0 },
+    status: 'run', reason: '', stats: { lysed: 0, flips: 0, births: 0, killed: 0, invaded: 0, blocked: 0, cleared: 0, deflected: 0 },
   };
   for (let k = 0; k < B.startRings; k++) {
     const ring = newRing(B.ringSize[k]);
@@ -69,11 +69,15 @@ export function diversity(s: State): number {
   return Math.min(1, h / Math.log(9));
 }
 
+export function activeFlares(s: State) {
+  return s.flares.filter((f) => s.t >= f.t0 && s.t < f.t0 + f.dur);
+}
 export function activeWaves(s: State) {
   return s.waves.filter((w) => s.t >= w.t0 && s.t < w.t0 + w.dur);
 }
 export function warnings(s: State) {
   return {
+    flares: s.flares.filter((f) => s.t >= f.t0 - B.director.warn && s.t < f.t0),
     waves: s.waves.filter((w) => s.t >= w.t0 - B.director.warn && s.t < w.t0),
     antibiotics: s.antibiotics.filter((a) => !a.fired && s.t >= a.t0 - B.director.warn),
   };
@@ -195,14 +199,18 @@ export function step(s: State, dt: number = B.dt): void {
           if (rand(s) < B.invader.landProb) {
             s.rings[k].cells[slot] = { sp: 'pathogen', coat: 0, inf: 0, cd: SPECIES.pathogen.interval };
             s.stats.invaded++;
+            s.events?.push({ kind: 'land', ring: k, slot });
           }
           consumed = true;
         } else if (rand(s) < B.invader.resist) { consumed = true; s.stats.blocked++; }
         continue;
       }
-      if (!cell) continue;
-      if (cell.inf > 0) { consumed = true; continue; } // wasted on an already infected cell
-      if (coatOf(cell).shape === p.shape) { infect(cell); consumed = true; }
+      if (!cell) continue; // holes let a phage through to whatever is behind
+      // a phage meets the outermost cell in its path: it infects on a matching receptor and is otherwise spent
+      consumed = true;
+      if (cell.inf > 0) continue;
+      if (coatOf(cell).shape === p.shape) { infect(cell); s.events?.push({ kind: 'infect', ring: k, slot, shape: p.shape }); }
+      else { s.stats.deflected++; s.events?.push({ kind: 'deflect', ring: k, slot, shape: p.shape }); }
     }
     if (!consumed && p.r > -0.5) alive.push(p);
   }
@@ -292,6 +300,12 @@ export function step(s: State, dt: number = B.dt): void {
     if (SPECIES[cell.sp].pathogen) heat[j] += B.wall.pathogenHeat / B.wall.coolWeight;
   }
   for (const p of s.particles) heat[sectorOf(p.angle, S)] += B.wall.particleHeat / B.wall.coolWeight;
+  // flares heat every sector whose centre lies inside the flare's arc
+  for (const f of activeFlares(s)) {
+    for (let j = 0; j < S; j++) {
+      if (Math.abs(angDiff(f.center, ((j + 0.5) / S) * TAU)) <= f.half + TAU / S / 2) heat[j] += f.power / B.wall.coolWeight;
+    }
+  }
   const global = B.inflammation.dysbiosisWeight * s.dysbiosis + (meal?.inflAdd ?? 0);
   const next = s.wall.map((w, j) => {
     const target = Math.max(0, Math.min(1, B.inflammation.base + B.wall.coolWeight * heat[j] + global));
