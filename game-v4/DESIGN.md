@@ -83,3 +83,29 @@ Feedback: not enough colour shifts (ended up all purple), the immune mechanism u
 - Space is weaker and slower (cooldown 30 s).
 
 Bots (30 seeds): never rotating about 20%, random spinning about 7%, dodging about 50-70% depending on pressure, dodging plus well-timed Space about 90%, Space mashed on every cooldown about 85%. Space looks very strong in the bots' hands; that is the thing to watch in human play.
+
+## 11. Proposal: puzzle pace (draft, not built)
+Why: playtest said "not fun": nothing to decide, hits feel random or unfair, no satisfying moment. With random phages from all sides, the best play was always an even mix and rotation became a twitchy reflex. The fix is to give the player information and a real choice each beat.
+
+### The loop: one beat at a time
+1. **Announce.** The next wave is shown *before* it hits: each incoming phage is drawn at its landing angle, in its colour(s), with a line to the blob. Immune cells (if the wall is red) and an antibiotic arc are announced the same way.
+2. **Plan.** Rotate the blob freely (fast and precise, no heavy momentum: the cost is time, not reflexes). A **live preview** follows your rotation: each phage's line ends where it would land. Green spark = deflected (wrong colour), red crater outline = a bite, sized by the patch it would open. You are solving "which rotation takes the fewest or smallest bites, or sacrifices the right patch".
+3. **Release.** Press Enter (or the button) when happy. Early acts are untimed; later acts add a planning timer that shrinks (about 12 s down to 6 s), which is where the tension comes from.
+4. **Resolve.** Everything lands at once, craters bloom pixel by pixel, cascades play out (deterministic given a seed, so the preview is honest about the first hit and shows a size range for the bite).
+5. **Regrow and shift.** A few seconds where the blob regrows into the holes and a couple of microcolonies switch colour (so every beat the colour map is different and the puzzle changes). Then the next beat.
+
+### The payoff
+- **Perfect parry:** every phage in a beat deflected, a big flash and a streak counter.
+- **Space meter, earned:** deflected phages and perfect parries *charge* the secrete meter (no flat cooldown). Space spends the meter: the shield length and cooling scale with the charge and with what is on the outside (amber, uniform layer, violet), so playing well gives you your strong tool.
+- Sacrifice is a visible, intentional choice: when a bite is unavoidable you pick which patch takes it, and the survivors regrow into the gap and shift the colour mix.
+
+### What stays
+Pixel blob, colours as capsule types (amber mucus, cyan phage resistance, violet immune evasion), cascades through same-colour neighbours, capacity, antibiotics, immune cells from the red wall (announced like the others, violet evades), mutations as microcolonies.
+
+### What changes in the engine
+A beat director (list of announced phages, immune cells, antibiotic per beat, with escalation), a preview function that ray-marches each announced particle against a candidate rotation, a phase machine (announce, plan, resolve, regrow), a charge-based secrete meter, direct rotation instead of momentum. Bots become planners (try every rotation, pick the best), which also tells us whether the puzzle has real depth: it should need several different rotations to be right, and a perfect parry should be possible but not every time.
+
+### Open choices (defaults in brackets)
+1. Planning timer from act 2 on [yes, shrinking], or always untimed.
+2. Space charged by parries [yes], or keep a cooldown as well.
+3. Keep immune cells and flares as announced attackers [yes].
