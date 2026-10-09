@@ -133,9 +133,8 @@ describe('containment, infections and immune balance', () => {
   it('pathogens ignore phages and inflammation damage but die to antibiotics', () => {
     const s = sandbox(); s.endT = 1e9;
     s.rings[2].cells[0] = { sp: 'pathogen', coat: 0, inf: 0, cd: 999 };
-    s.inflammation = 1;
     s.particles.push({ r: 4, angle: 0.5 * Math.PI * 2 / 12, shape: 'd' });
-    for (let i = 0; i < 60; i++) { s.inflammation = 1; step(s); }
+    for (let i = 0; i < 60; i++) { s.wall.fill(1); step(s); }
     expect(ringOf(s, 2)[0]?.sp).toBe('pathogen');
     s.antibiotics = [{ t0: s.t + 0.1, center: 0.5 * Math.PI * 2 / 12, half: 0.3, fired: false }];
     for (let i = 0; i < 10; i++) step(s);
@@ -153,5 +152,49 @@ describe('containment, infections and immune balance', () => {
     expect(s.dysbiosis).toBeGreaterThan(mono.dysbiosis);
     expect(s.inflammation).toBeGreaterThan(mono.inflammation);
     expect(s.status).toBe('run');
+  });
+});
+
+describe('gut wall hot spots and recovery', () => {
+  const settle = (calmOffset: number) => {
+    const s = sandbox(); s.endT = 1e9;
+    s.rings[2].cells[1] = { sp: 'pathogen', coat: 0, inf: 0, cd: 999 }; // immune -2 at the rim (doesn't die to inflammation), 45 deg -> sector 1
+    s.rings[1].cells[0] = { sp: 'cool', coat: 0, inf: 0, cd: 999 };  // immune +2, 30 deg -> sector 1 when aligned
+    s.rings[1].off = calmOffset;
+    for (let i = 0; i < 20 * 40; i++) {
+      step(s);
+      // pin coats so random flips don't add noise to the experiment
+      s.rings[1].cells.forEach((c, j) => { if (c) c.coat = j === 0 ? 0 : 2; });
+    }
+    return s;
+  };
+
+  it('a hot cell heats its own sector of the wall', () => {
+    const s = settle(Math.PI);
+    expect(s.wall[1]).toBeGreaterThan(s.wall[6]);
+  });
+
+  it('putting calming cells under the hot sector cools it and lowers overall inflammation', () => {
+    const aligned = settle(0);
+    const misplaced = settle(Math.PI);
+    expect(aligned.wall[1]).toBeLessThan(misplaced.wall[1] - 0.1);
+    expect(aligned.inflammation).toBeLessThan(misplaced.inflammation);
+  });
+
+  it('heat spreads a little to neighbouring sectors', () => {
+    const s = settle(Math.PI);
+    expect(s.wall[2]).toBeGreaterThan(s.wall[6]);
+  });
+
+  it('calm gaps heal a little, but only a little', () => {
+    const mk = (gap: boolean) => {
+      const s = sandbox(); s.endT = 1e9; s.health = 50;
+      s.gaps = gap ? [{ start: 0, end: 8, offered: true }] : [];
+      for (let i = 0; i < 20 * 5; i++) step(s);
+      return s.health;
+    };
+    const diff = mk(true) - mk(false);
+    expect(diff).toBeGreaterThan(1);
+    expect(diff).toBeLessThan(5);
   });
 });

@@ -160,3 +160,28 @@ moves quickly once it tips. A recovery mechanic (calming meals, a "rest" gap) ma
   B. *Resolution pulse*: panic button (cooldown, costs cells). Simple, less elegant.
   C. *Passive recovery*: calm gaps heal health a little; calming species grow faster under high inflammation ("resolution response"); mucin meal stronger.
   Recommended: A + C.
+
+## 16. Gut-wall hot spots and passive recovery (implemented)
+- **The wall is 12 sectors**, each with its own inflammation (0..1). A cell heats or cools the sector it faces: rim cells count fully, deeper rings less
+  (1 / 0.6 / 0.35 / 0.2). Calming (+) cools, red (-) heats, pathogens add extra heat, phage lysis and flying particles add local pulses.
+  Heat leaks a little into neighbouring sectors.
+- **Rotation is the recovery lever.** Rotating a ring moves its cells under different sectors, so you can park calming cells under a burning patch
+  and tuck red cells away. Letting one patch stay mildly inflamed while you protect the rest is a real choice.
+- **Local effects.** Each cell feels its own sector: flip rate, red-cell damage, calming-cell growth, and pathogen growth all depend on local inflammation.
+- **Overall inflammation is a convex (power-mean, p=3) aggregate**, so an even field is cheaper than one blazing sector. Mild, tolerable inflammation is cheap;
+  a sector that runs near 1.0 is expensive.
+- **Passive recovery, kept small:** calm gaps heal 0.5 health/s (about +4 per gap), and calming cells grow up to 50% faster where it is inflamed.
+- **Evidence the lever works** (no waves, 40 seeds, 90 s): idle bot mean inflammation 0.49 / hottest sector 0.75; cooling bot 0.44 / 0.64.
+
+Balance pass 2 (150 seeds, rateScale 2.5):
+
+| bot | win % |
+|---|---|
+| idle | 24 |
+| spin | 0 |
+| dodge | 51 |
+| sponge | 36 |
+| cool (dodge + cooling, with hysteresis so it doesn't keep stirring the colony) | 54 |
+
+Note for the renderer: constantly rotating rings is bad play (spin 0%), because stirring exposes every cell to the wave. The UI shouldn't make
+wild rotation the default; rings should feel heavy and deliberate.

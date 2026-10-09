@@ -2,7 +2,7 @@ import balance from '../data/balance.json';
 import speciesData from '../data/species.json';
 import mealsData from '../data/meals.json';
 import { rand } from './rng';
-import { angDiff, allCells, neighbours, slotAt, TAU, wrap } from './geometry';
+import { angDiff, allCells, neighbours, sectorOf, slotAngle, slotAt, TAU, wrap } from './geometry';
 import { buildSchedule, mixAt } from './director';
 import type { Cell, MealDef, Shape, SpeciesDef, State } from './types';
 
@@ -24,7 +24,7 @@ function makeCell(s: State, sp: string, coat?: number): Cell {
 export function createState(seed: number): State {
   const s: State = {
     t: 0, rng: seed >>> 0, rings: [], particles: [], waves: [], waveAcc: [], antibiotics: [], gaps: [],
-    offer: null, meal: null, inflammation: B.inflammation.base, health: B.health.start, dysbiosis: 0, endT: 0,
+    offer: null, meal: null, inflammation: B.inflammation.base, wall: Array(B.wall.sectors).fill(B.inflammation.base), health: B.health.start, dysbiosis: 0, endT: 0,
     status: 'run', reason: '', stats: { lysed: 0, flips: 0, births: 0, killed: 0, invaded: 0, blocked: 0, cleared: 0 },
   };
   for (let k = 0; k < B.startRings; k++) {
@@ -105,12 +105,22 @@ function mealFlipBias(s: State, cell: Cell): number[] {
   return w;
 }
 
-function growthMult(s: State, cell: Cell): number {
+/** Local inflammation a cell feels (the core cell feels the average). */
+export function localInflammation(s: State, ring: number, slot: number): number {
+  if (s.rings[ring].n === 1) return s.wall.reduce((a, b) => a + b, 0) / s.wall.length;
+  return s.wall[sectorOf(slotAngle(s, ring, slot), B.wall.sectors)];
+}
+
+function growthMult(s: State, cell: Cell, infl: number): number {
   const m = s.meal ? MEALS[s.meal.id] : null;
   let g = coatOf(cell).growth;
   if (m) g *= m.growthBySpecies?.[cell.sp] ?? m.growthDefault ?? 1;
   // commensals are slowed by inflammation; pathogens thrive on it
-  return g * (SPECIES[cell.sp].pathogen ? 1 + s.inflammation : Math.max(0.3, 1 - 0.5 * s.inflammation));
+  const imm = coatOf(cell).immune;
+  if (SPECIES[cell.sp].pathogen) return g * (1 + infl);
+  // resolution response: calming cells recover a little faster where it is inflamed
+  const resolution = imm > 0 ? 1 + B.recovery.resolution * infl : 1;
+  return g * Math.max(0.3, 1 - 0.5 * infl) * resolution;
 }
 
 // ---- the step ---------------------------------------------------------------
@@ -206,7 +216,10 @@ export function step(s: State, dt: number = B.dt): void {
   for (const l of lysing) {
     killAt(s, l.ring, l.slot);
     s.stats.lysed++;
-    s.inflammation = Math.min(1, s.inflammation + B.phage.lysisInflammation);
+    {
+      const j = sectorOf(slotAngle(s, l.ring, l.slot), B.wall.sectors);
+      s.wall[j] = Math.min(1, s.wall[j] + B.wall.lysisPulse);
+    }
     // containment: only immediate neighbours, at most burstMax, with chance shrinking each generation
     const pBurst = B.phage.burst[Math.min(l.gen, B.phage.burst.length - 1)];
     const hosts = neighbours(s, l.ring, l.slot).filter(([nr, ns]) => {
@@ -225,7 +238,8 @@ export function step(s: State, dt: number = B.dt): void {
   for (const { ring, slot, cell } of allCells(s)) {
     if (cell.inf > 0) continue;
     const def = SPECIES[cell.sp];
-    const lambda = def.flip * (1 + 2 * s.inflammation) * (meal?.flipMult ?? 1);
+    const local = localInflammation(s, ring, slot);
+    const lambda = def.flip * (1 + 2 * local) * (meal?.flipMult ?? 1);
     if (rand(s) < 1 - Math.exp(-lambda * dt)) {
       const w = mealFlipBias(s, cell);
       let x = rand(s) * w.reduce((a, b) => a + b, 0), pick = 0;
@@ -234,8 +248,8 @@ export function step(s: State, dt: number = B.dt): void {
       s.stats.flips++;
     }
     const imm = coatOf(cell).immune;
-    if (imm < 0 && !def.pathogen && rand(s) < 1 - Math.exp(-s.inflammation * -imm * damageRate * dt)) { killAt(s, ring, slot); s.stats.killed++; continue; }
-    cell.cd -= dt * growthMult(s, cell) * B.growthScale;
+    if (imm < 0 && !def.pathogen && rand(s) < 1 - Math.exp(-local * -imm * damageRate * dt)) { killAt(s, ring, slot); s.stats.killed++; continue; }
+    cell.cd -= dt * growthMult(s, cell, local) * B.growthScale;
     if (cell.cd <= 0) births.push({ ring, slot });
   }
   for (const b of births) {
@@ -255,25 +269,45 @@ export function step(s: State, dt: number = B.dt): void {
     s.rings.push(newRing(B.ringSize[s.rings.length]));
   }
 
-  // host mood: immune balance is the real fight
+  // host mood: the gut wall is 12 sectors with their own inflammation; rotation decides who sits under which
   const cells = allCells(s);
   const commensals = cells.filter((c) => !SPECIES[c.cell.sp].pathogen);
   const nPath = cells.length - commensals.length;
   const n = commensals.length;
-  const avgImm = cells.length ? cells.reduce((a, c) => a + coatOf(c.cell).immune, 0) / cells.length : 0;
   // dysbiosis (one species dominating the commensals) makes inflammation worse instead of ending the run
   const bySp = new Map<string, number>();
   for (const c of commensals) bySp.set(c.cell.sp, (bySp.get(c.cell.sp) ?? 0) + 1);
   const top = n ? Math.max(...bySp.values()) / n : 1;
   s.dysbiosis = Math.max(0, (top - 0.5) / 0.5);
-  const target = Math.max(0, Math.min(1, B.inflammation.base - B.inflammation.immuneWeight * avgImm
-    + B.inflammation.particleWeight * s.particles.length + B.inflammation.pathogenWeight * nPath
-    + B.inflammation.dysbiosisWeight * s.dysbiosis + (meal?.inflAdd ?? 0)));
-  s.inflammation += (target - s.inflammation) * B.inflammation.relax * dt;
-  s.inflammation = Math.max(0, Math.min(1, s.inflammation));
+
+  const S = B.wall.sectors;
+  const heat = new Array<number>(S).fill(0);
+  for (const { ring, slot, cell } of cells) {
+    const depth = s.rings.length - 1 - ring;
+    const w = B.wall.depthWeights[Math.min(depth, B.wall.depthWeights.length - 1)];
+    const imm = coatOf(cell).immune;
+    if (s.rings[ring].n === 1) { for (let j = 0; j < S; j++) heat[j] += (-imm * w) / S; continue; }
+    const j = sectorOf(slotAngle(s, ring, slot), S);
+    heat[j] += -imm * w;
+    if (SPECIES[cell.sp].pathogen) heat[j] += B.wall.pathogenHeat / B.wall.coolWeight;
+  }
+  for (const p of s.particles) heat[sectorOf(p.angle, S)] += B.wall.particleHeat / B.wall.coolWeight;
+  const global = B.inflammation.dysbiosisWeight * s.dysbiosis + (meal?.inflAdd ?? 0);
+  const next = s.wall.map((w, j) => {
+    const target = Math.max(0, Math.min(1, B.inflammation.base + B.wall.coolWeight * heat[j] + global));
+    const nb = (s.wall[(j + 1) % S] + s.wall[(j + S - 1) % S]) / 2;
+    return w + ((target - w) * B.wall.relax + (nb - w) * B.wall.spread) * dt;
+  });
+  s.wall = next.map((w) => Math.max(0, Math.min(1, w)));
+  // convex aggregate (power mean): an even field is cheaper than one blazing sector, so evening it out pays
+  s.inflammation = Math.pow(s.wall.reduce((a, w) => a + Math.pow(w, B.wall.power), 0) / S, 1 / B.wall.power);
+  void nPath;
   const div = diversity(s);
   s.health += (B.health.inflWeight * (B.health.inflCenter - s.inflammation) + B.health.divWeight * (div - B.health.divCenter)) * dt;
   s.health = Math.max(0, Math.min(100, s.health));
+
+  // passive recovery: a little healing during the calm gaps between acts
+  if (s.gaps.some((g) => s.t >= g.start && s.t < g.end)) s.health = Math.min(100, s.health + B.recovery.gapHeal * dt);
 
   // end conditions
   if (n < B.lose.minCells) { s.status = 'lost'; s.reason = 'colony collapsed'; }

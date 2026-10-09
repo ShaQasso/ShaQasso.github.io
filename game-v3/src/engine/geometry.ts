@@ -39,3 +39,6 @@ export function allCells(s: State): { ring: number; slot: number; cell: Cell }[]
   s.rings.forEach((r, ring) => r.cells.forEach((cell, slot) => { if (cell) out.push({ ring, slot, cell }); }));
   return out;
 }
+
+/** Gut-wall sector (0..sectors-1) that an angle faces. */
+export const sectorOf = (angle: number, sectors: number) => Math.floor(wrap(angle) / (TAU / sectors)) % sectors;

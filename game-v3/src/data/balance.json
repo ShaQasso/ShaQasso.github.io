@@ -55,12 +55,33 @@
     "gapLen": 8,
     "warn": 3,
     "antibioticAct": 1,
-    "rateScale": 1.7,
+    "rateScale": 2.5,
     "invaderFirstAct": 1
   },
   "invader": {
     "landProb": 0.7,
     "resist": 0.6
   },
-  "growthScale": 1.3
+  "growthScale": 1.3,
+  "wall": {
+    "sectors": 12,
+    "coolWeight": 0.2,
+    "depthWeights": [
+      1,
+      0.6,
+      0.35,
+      0.2
+    ],
+    "spread": 0.15,
+    "relax": 0.4,
+    "particleHeat": 0.02,
+    "lysisPulse": 0.04,
+    "pathogenHeat": 0.04,
+    "meanMix": 0.7,
+    "power": 3.0
+  },
+  "recovery": {
+    "gapHeal": 0.5,
+    "resolution": 0.5
+  }
 }

@@ -27,7 +27,8 @@ export interface State {
   gaps: { start: number; end: number; offered: boolean }[];
   offer: string[] | null;
   meal: { id: string; left: number } | null;
-  inflammation: number;
+  inflammation: number; // composite shown in the UI and used by host health
+  wall: number[]; // local inflammation per gut-wall sector (0..1)
   health: number;
   dysbiosis: number;
   endT: number;

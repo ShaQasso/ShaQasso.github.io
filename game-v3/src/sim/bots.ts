@@ -1,4 +1,5 @@
-import { angDiff, TAU, wrap } from '../engine/geometry';
+import { angDiff, sectorOf, TAU, wrap } from '../engine/geometry';
+import balance from '../data/balance.json';
 import { activeWaves, chooseMeal, coatOf, setRotation, SPECIES, warnings } from '../engine/sim';
 import { mixAt } from '../engine/director';
 import type { Shape, State } from '../engine/types';
@@ -21,7 +22,7 @@ function pickMeal(s: State) {
   if (s.offer) chooseMeal(s, 0);
 }
 
-function steer(s: State, ring: number, cost: (off: number) => number) {
+function steer(s: State, ring: number, cost: (off: number) => number, margin = 0) {
   const r = s.rings[ring];
   if (r.n === 1) return;
   const stepA = TAU / r.n;
@@ -32,6 +33,8 @@ function steer(s: State, ring: number, cost: (off: number) => number) {
     const score = cost(off) + 0.3 * travel;
     if (score < bestScore) { bestScore = score; best = m; }
   }
+  // hysteresis: only move when the best arrangement clearly beats staying put (constant stirring exposes every cell)
+  if (margin > 0 && cost(r.off) - bestScore < margin) { setRotation(s, ring, Math.max(-1, Math.min(1, -r.omega * 0.8))); return; }
   const err = angDiff(r.off, r.off + best * stepA);
   // simple PD controller on a ring with momentum
   setRotation(s, ring, Math.max(-1, Math.min(1, err * 3 - r.omega * 0.8)));
@@ -121,4 +124,33 @@ export const spongeBot: Bot = (s) => {
   });
 };
 
-export const BOTS: Record<string, Bot> = { idle: idleBot, spin: spinBot, dodge: dodgeBot, sponge: spongeBot };
+/** Cooling cost for a ring at an offset: calming cells under hot sectors are good, red cells under hot sectors are bad. */
+function coolingCost(s: State, ring: number, off: number): number {
+  const r = s.rings[ring];
+  const depth = s.rings.length - 1 - ring;
+  const w = balance.wall.depthWeights[Math.min(depth, balance.wall.depthWeights.length - 1)];
+  let cost = 0;
+  r.cells.forEach((c, i) => {
+    if (!c) return;
+    const hot = s.wall[sectorOf(off + (i + 0.5) * (TAU / r.n), balance.wall.sectors)];
+    const imm = SPECIES[c.sp].pathogen ? -3 : coatOf(c).immune;
+    cost -= imm * w * (hot - 0.3);
+  });
+  return cost;
+}
+
+/** Dodge incoming phages while putting calming cells under the hottest wall sectors. */
+export const coolBot: Bot = (s) => {
+  pickMeal(s);
+  if (antibioticPlan(s)) return;
+  const th = threat(s);
+  const rim = s.rings.length - 1;
+  s.rings.forEach((_, k) => {
+    // the rim is busy dodging; inner rings (protected) do most of the cooling
+    const dodge = (off: number) => (th ? 3 * cellsInArc(s, k, off, th).match : 0);
+    if (k === rim && th) steer(s, k, dodge, 0.5);
+    else steer(s, k, (off) => dodge(off) + coolingCost(s, k, off), 2.5);
+  });
+};
+
+export const BOTS: Record<string, Bot> = { idle: idleBot, spin: spinBot, dodge: dodgeBot, sponge: spongeBot, cool: coolBot };
