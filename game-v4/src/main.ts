@@ -27,14 +27,14 @@ function startRun(forcedSeed?: number): void {
 function titleScreen(): void {
   showScreen(`
     <h1>MBIOTA</h1>
-    <h2>You are a living blob of <i>Bacteroides</i>. The world chips at it from every side.</h2>
+    <h2>You are a living blob of <i>Bacteroides</i> pixels. The world takes bites out of it.</h2>
     <ul>
-      <li><b>Drag</b> to turn the whole blob (or scroll, or A/D). It is heavy, so turn with intent. Threats come from fixed directions, so turning decides which side takes the hit.</li>
-      <li>You can't pick colours. <b>Sacrifice what faces the wave</b> and the survivors regrow into the gap, shifting your mix.</li>
-      <li>A phage only infects the colour it wears (<span class="sw" style="background:#fbbf24"></span>amber, <span class="sw" style="background:#22d3ee"></span>cyan, <span class="sw" style="background:#a78bfa"></span>violet) and hits the first block it meets. The burst then spreads through <b>same-colour neighbours</b>. Big patches die, a different colour is a firewall.</li>
-      <li><b>Space</b> secretes a mucus shield that blocks phages for a moment, and cools the gut wall. A uniform outer layer, and more amber, make the shield last longer. But a uniform blob dies to one matching phage. Hedge your bets.</li>
-      <li>Cyan resists cascades, violet survives inflammation and cools better, amber makes mucus. Each grows at a different pace. Hover any block to see its patch.</li>
-      <li>Hold <b>Shift</b> for slow-mo. The blob can't outgrow its capacity. Survive ${balance.director.acts} acts.</li>
+      <li><b>Drag</b> to turn the whole blob (or scroll, or A/D). It is heavy, so turn with intent. Everything arrives from random directions, so turning decides which colour takes each hit.</li>
+      <li>You can't pick colours: pixels <b>switch colour</b> now and then (small patches of whatever you are short of), and what you sacrifice regrows from its neighbours.</li>
+      <li><b>Phages</b> are coloured like the pixels they hunt (<span class="sw" style="background:#fbbf24"></span>amber, <span class="sw" style="background:#22d3ee"></span>cyan, <span class="sw" style="background:#a78bfa"></span>violet). A phage hits the first pixel it meets. If the colour matches, a crater <b>spreads through same-colour neighbours</b>. A different colour is a firewall, so staying mixed keeps bites small.</li>
+      <li><b>Space</b> secretes a mucus shield (blocks phages and immune cells, halves antibiotics) and cools the wall. A uniform outer layer and more amber make it last longer. But a uniform blob loses a huge bite to one matching phage. Hedge your bets.</li>
+      <li><b>Inflammation:</b> when the wall goes red it fires <b>white immune cells</b> that chew pixels. <span class="sw" style="background:#a78bfa"></span>Violet evades them and boosts cooling. Cyan damps cascades. Amber makes mucus. Each colour grows at a different pace.</li>
+      <li>Hover any pixel to see its patch. Hold <b>Shift</b> for slow-mo. The blob can't outgrow its capacity. Survive ${balance.director.acts} acts.</li>
     </ul>
     <button class="btn" id="go" type="button">Start</button> <span style="color:#7d8ba1;font-size:12px;margin-left:8px">Enter</span>`);
   document.getElementById('go')!.addEventListener('click', () => startRun());
@@ -48,10 +48,10 @@ function endScreen(s: State): void {
     <div class="big ${s.status}">${won ? 'The blob held' : 'The blob fell'}</div>
     <h2>${won ? `Survived all ${balance.director.acts} acts` : `Cause: ${s.reason}`}</h2>
     <div class="stats">
-      <div><span>Time</span><br>${Math.round(s.t)} s</div><div><span>Blocks left</span><br>${n}</div>
+      <div><span>Time</span><br>${Math.round(s.t)} s</div><div><span>Pixels left</span><br>${n}</div>
       <div><span>Diversity</span><br>${d}%</div><div><span>Host health</span><br>${Math.round(s.health)}</div>
-      <div><span>Phage hits</span><br>${s.stats.hits}</div><div><span>Blocks burst</span><br>${s.stats.lysed}</div>
-      <div><span>Phages stopped by mucus</span><br>${s.stats.blocked}</div><div><span>Times secreted</span><br>${s.stats.secretes}</div>
+      <div><span>Phage hits</span><br>${s.stats.hits}</div><div><span>Pixels burst</span><br>${s.stats.lysed}</div>
+      <div><span>Stopped by mucus</span><br>${s.stats.blocked}</div><div><span>Times secreted</span><br>${s.stats.secretes}</div>
     </div>
     <button class="btn" id="again" type="button">Play again</button>
     <button class="btn alt" id="copy" type="button">Copy result</button>
@@ -81,7 +81,7 @@ function frame(now: number): void {
     if (state.status !== 'run' && !shown) { shown = true; endScreen(state); }
   } else {
     if (!demo) demo = createState(7);
-    demo.volleys = []; demo.abx = []; demo.flares = []; demo.cmd = 0.12;
+    demo.spawning = false; demo.immuneSpawning = false; demo.mutating = false; demo.abx = []; demo.flares = []; demo.cmd = 0.12;
     step(demo, balance.dt);
     if (demo.status !== 'run') demo = createState(7);
     renderer.draw(demo, 0, null, false);

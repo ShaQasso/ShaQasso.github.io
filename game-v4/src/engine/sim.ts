@@ -11,10 +11,10 @@ const newCell = (c: number, cd: number): Cell => ({ c, inf: 0, ph: 0, gen: 0, cd
 
 export function createState(seed: number): State {
   const s: State = {
-    t: 0, rng: seed >>> 0, cells: new Array(W * W).fill(null), theta: 0, omega: 0, cmd: 0, phages: [], volleys: [], volAcc: [],
-    abx: [], flares: [], gaps: [], wall: Array(B.wall.sectors).fill(B.wall.base), inflammation: B.wall.base, health: B.health.start,
+    t: 0, rng: seed >>> 0, cells: new Array(W * W).fill(null), theta: 0, omega: 0, cmd: 0, phages: [], immune: [],
+    spawning: true, immuneSpawning: true, mutating: true, phageAcc: 0, immuneAcc: Array(B.wall.sectors).fill(0), abx: [], flares: [], gaps: [], wall: Array(B.wall.sectors).fill(B.wall.base), inflammation: B.wall.base, health: B.health.start,
     mucus: 0, secreteCd: 0, endT: 0, status: 'run', reason: '',
-    stats: { lysed: 0, hits: 0, deflected: 0, blocked: 0, flips: 0, births: 0, abxKilled: 0, immuneKilled: 0, secretes: 0, starved: 0 },
+    stats: { lysed: 0, hits: 0, deflected: 0, blocked: 0, flips: 0, births: 0, abxKilled: 0, immuneKilled: 0, immuneEvaded: 0, secretes: 0, starved: 0 },
   };
   // a disc of blocks made of clonal patches: a seed per colour, everyone takes the colour of the nearest seed
   const spots: [number, number][] = [];
@@ -72,10 +72,8 @@ export function secrete(s: State): boolean {
 }
 
 // ---- queries ----------------------------------------------------------------
-export const activeVolleys = (s: State) => s.volleys.filter((v) => s.t >= v.t0 && s.t < v.t0 + v.dur);
 export function warnings(s: State) {
   return {
-    volleys: s.volleys.filter((v) => s.t >= v.t0 - B.director.warn && s.t < v.t0),
     abx: s.abx.filter((a) => !a.fired && s.t >= a.t0 - B.director.warn),
     flares: s.flares.filter((f) => s.t >= f.t0 - B.director.warn && s.t < f.t0),
   };
@@ -137,16 +135,28 @@ export function step(s: State, dt: number = B.dt): void {
   s.mucus = Math.max(0, s.mucus - dt);
   s.secreteCd = Math.max(0, s.secreteCd - dt);
 
-  // volleys spawn phages
-  s.volleys.forEach((v, k) => {
-    if (s.t < v.t0 || s.t >= v.t0 + v.dur) return;
-    s.volAcc[k] += v.rate * dt;
-    while (s.volAcc[k] >= 1) {
-      s.volAcc[k] -= 1;
-      const a = v.angle + v.drift * (s.t - v.t0) + (rand(s) * 2 - 1) * v.half;
-      s.phages.push({ r: R + 3, angle: wrap(a), mask: v.mask });
+  // phages arrive at random from every side (none during calm gaps), more of them each act
+  const inGap = s.gaps.some((g) => s.t >= g.start && s.t < g.end);
+  if (s.spawning && !inGap) {
+    const act = Math.min(B.director.acts - 1, Math.floor(s.t / (B.director.actLen + B.director.gapLen)));
+    s.phageAcc += B.spawn.base * Math.pow(B.spawn.growth, act) * B.spawn.rateScale * dt;
+    while (s.phageAcc >= 1) {
+      s.phageAcc -= 1;
+      let mask = 1 << Math.floor(rand(s) * 3);
+      if (act >= B.spawn.twoColourAct && rand(s) < B.spawn.twoColourProb) mask |= 1 << Math.floor(rand(s) * 3);
+      s.phages.push({ r: B.phage.spawnR, angle: rand(s) * TAU, mask });
     }
-  });
+  }
+  // the inflamed wall fires immune cells at the blob (none while it is calm)
+  if (s.immuneSpawning) {
+    for (let j = 0; j < B.wall.sectors; j++) {
+      s.immuneAcc[j] += B.immune.rate * Math.max(0, s.wall[j] - B.immune.threshold) * dt;
+      while (s.immuneAcc[j] >= 1) {
+        s.immuneAcc[j] -= 1;
+        s.immune.push({ r: B.wallR, angle: ((j + rand(s)) / B.wall.sectors) * TAU });
+      }
+    }
+  }
 
   // antibiotics: a telegraphed arc over the outer layers, colour-blind
   for (const a of s.abx) {
@@ -182,6 +192,29 @@ export function step(s: State, dt: number = B.dt): void {
   }
   s.phages = alive;
 
+  // immune cells: they bite the first block they meet (a small chew), unless it evades or mucus stops them
+  const aliveI: typeof s.immune = [];
+  for (const m of s.immune) {
+    const r0 = m.r;
+    m.r -= B.immune.speed * dt;
+    const psi = m.angle - s.theta;
+    let done = false;
+    for (let rr = r0; rr > m.r && !done; rr -= 0.25) {
+      const x = Math.round(rr * Math.cos(psi)), y = Math.round(rr * Math.sin(psi));
+      const c = cellAt(s, x, y);
+      if (!c) continue;
+      done = true;
+      if (s.mucus > 0) { s.stats.blocked++; s.events?.push({ kind: 'mucus', x, y }); }
+      else if (rand(s) < COLOURS[c.c].evade * B.immune.evadeFactor) { s.stats.immuneEvaded++; s.events?.push({ kind: 'evade', x, y, c: c.c }); }
+      else {
+        kill(s, x, y, 'immune'); s.stats.immuneKilled++;
+        for (const [di, dj] of NEIGH) if (cellAt(s, x + di, y + dj) && rand(s) < B.immune.bite) { kill(s, x + di, y + dj, 'immune'); s.stats.immuneKilled++; }
+      }
+    }
+    if (!done && m.r > 0) aliveI.push(m);
+  }
+  s.immune = aliveI;
+
   // lysis and cascades: neighbours of the targeted colour, odds fading each generation, damped by phage-resistant capsules
   const lysing: { i: number; j: number; c: Cell }[] = [];
   eachCell(s, (c, i, j) => { if (c.inf > 0) { c.inf -= dt; if (c.inf <= 0) lysing.push({ i, j, c }); } });
@@ -202,9 +235,25 @@ export function step(s: State, dt: number = B.dt): void {
   const K = B.capacity;
   const room = Math.max(0, 1 - n0 / K);
   const parents: [number, number][] = [];
+  const share = [0, 0, 0];
+  eachCell(s, (c) => { share[c.c]++; });
+  const rareW = share.map((v) => 1 / (v / Math.max(1, n0) + B.flipRareBias)); // flips favour the colours you are short of
   eachCell(s, (c, i, j) => {
     if (c.inf > 0) return;
-    if (rand(s) < 1 - Math.exp(-B.flip * (1 + s.inflammation) * dt)) { c.c = (c.c + 1 + Math.floor(rand(s) * 2)) % 3; s.stats.flips++; }
+    if (s.mutating && rand(s) < 1 - Math.exp(-B.flip * (1 + s.inflammation) * dt)) {
+      // a phase switch spreads as a small microcolony of the new colour (favouring the colour you are short of), not a lone speck
+      const w = rareW.map((v, k) => (k === c.c ? 0 : v));
+      let x = rand(s) * (w[0] + w[1] + w[2]);
+      let pick = (c.c + 1) % 3;
+      for (let k = 0; k < 3; k++) { x -= w[k]; if (x <= 0) { pick = k; break; } }
+      const rad = B.flipRadius[0] + rand(s) * (B.flipRadius[1] - B.flipRadius[0]);
+      for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) {
+        if (di * di + dj * dj > rad * rad) continue;
+        const nb = cellAt(s, i + di, j + dj);
+        if (nb && nb.inf === 0) nb.c = pick;
+      }
+      s.stats.flips++;
+    }
     if (rand(s) < 1 - Math.exp(-dt * (COLOURS[c.c].growth / B.growthInterval) * room)) parents.push([i, j]);
   });
   for (const [i, j] of parents) {
@@ -231,12 +280,6 @@ export function step(s: State, dt: number = B.dt): void {
   s.wall = s.wall.map((w, j) => {
     const nb = (s.wall[(j + 1) % S] + s.wall[(j + S - 1) % S]) / 2;
     return Math.max(0, Math.min(1, w + (((B.wall.base + heat[j]) - w) * B.wall.relax + (nb - w) * B.wall.spread) * dt));
-  });
-  eachCell(s, (c, i, j) => {
-    if (!exposed(s, i, j)) return;
-    const w = s.wall[sectorOfAngle(worldAngle(s, i, j), S)];
-    const h = B.wall.attack * w * w * (1 - B.wall.evadeFactor * COLOURS[c.c].evade) * (s.mucus > 0 ? B.secrete.mucusAbxFactor : 1);
-    if (rand(s) < 1 - Math.exp(-h * dt)) { kill(s, i, j, 'immune'); s.stats.immuneKilled++; }
   });
   s.inflammation = Math.pow(s.wall.reduce((a, w) => a + w ** 3, 0) / S, 1 / 3);
   s.health += B.health.weight * (B.health.center - s.inflammation) * dt;

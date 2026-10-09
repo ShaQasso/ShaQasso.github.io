@@ -71,3 +71,15 @@ Known rough edges: diversity drifts to about 0.7 because chip-and-regrow favours
 - Hover a block: its colour's role, the size of the same-colour patch it belongs to (and a warning when a hit would spread far), and that patch is outlined.
 - Controls: drag (or scroll, A/D) to turn the heavy blob, Space to secrete, hold Shift for slow-mo, Enter to start.
 - Gut wall, flares, antibiotics wedge and stress effects carry over from v3.
+
+## 10. Playtest round 1 changes (pixel blob, random phages, visible immune cells)
+Feedback: not enough colour shifts (ended up all purple), the immune mechanism unclear and inflammation inconsequential, phages should be random colours from all sides, antibiotics stay, and the blob should be dense pixels so chips feel like real bites.
+- **A dense pixel blob.** Grid radius 28, about 700 pixels at the start, capacity 1000. Pixels regrow from their neighbours (a new pixel takes after the pixels around its spot), so patches are big and clonal.
+- **Real bites.** A phage hits the first pixel it meets; if the colour matches, the infection spreads pixel to pixel through same-colour neighbours (0.32 s per generation, fading odds up to 10 generations), so you watch a crater open. On a uniform amber blob one hit takes about 60 pixels; on a mixed blob almost nothing; cyan damps it.
+- **Random phages from every side.** No directional volleys any more: phages arrive at random angles in random colours, more each act, none during calm gaps; two-colour phages from act 3.
+- **More colour shifts.** Pixels switch colour as small microcolonies (radius 1 to 3), about one every couple of seconds, favouring whichever colour you are short of, so you cannot stay stuck with a single colour for long.
+- **Inflammation now does something you can see.** The wall's red sectors fire **white immune cells** at the blob (rate grows with how red the sector is, none when calm). An immune cell bites the first pixel it meets plus a small chew of its neighbours. **Violet evades about 75% of them**, mucus blocks them completely, and Space cools the wall so fewer are fired. The legend, tooltip, banner and intro all explain this.
+- Antibiotics are unchanged (telegraphed arc through the outer layers, colour-blind).
+- Space is weaker and slower (cooldown 30 s).
+
+Bots (30 seeds): never rotating about 20%, random spinning about 7%, dodging about 50-70% depending on pressure, dodging plus well-timed Space about 90%, Space mashed on every cooldown about 85%. Space looks very strong in the bots' hands; that is the thing to watch in human play.

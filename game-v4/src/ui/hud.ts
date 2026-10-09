@@ -8,9 +8,9 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const B = balance;
 
 const ACT_NOTES = [
-  ['ACT 1', 'Phages hunt one colour. Turn the blob so they meet the wrong one'],
-  ['ACT 2', 'Antibiotics kill anything on the outside. Flares heat the wall. Phages may hunt two colours'],
-  ['ACT 3', 'Bigger volleys. Big same-colour patches burst. Mix it up, or bet on the shield'],
+  ['ACT 1', 'Phages come from every side, each hunting one colour. Turn the blob so they meet the wrong colour'],
+  ['ACT 2', 'Antibiotics kill whatever is on the outside. Red flares inflame the wall, and the wall fires white immune cells at you'],
+  ['ACT 3', 'Phages may hunt two colours at once. Big same-colour patches burst. Mix it up, or bet on the shield'],
   ['FINAL ACT', 'Everything at once'],
 ];
 
@@ -46,7 +46,7 @@ export class Hud {
       : `shield <b>${dur.toFixed(1)}s</b> · cooling <b>-${Math.round(cool * 100)}%</b> · outside: <b style="color:${COLOUR_HEX[top]}">${Math.round(st.share[top] * 100)}% ${COLOUR_NAME[top].toLowerCase()}</b>`;
 
     if (act !== this.lastAct && !inGap) { this.lastAct = act; this.banner(ACT_NOTES[act][0], ACT_NOTES[act][1], 3.4); }
-    if (inGap && !this.lastGap) this.banner('CALM GAP', 'The host heals a little. The blob regrows', 3);
+    if (inGap && !this.lastGap) this.banner('CALM GAP', 'No phages. The host heals a little and the blob regrows', 3);
     this.lastGap = inGap;
     if (this.bannerT > 0) { this.bannerT -= 1 / 60; if (this.bannerT <= 0) $('banner').classList.remove('show'); }
   }
@@ -64,7 +64,7 @@ export class Hud {
     const patch = r.patchOf(s, h.i, h.j).size;
     const co = COLOURS[c.c];
     el.innerHTML = `<b style="color:${COLOUR_HEX[c.c]}">${COLOUR_NAME[c.c]}</b> · ${COLOUR_TRAIT[c.c]}<br>`
-      + `Patch of <b>${patch}</b> same-colour blocks${patch >= 12 ? ' <b style="color:#fca5a5">(a hit here would spread far)</b>' : ''}<br>`
+      + `Patch of <b>${patch}</b> same-colour pixels${patch >= 150 ? ' <b style="color:#fca5a5">(a hit here takes a big bite)</b>' : ''}<br>`
       + `${exposed(s, h.i, h.j) ? 'On the surface' : 'Inside the blob'} · resist ${Math.round(co.resist * 100)}% · evasion ${Math.round(co.evade * 100)}%`
       + (c.inf > 0 ? '<br><b style="color:#e9d5ff">Infected</b>' : '');
     el.style.display = 'block';

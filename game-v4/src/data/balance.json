@@ -1,9 +1,9 @@
 {
   "dt": 0.05,
-  "R": 11,
-  "capacity": 90,
-  "startRadius": 4.6,
-  "seedPatches": 3,
+  "R": 28,
+  "capacity": 1000,
+  "startRadius": 15,
+  "seedPatches": 7,
   "colours": [
     {
       "name": "amber",
@@ -27,8 +27,8 @@
       "growth": 0.9
     }
   ],
-  "growthInterval": 14.0,
-  "flip": 0.001,
+  "growthInterval": 22,
+  "flip": 0.0005,
   "parentWeight": 2,
   "starve": 0.05,
   "rotate": {
@@ -37,22 +37,26 @@
     "maxOmega": 1.6
   },
   "phage": {
-    "speed": 9,
-    "infectTime": 1.1,
+    "speed": 16,
+    "infectTime": 0.32,
     "burst": [
-      1.0,
-      0.95,
-      0.85,
-      0.7,
+      0.98,
+      0.93,
+      0.87,
+      0.8,
+      0.72,
+      0.62,
       0.5,
-      0.3,
-      0.1,
+      0.38,
+      0.25,
+      0.12,
       0
     ],
-    "resistFactor": 0.7
+    "resistFactor": 0.55,
+    "spawnR": 30
   },
   "abx": {
-    "depth": 3,
+    "depth": 6,
     "kill": 0.85
   },
   "wall": {
@@ -61,9 +65,7 @@
     "relax": 0.4,
     "spread": 0.15,
     "lysisPulse": 0.03,
-    "flareHeat": 1.0,
-    "attack": 0.02,
-    "evadeFactor": 0.6
+    "flareHeat": 1.0
   },
   "health": {
     "start": 70,
@@ -72,35 +74,46 @@
     "gapHeal": 0.5
   },
   "secrete": {
-    "cooldown": 20.0,
-    "baseMucus": 1.0,
-    "mucusGain": 11.0,
+    "cooldown": 30.0,
+    "baseMucus": 0.6,
+    "mucusGain": 9.0,
     "baseCool": 0.1,
     "coolGain": 0.4,
     "mucusAbxFactor": 0.5
   },
   "lose": {
-    "minCells": 8
+    "minCells": 40
   },
   "director": {
     "acts": 4,
     "actLen": 50,
     "gapLen": 8,
     "warn": 3,
-    "baseRate": 0.45,
-    "actGrowth": 1.5,
-    "rateScale": 6.0,
     "abxAct": 1,
-    "flareAct": 1,
-    "twoColourAct": 1,
-    "arcHalf": [
-      0.5,
-      0.9
-    ],
-    "twoColourProb": 0.8
+    "flareAct": 1
   },
   "flare": {
     "dur": 10,
     "power": 0.5
-  }
+  },
+  "wallR": 22.5,
+  "flipRareBias": 0.08,
+  "spawn": {
+    "base": 0.35,
+    "growth": 1.7,
+    "rateScale": 3.0,
+    "twoColourAct": 2,
+    "twoColourProb": 0.4
+  },
+  "immune": {
+    "speed": 13,
+    "rate": 2.0,
+    "threshold": 0.35,
+    "bite": 0.55,
+    "evadeFactor": 0.85
+  },
+  "flipRadius": [
+    1,
+    3
+  ]
 }
