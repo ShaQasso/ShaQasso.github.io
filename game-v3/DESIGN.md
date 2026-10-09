@@ -20,7 +20,7 @@
 - The rim faces **12 compass slots** (like a clock). Threats arrive at slots, from all sides.
 - Cells = (species, coat). Empty hex = hole (a dead cell). Colony grows by filling holes from neighbours
   and by adding a new outer ring when the rim is full ("the bubble expands").
-- **Player verb: rotate.** Each ring rotates independently by ±1 step.
+- **Player verb: rotate.** Each ring rotates independently continuously, with momentum and a speed cap.
   Inner rings are protected, so rotating them is how you *rotate a safe, diverse reserve outward*
   and decide who takes the next hit. Rim cells at a slot are "exposed".
 
