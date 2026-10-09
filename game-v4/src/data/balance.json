@@ -1,0 +1,106 @@
+{
+  "dt": 0.05,
+  "R": 11,
+  "capacity": 90,
+  "startRadius": 4.6,
+  "seedPatches": 3,
+  "colours": [
+    {
+      "name": "amber",
+      "mucus": 1.0,
+      "resist": 0.15,
+      "evade": 0.1,
+      "growth": 1.0
+    },
+    {
+      "name": "cyan",
+      "mucus": 0.1,
+      "resist": 0.9,
+      "evade": 0.1,
+      "growth": 0.85
+    },
+    {
+      "name": "violet",
+      "mucus": 0.1,
+      "resist": 0.15,
+      "evade": 0.9,
+      "growth": 0.9
+    }
+  ],
+  "growthInterval": 14.0,
+  "flip": 0.001,
+  "parentWeight": 2,
+  "starve": 0.05,
+  "rotate": {
+    "accel": 5,
+    "friction": 2.5,
+    "maxOmega": 1.6
+  },
+  "phage": {
+    "speed": 9,
+    "infectTime": 1.1,
+    "burst": [
+      1.0,
+      0.95,
+      0.85,
+      0.7,
+      0.5,
+      0.3,
+      0.1,
+      0
+    ],
+    "resistFactor": 0.7
+  },
+  "abx": {
+    "depth": 3,
+    "kill": 0.85
+  },
+  "wall": {
+    "sectors": 6,
+    "base": 0.3,
+    "relax": 0.4,
+    "spread": 0.15,
+    "lysisPulse": 0.03,
+    "flareHeat": 1.0,
+    "attack": 0.02,
+    "evadeFactor": 0.6
+  },
+  "health": {
+    "start": 70,
+    "weight": 14.0,
+    "center": 0.45,
+    "gapHeal": 0.5
+  },
+  "secrete": {
+    "cooldown": 20.0,
+    "baseMucus": 1.0,
+    "mucusGain": 11.0,
+    "baseCool": 0.1,
+    "coolGain": 0.4,
+    "mucusAbxFactor": 0.5
+  },
+  "lose": {
+    "minCells": 8
+  },
+  "director": {
+    "acts": 4,
+    "actLen": 50,
+    "gapLen": 8,
+    "warn": 3,
+    "baseRate": 0.45,
+    "actGrowth": 1.5,
+    "rateScale": 6.0,
+    "abxAct": 1,
+    "flareAct": 1,
+    "twoColourAct": 1,
+    "arcHalf": [
+      0.5,
+      0.9
+    ],
+    "twoColourProb": 0.8
+  },
+  "flare": {
+    "dur": 10,
+    "power": 0.5
+  }
+}
