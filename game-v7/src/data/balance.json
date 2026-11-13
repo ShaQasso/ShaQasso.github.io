@@ -40,7 +40,7 @@
     "maxOmega": 1.6
   },
   "phage": {
-    "speed": 19,
+    "speed": 60,
     "infectTime": 0.3,
     "burst": [
       0.97,
@@ -56,7 +56,7 @@
     ],
     "resistFactor": 0.55,
     "spawnR": 44,
-    "speedGrow": 0.14,
+    "speedGrow": 0.06,
     "warn": 2.2
   },
   "immune": {

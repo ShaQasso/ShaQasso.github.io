@@ -196,7 +196,13 @@ export class Renderer {
         ctx.strokeStyle = hexA(maskColours(p.mask)[0], 0.4); ctx.lineWidth = Math.max(1, U * 0.16); ctx.setLineDash([U * 0.4, U * 0.9]);
         ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
       }
-      this.phageSprite(x, y, p.angle, maskColours(p.mask), waiting ? 0.45 + 0.3 * Math.sin(this.time * 10) : 1);
+      if (!waiting) { // in flight it is a shot: a short streak behind it
+        const [bx, by] = this.polar(r + 5, p.angle);
+        const g = ctx.createLinearGradient(x, y, bx, by); g.addColorStop(0, hexA(maskColours(p.mask)[0], 0.8)); g.addColorStop(1, hexA(maskColours(p.mask)[0], 0));
+        ctx.strokeStyle = g; ctx.lineWidth = Math.max(1.5, U * 0.5); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(bx, by); ctx.stroke();
+      }
+      this.phageSprite(x, y, p.angle, maskColours(p.mask), waiting ? 0.75 + 0.25 * Math.sin(this.time * 10) : 1);
     }
     for (const m of s.immune) {
       const r = m.r - immuneSpeed(s) * acc; if (r < 0) continue;
