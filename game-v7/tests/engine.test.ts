@@ -32,13 +32,12 @@ describe('the run loop and cards', () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(c));
   });
 
-  it('opens in the grooming phase with three cards to pick from, twice, and then the wave begins', () => {
+  it('opens in the grooming phase with three cards to pick from, and one card starts the wave', () => {
     const s = createState(2);
     expect(s.phase).toBe('groom'); expect(s.offer.length).toBe(3); expect(s.picksLeft).toBe(balance.picks);
     const first = s.offer.slice();
+    s.offer = ['steroid_now', 'fibre', 'mucin']; // one card a month; a card with no target plays at once
     expect(pickCard(s, 0)).toBe(true);
-    expect(s.phase).toBe('groom'); expect(s.offer.length).toBe(3);
-    pickCard(s, 1);
     expect(s.phase).toBe('wave');
     expect(first.every((id) => CARD[id])).toBe(true);
     step(s); // the simulation only runs in the wave
@@ -51,12 +50,13 @@ describe('the run loop and cards', () => {
     expect(JSON.stringify(s.cells)).toBe(before); expect(s.waveT).toBe(0);
   });
 
-  it('food, motility and drug cards all exist, and held cards go in the held slot', () => {
+  it('offered cards are food and drugs only; legacy held cards still resolve', () => {
     const fam = new Set(CARDS.map((c) => c.family));
-    expect(fam).toEqual(new Set(['food', 'motility', 'drug']));
+    expect(fam).toEqual(new Set(['food', 'drug'])); // offered cards are only things from outside the body
+    expect(CARDS.some((c) => c.held || c.mods)).toBe(false); // nothing held, nothing on a timer
     const s = createState(4); s.offer = ['ringturn', 'fibre', 'steroid']; pickCard(s, 0);
     expect(s.held).toEqual({ id: 'ringturn', charges: 3 });
-    s.offer = ['fibre', 'steroid', 'mucin']; pickCard(s, 1);
+    s.phase = 'groom'; s.offer = ['fibre', 'steroid', 'mucin']; pickCard(s, 1);
     expect(s.held?.id).toBe('steroid'); // a new held card replaces the old one
   });
 
@@ -88,7 +88,7 @@ describe('the run loop and cards', () => {
     expect(s.sites.length).toBe(0);
   });
 
-  it('a drug site on the wall cools that stretch of the wall strongly for a few waves', () => {
+  it('a drug site on the wall cools that stretch of the wall strongly for the coming wave', () => {
     const s = wave(12, () => 1); const before = coolingFactors(s);
     s.phase = 'groom'; s.picksLeft = 5; s.offer = ['mesalamine', 'x', 'y']; pickCard(s, 0);
     expect(s.pending).toEqual({ id: 'mesalamine', target: 'wall' });
@@ -97,7 +97,7 @@ describe('the run loop and cards', () => {
     expect(after[3]).toBeGreaterThan(before[3] + 0.25); expect(after[0]).toBeCloseTo(before[0]);
     expect(after[2]).toBeGreaterThan(before[2]); // neighbours get half
     s.phase = 'wave'; s.waveLen = 5; s.waveT = 4.99; step(s); step(s);
-    expect(s.wallSites[0].left).toBe(balance.site.wallWaves - 1);
+    expect(s.wallSites.length).toBe(0); // it lasts for the coming wave only
   });
 
   it('card effects expire after their waves', () => {
@@ -295,14 +295,39 @@ describe('ring turn: shaping the blob', () => {
 });
 
 describe('balance sanity', () => {
-  it('a bot that turns toward the cooling and away from phages gets further than one that does nothing', () => {
+  it('a bot that turns away from phages takes far fewer hits than one that does nothing', () => {
     const play = (bot: string, seed: number) => {
       const s = createState(seed); const b = BOTS[bot]; let r = seed >>> 0; const rnd = () => { r = (r + 0x6d2b79f5) >>> 0; let t = r; t = Math.imul(t ^ (t >>> 15), t | 1); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; let k = 0;
       while (s.status === 'run') { if (s.phase === 'groom') { while (s.phase === 'groom') b.groom(s, rnd); continue; } if (s.phase === 'checkup') { nextCycle(s); continue; } if (k++ % 5 === 0) b.tick(s, rnd); step(s); }
-      return s.cycle + (s.status === 'won' ? 1 : 0);
+      return s.stats.hits;
     };
     let smart = 0, idle = 0; for (const seed of [1, 2, 3]) { smart += play('smart', seed); idle += play('idle', seed); }
-    expect(smart).toBeGreaterThan(idle);
+    expect(smart).toBeLessThan(idle * 0.7); // turning away from announced phages takes far fewer hits
   }, 280000);
+});
+
+describe('v7: gardening cards and announced phages', () => {
+  it('an antibiotic card clears every cell where it is dropped', () => {
+    const s = wave(12, mixed); s.phase = 'groom'; s.picksLeft = 5; s.offer = ['antibiotic', 'fibre', 'mucin'];
+    const before = count(s); pickCard(s, 0);
+    expect(s.pending).toEqual({ id: 'antibiotic', target: 'blob' });
+    expect(placeTarget(s, { i: 0, j: 0 })).toBe(true);
+    expect(cellAt(s, 0, 0)).toBeNull(); expect(cellAt(s, 3, 0)).toBeNull();
+    expect(count(s)).toBeLessThan(before - 50); expect(cellAt(s, 9, 0)).not.toBeNull();
+  });
+  it('a steroid cools the whole wall now and raises the baseline for good', () => {
+    const s = createState(5); s.wall.fill(0.6); const drift = s.drift; s.offer = ['steroid_now', 'fibre', 'mucin']; pickCard(s, 0);
+    expect(Math.max(...s.wall)).toBeLessThan(0.6); expect(s.drift).toBeGreaterThan(drift); expect(s.held).toBeNull(); expect(s.mods.length).toBe(0);
+  });
+  it('a phage waits at the rim before it launches, so there is time to turn', () => {
+    const s = wave(12, () => 1); s.phages.push({ r: balance.phage.spawnR, angle: 0, mask: 2, wait: 1 });
+    run(s, 0.9); expect(s.phages[0].r).toBe(balance.phage.spawnR);
+    run(s, 0.5); expect(s.phages[0].r).toBeLessThan(balance.phage.spawnR);
+  });
+  it('a run is six months, and antibiotics never arrive as a wave', () => {
+    expect(balance.cycles).toBe(6); expect(balance.picks).toBe(1);
+    const s = createState(3); s.cycle = 6; s.offer = ['steroid_now', 'fibre', 'mucin']; pickCard(s, 0);
+    expect(s.abx.length).toBe(0);
+  });
 });
 void COLOURS;

@@ -1,9 +1,9 @@
 import { angDiff, TAU } from './engine/geometry';
-import { nextCycle, pickCard, placeTarget, setRotation, useHeld } from './engine/sim';
+import { nextCycle, pickCard, placeTarget, setRotation } from './engine/sim';
 import type { State } from './engine/types';
 import type { Renderer } from './render/draw';
 
-/** One control in a wave: turn the blob (drag, scroll, A/D). Space uses the held card. 1/2/3 pick a card, Enter continues. */
+/** One control in a wave: turn the colony (drag, scroll, A/D). 1/2/3 pick a card (then click where it goes), Enter continues. */
 export class Input {
   pointer = { x: -1, y: -1, inside: false };
   onStart: () => void = () => {};
@@ -21,7 +21,6 @@ export class Input {
     canvas.addEventListener('wheel', (e) => this.wheel(e), { passive: false });
     addEventListener('keydown', (e) => this.key(e, true));
     addEventListener('keyup', (e) => this.key(e, false));
-    document.getElementById('held')?.addEventListener('click', () => { const s = this.getState(); if (s) useHeld(s); });
   }
   bind(getState: () => State | null): void { this.getState = getState; }
   get dragging(): boolean { return !!this.drag; }
@@ -65,7 +64,6 @@ export class Input {
     if (!s || s.status !== 'run') return;
     if (s.phase === 'groom' && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) { pickCard(s, Number(e.code.slice(5)) - 1); return; }
     if (s.phase !== 'wave') return;
-    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) useHeld(s, e.shiftKey); return; }
     if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.dir = -1;
     else if (e.code === 'ArrowRight' || e.code === 'KeyD') this.dir = 1;
     else return;

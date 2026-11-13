@@ -1,5 +1,5 @@
 export interface Cell { c: number; inf: number; ph: number; gen: number; m: number; mcd: number }
-export interface Phage { r: number; angle: number; mask: number }
+export interface Phage { r: number; angle: number; mask: number; wait?: number }
 export interface ImmuneCell { r: number; angle: number }
 export interface Abx { t0: number; angle: number; half: number; fired: boolean }
 export interface FlareSeg { t0: number; t1: number; angle: number; half: number; intensity: number; kind: 'pre' | 'flare' | 'after' }

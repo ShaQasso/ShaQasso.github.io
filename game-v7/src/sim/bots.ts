@@ -44,7 +44,7 @@ function steer(s: State, useCooling: boolean): void {
 }
 
 // ---- card drafting policies ------------------------------------------------------------------------
-const SCORE: Record<string, number> = { mesalamine: 9, antitnf: 8, steroid: 7, fibre: 7, starch: 5, mucin: 4, peristalsis: 4, mucolytic: 5, ringturn: 2 };
+const SCORE: Record<string, number> = { mesalamine: 9, fibre: 8, steroid_now: 6, starch: 5, mucin: 4, antibiotic: 0 };
 
 /** Places a pending site card. Smart: blue food faces the hottest part of the wall, a wall drug goes on the hottest sector. */
 function place(s: State, rnd: () => number, smart: boolean): void {

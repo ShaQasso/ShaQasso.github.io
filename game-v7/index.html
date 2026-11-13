@@ -3,36 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>MBIOTA — remission</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='5' y='5' width='10' height='10' rx='3' fill='%23fbbf24'/><rect x='17' y='5' width='10' height='10' rx='3' fill='%2322d3ee'/><rect x='11' y='17' width='10' height='10' rx='3' fill='%23a78bfa'/></svg>" />
+  <title>Mbiota</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d0d0d'/><rect x='5' y='11' width='22' height='10' rx='5' fill='%23eef3d4'/><rect x='5' y='11' width='11' height='10' rx='5' fill='%23d0392a'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="app">
     <canvas id="game"></canvas>
     <div id="hud">
       <div class="top">
-        <div class="brand">MBIOTA <span>remission</span></div>
-        <div class="turn"><b id="turn">MONTH 1 / 12</b><span id="phase">grooming</span></div>
+        <div class="brand"><i class="mark"><b></b><b></b></i>MBIOTA</div>
+        <div class="turn"><b id="turn">Month 1 of 6</b><span id="phase"></span><div class="bar timer" id="timer"><i id="b-timer"></i></div></div>
         <div class="bars">
-          <label>Wave<div class="bar timer"><i id="b-timer"></i></div></label>
           <label>Inflammation<div class="bar infl"><i id="b-infl"></i><u id="m-over"></u></div></label>
-          <label><span id="pop-label">Blob</span><div class="bar pop"><i id="b-pop"></i><u id="m-min"></u></div></label>
+          <label><span id="pop-label">Colony</span><div class="bar pop"><i id="b-pop"></i></div></label>
         </div>
       </div>
       <div id="banner"></div>
-      <div class="bottom">
-        <div class="legend">
-          <span><i style="background:#fbbf24"></i><b>Yellow</b> mucus coats</span>
-          <span><i style="background:#a78bfa"></i><b>Purple</b> phage-resistant</span>
-          <span><i style="background:#38a8ff"></i><b>Blue</b> treats flares, evades immune cells</span>
-          <span><i style="background:#fecaca;border-radius:50%"></i><b>White</b> immune cell</span>
-        </div>
-        <div class="actions">
-          <div id="chips"></div>
-          <button id="held" type="button"><span id="held-name">no held card</span> <u>Space</u></button>
-        </div>
+      <div class="legend" id="legend">
+        <span><i style="background:#f2b01e"></i>Yellow builds a mucus coat</span>
+        <span><i style="background:#1f7a52"></i>Green resists phages</span>
+        <span><i style="background:#1d6fa5"></i>Blue calms flares</span>
+        <span><i style="background:#eef3d4"></i>A phage's head colour is the cells it infects</span>
       </div>
     </div>
+    <div id="hand"></div>
+    <div id="summary"></div>
     <div id="screen"></div>
     <div id="tip"></div>
   </div>

@@ -56,7 +56,8 @@
     ],
     "resistFactor": 0.55,
     "spawnR": 44,
-    "speedGrow": 0.14
+    "speedGrow": 0.14,
+    "warn": 2.2
   },
   "immune": {
     "speed": 8,
@@ -81,13 +82,13 @@
     ],
     "twoColourFrom": 3,
     "twoColourProb": 0.4,
-    "abxFrom": 4,
-    "abxLate": 6,
+    "abxFrom": 99,
+    "abxLate": 99,
     "firstMonth": 0.6
   },
   "flare": {
     "from": 2,
-    "heat": 0.13,
+    "heat": 0.155,
     "immunePerSec": 0.32,
     "immuneGrow": 0.08,
     "pre": [
@@ -116,18 +117,18 @@
   "cool": {
     "half": 0.6,
     "proximity": 0.6,
-    "K": 30,
-    "rate": 0.16,
+    "K": 42,
+    "rate": 0.3,
     "max": 0.85,
     "refresh": 0.25
   },
   "wall": {
     "base": 0.3,
     "decay": 0.04,
-    "lysisPulse": 0.0015
+    "lysisPulse": 0.004
   },
   "chronic": {
-    "perCycle": 0.06,
+    "perCycle": 0.04,
     "recover": 0.35
   },
   "overload": 0.78,
@@ -162,11 +163,16 @@
   },
   "site": {
     "blobR": 7,
-    "coreR": 3,
+    "coreR": 4,
     "growMul": 2.2,
     "newbornP": 0.85,
-    "waves": 2,
+    "waves": 1,
     "wallBonus": 0.32,
-    "wallWaves": 3
+    "wallWaves": 1
+  },
+  "card": {
+    "abxR": 5,
+    "steroidCool": 0.25,
+    "steroidDrift": 0.03
   }
 }

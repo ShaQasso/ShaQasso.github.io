@@ -1,109 +1,149 @@
 import balance from '../data/balance.json';
 import { CARD } from '../engine/cards';
 import { count, exposed } from '../engine/geometry';
-import { COLOURS, baseInflammation, coatThreshold } from '../engine/sim';
+import { coatThreshold } from '../engine/sim';
 import type { State } from '../engine/types';
 import { COLOUR_HEX, COLOUR_NAME, type Pick, type Renderer } from '../render/draw';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const B = balance;
-const FAM: Record<string, string> = { food: 'Food (carb source)', motility: 'Motility', drug: 'IBD treatment' };
-const ROLE = ['mucus capsule: its coats last longest', 'phage-resistant capsule: damps cascades', 'immune-evasion capsule: treats flares, dodges immune cells'];
+const FAM: Record<string, string> = { food: 'Food', drug: 'Drug', motility: 'Motion' };
+const ROLE = ['builds a mucus coat when the patch is big', 'resists phages', 'calms flares and slips past immune cells'];
+/** What each month adds, so there is always something new. */
+export const NEW: Record<number, string> = { 2: 'flares', 3: 'two-colour phages', 4: 'faster phages', 5: 'stronger flares', 6: 'a second flare' };
+const BIO: Record<number, string> = {
+  1: 'Phages attack one type of capsule at a time, so a colony with several types is rarely wiped out.',
+  2: 'In an inflamed gut, Bacteroides shift which capsules they make. Blue cells stand in for the types that calm the immune system.',
+  3: 'Bacteria change capsule type by flipping short stretches of DNA, so one lineage can hold several types at once.',
+  4: 'Diet moves the same switches: different carbohydrates favour different capsule states.',
+  5: 'A thick mucus layer keeps bacteria and the gut wall apart. It thins when the gut is inflamed.',
+};
+
+/** Flat poster art for each card, built from a few shapes. */
+function art(id: string): string {
+  const d = (style: string) => `<div style="${style}"></div>`;
+  switch (id) {
+    case 'fibre': return `<div class="art" style="background:#0d0d0d">${d('left:50px;top:8px;width:84px;height:84px;border-radius:50%;border:4px dashed #eef3d4')}${d('left:68px;top:26px;width:48px;height:48px;border-radius:50%;background:#1d6fa5')}</div>`;
+    case 'mucin': return `<div class="art" style="background:#f2b01e">${d('left:20px;top:44px;width:140px;height:140px;border-radius:50%;border:7px solid #0d0d0d')}${d('left:44px;top:68px;width:92px;height:92px;border-radius:50%;border:7px solid #0d0d0d')}${d('left:68px;top:92px;width:44px;height:44px;border-radius:50%;background:#0d0d0d')}</div>`;
+    case 'starch': return `<div class="art" style="background:#1f7a52">${d('left:66px;top:20px;width:48px;height:58px;background:#eef3d4;clip-path:polygon(50% 0,100% 22%,100% 78%,50% 100%,0 78%,0 22%)')}${d('left:40px;top:45px;width:100px;height:9px;background:#0d0d0d;transform:rotate(-32deg)')}</div>`;
+    case 'antibiotic': return `<div class="art" style="background:#d0392a">${d('left:55px;top:15px;width:70px;height:70px;border-radius:50%;background:#0d0d0d')}${d('left:14px;top:20px;width:16px;height:16px;border-radius:3px;background:#eef3d4')}${d('left:22px;top:62px;width:16px;height:16px;border-radius:3px;background:#f2b01e')}${d('left:146px;top:28px;width:16px;height:16px;border-radius:3px;background:#f2b01e')}${d('left:140px;top:66px;width:16px;height:16px;border-radius:3px;background:#eef3d4')}</div>`;
+    case 'mesalamine': return `<div class="art" style="background:#0d0d0d">${d('left:10px;top:20px;width:160px;height:160px;border-radius:50%;background:#d0392a')}${d('left:35px;top:45px;width:110px;height:110px;border-radius:50%;background:#e0701f')}${d('left:60px;top:70px;width:60px;height:60px;border-radius:50%;background:#1d6fa5')}</div>`;
+    default: return `<div class="art" style="background:#e0701f">${d('left:40px;top:0;width:100px;height:100px;border-radius:50%;border:6px solid #eef3d4')}${d('left:62px;top:22px;width:56px;height:56px;border-radius:50%;border:6px solid #eef3d4')}${d('left:82px;top:42px;width:16px;height:16px;border-radius:50%;background:#0d0d0d')}</div>`;
+  }
+}
 
 export class Hud {
   onPick: (i: number) => void = () => {};
   onContinue: () => void = () => {};
+  /** Drag-to-play: the game says whether the pointer is over a valid spot, and plays the card on drop. */
+  onDragMove: (i: number, x: number, y: number) => void = () => {};
+  onDrop: (i: number, x: number, y: number) => boolean = () => false;
+  onDragEnd: () => void = () => {};
   private bannerT = 0;
   private seen = new Set<string>();
-  private screenKey = '';
+  private key = '';
   private lastCycle = 0;
 
   update(s: State): void {
     const n = count(s), wave = s.phase === 'wave';
-    $('turn').textContent = `MONTH ${s.cycle} / ${B.cycles}`;
-    $('phase').textContent = s.phase === 'groom' ? `grooming ${B.picks - s.picksLeft + 1} of ${B.picks}` : s.phase === 'wave' ? 'the wave' : 'check-up';
-    $('b-timer').style.width = wave ? `${(1 - s.waveT / s.waveLen) * 100}%` : '0%';
-    $('b-infl').style.width = `${Math.min(100, (s.inflammation / B.overload) * 90)}%`;
-    $('b-infl').style.background = s.overloadT > 0 ? '#ef4444' : '';
-    $('m-over').style.left = '90%';
+    $('turn').textContent = `Month ${s.cycle} of ${B.cycles}`;
+    $('phase').textContent = s.status !== 'run' ? '' : s.phase === 'groom' ? (s.pending ? '' : 'Choose one card. Drag it to where it should work.') : '';
+    $('timer').style.display = wave ? 'block' : 'none';
+    $('b-timer').style.width = `${Math.min(100, (s.waveT / s.waveLen) * 100)}%`;
+    const fr = Math.min(1, s.inflammation / B.overload);
+    $('b-infl').style.width = `${fr * 78}%`;
+    $('b-infl').style.background = s.overloadT > 0 ? '#d0392a' : fr > 0.75 ? '#e0701f' : '';
+    $('m-over').style.left = '78%';
     $('b-pop').style.width = `${Math.min(100, (n / B.capacity) * 100)}%`;
-    $('m-min').style.left = `${(B.lose.minCells / B.capacity) * 100}%`;
-    $('pop-label').textContent = `Blob ${n} / ${B.capacity}`;
+    $('pop-label').textContent = `Colony ${n} / ${B.capacity}`;
+    $('legend').style.display = wave ? '' : 'none';
 
-    const held = $<HTMLButtonElement>('held');
-    if (s.held) { const c = CARD[s.held.id]; $('held-name').textContent = `${c.name} ×${s.held.charges}`; held.disabled = !wave; held.classList.toggle('ready', wave); }
-    else { $('held-name').textContent = 'no held card'; held.disabled = true; held.classList.remove('ready'); }
-    const chips = s.mods.filter((m) => CARD[m.id]?.family).map((m) => `<span><b>${CARD[m.id].name}</b> ${m.left} wave${m.left > 1 ? 's' : ''}</span>`);
-    for (const st of s.sites) chips.push(`<span style="border-color:${COLOUR_HEX[st.colour]}"><b>${COLOUR_NAME[st.colour]} feed</b> ${st.left} wave${st.left > 1 ? 's' : ''}</span>`);
-    for (const w of s.wallSites) chips.push(`<span style="border-color:#facc15"><b>Wall treatment</b> ${w.left} wave${w.left > 1 ? 's' : ''}</span>`);
-    if (s.drift > 0.005) chips.push(`<span>baseline <b>+${Math.round(s.drift * 100)}%</b></span>`);
-    $('chips').innerHTML = chips.join('');
-
-    // teaching banners
+    // one prompt at a time, the first time each thing appears
     if (wave && s.cycle !== this.lastCycle) {
       this.lastCycle = s.cycle;
-      if (s.cycle === 1) this.banner('MONTH 1', 'Phages come from every side, each hunting one colour. Drag to turn the blob so they meet the wrong one. Big same-colour patches grow a gold mucus coat.', 8);
-      else if (s.flares.length && !this.seen.has('flare')) { this.seen.add('flare'); this.banner('A FLARE IS COMING', 'The magenta arc on the wall will heat up and fire big white immune cells that scrape a strip off the blob. Blue pixels facing the hot spot cool it and evade the scrape. Turn blue toward it.', 8); }
-      else if (s.abx.length && !this.seen.has('abx')) { this.seen.add('abx'); this.banner('ANTIBIOTIC COURSE', 'A yellow wedge kills the outer layers inside it, whatever the colour. Turn weak spots away, or coat them.', 7); }
+      if (s.cycle === 1) this.banner('Drag to turn the colony', 'Each phage waits at the rim before it launches. Its head colour is the cells it infects: turn so it lands on a different colour.', 9);
+      else if (s.flares.length && !this.seen.has('flare')) { this.seen.add('flare'); this.banner('A flare is coming', 'The orange arc heats the wall and sends immune cells that scrape a strip off the colony. Turn blue cells toward it.', 8); }
+      else if (s.cycle === 3) this.banner('Two-colour phages', 'A head split in two colours infects both.', 6);
     }
-    if (s.stats.coats > 0 && !this.seen.has('coat')) { this.seen.add('coat'); this.banner('MUCUS COAT', 'A really big patch coated itself (gold outline). Hits chip the coat, and a chipped coat takes a while to regrow. Big patches shield you, but a bite into one is large.', 7); }
-    if (this.bannerT > 0) { this.bannerT -= 1 / 60; if (this.bannerT <= 0) $('banner').classList.remove('show'); }
+    if (s.stats.coats > 0 && !this.seen.has('coat')) { this.seen.add('coat'); this.banner('Mucus coat', 'A big single-colour patch coated itself (pale edge). It blocks hits, but a bite into a big patch is large.', 7); }
+    if (this.bannerT > 0 && this.bannerT < 9000) { this.bannerT -= 1 / 60; if (this.bannerT <= 0) $('banner').classList.remove('show'); }
 
     this.screens(s);
   }
 
   banner(title: string, sub: string, secs: number): void { const b = $('banner'); b.innerHTML = `${title}<small>${sub}</small>`; b.classList.add('show'); this.bannerT = secs; }
-  reset(): void { this.seen.clear(); this.lastCycle = 0; this.screenKey = ''; $('banner').classList.remove('show'); }
+  reset(): void { this.seen.clear(); this.lastCycle = 0; this.key = ''; $('banner').classList.remove('show'); $('hand').classList.remove('show'); $('summary').classList.remove('show'); }
 
-  private status(s: State): string {
-    return `Blob <b>${count(s)}</b> px · inflammation <b>${Math.round(s.inflammation * 100)}%</b> (baseline ${Math.round(baseInflammation(s) * 100)}%) · held: <b>${s.held ? CARD[s.held.id].name : 'none'}</b>`;
-  }
-
-  /** Grooming (pick a card) and check-up (continue) overlays. */
+  /** The hand (grooming) and the month summary (check-up). */
   private screens(s: State): void {
-    const key = s.status !== 'run' ? 'end' : s.phase === 'groom' && s.pending ? `p|${s.pending.id}` : s.phase === 'groom' ? `g|${s.cycle}|${s.picksLeft}|${s.offer.join(',')}` : s.phase === 'checkup' ? `c|${s.cycle}` : 'w';
-    if (key === this.screenKey) return;
-    this.screenKey = key;
-    const el = $('screen');
-    if (key === 'w' || key === 'end') { if (key === 'w') el.classList.remove('show'); return; }
+    const key = s.status !== 'run' ? 'end' : s.phase === 'groom' && s.pending ? `p|${s.pending.id}` : s.phase === 'groom' ? `g|${s.cycle}|${s.offer.join(',')}` : s.phase === 'checkup' ? `c|${s.cycle}` : 'w';
+    if (key === this.key) return;
+    this.key = key;
+    const hand = $('hand'), sum = $('summary');
+    hand.classList.remove('show'); sum.classList.remove('show');
+    if (key === 'w' || key === 'end') { if (this.bannerT > 9000) { this.bannerT = 0; $('banner').classList.remove('show'); } return; }
     if (s.pending) {
-      el.classList.remove('show');
       const card = CARD[s.pending.id];
-      this.banner(`${card.name.toUpperCase()}: CHOOSE A SITE`, s.pending.target === 'blob' ? `Click on the blob where the food goes. A small spot turns ${COLOUR_NAME[card.colour ?? 0].toLowerCase()} now and the area keeps growing ${COLOUR_NAME[card.colour ?? 0].toLowerCase()} for ${B.site.waves} waves.` : `Click a stretch of the gut wall to treat. It is cooled strongly there for ${B.site.wallWaves} waves.`, 9999);
+      this.banner(card.name, s.pending.target === 'blob' ? 'Click the colony where it should work.' : 'Click the section of the wall to treat.', 9999);
       return;
     }
+    $('banner').classList.remove('show'); this.bannerT = 0;
     if (s.phase === 'groom') {
-      $('banner').classList.remove('show'); this.bannerT = 0;
-      const cards = s.offer.map((id, i) => { const c = CARD[id]; return `<button class="pick ${c.family}" data-i="${i}"><kbd>${i + 1}</kbd><div class="fam">${FAM[c.family]}${c.held ? ' · held' : ''}</div><b>${c.name}</b><span>${c.text}</span></button>`; }).join('');
-      el.innerHTML = `<div class="card wide"><h1 style="font-size:20px;letter-spacing:.12em">MONTH ${s.cycle} · GROOMING</h1>
-        <h2>Pick ${s.picksLeft === B.picks ? 'your first' : 'your second'} card (${B.picks - s.picksLeft + 1} of ${B.picks}). Food and motility cards last a few waves; a held card is used with Space during the wave.</h2>
-        <div class="hand">${cards}</div><div class="status">${this.status(s)}</div></div>`;
-      el.classList.add('show');
-      el.querySelectorAll<HTMLButtonElement>('.pick').forEach((b) => b.addEventListener('click', () => this.onPick(Number(b.dataset.i))));
+      hand.innerHTML = s.offer.map((id, i) => { const c = CARD[id]; return `<div class="slot"><button class="pcard" type="button" data-i="${i}" aria-label="${c.name}: ${c.text}"><kbd>${i + 1}</kbd>${art(id)}<div class="body"><div class="fam">${FAM[c.family]}</div><div class="name">${c.name}</div><div class="txt">${c.text}</div></div></button></div>`; }).join('');
+      hand.classList.add('show');
+      hand.querySelectorAll<HTMLButtonElement>('.pcard').forEach((el) => this.draggable(el, Number(el.dataset.i)));
     } else if (s.phase === 'checkup') {
-      const h = s.history[s.history.length - 1];
-      el.innerHTML = `<div class="card"><h1 style="font-size:20px;letter-spacing:.12em">MONTH ${s.cycle} · CHECK-UP</h1>
-        <h2>${h.peak < 0.5 ? 'A quiet month. The wall held.' : h.peak < 0.68 ? 'A rough month, but you kept it in check.' : 'A close call. The disease nearly won.'}</h2>
-        <div class="stats"><div><span>Peak inflammation</span><br>${Math.round(h.peak * 100)}% (flare-out at ${Math.round(B.overload * 100)}%)</div><div><span>Pixels lost</span><br>${h.lost}</div>
-        <div><span>Phage hits</span><br>${h.hits}</div><div><span>Immune cell bites</span><br>${h.immune}</div>
-        <div><span>Antibiotic kills</span><br>${h.abx}</div><div><span>Mucus coats grown</span><br>${h.coats}</div></div>
-        <div class="status">Chronic disease: the baseline creeps up a little every month. ${this.status(s)}</div>
-        <button class="btn" id="cont" type="button">Next month</button> <span style="color:#7d8ba1;font-size:12px;margin-left:8px">Enter</span></div>`;
-      el.classList.add('show');
+      const h = s.history[s.history.length - 1], thr = Math.round(coatThreshold(s)), peak = Math.round(h.peak * 100);
+      const head = h.peak < 0.5 ? 'Remission holds.' : h.peak < 0.68 ? 'A rough month.' : 'A close call.';
+      const row = (col: string, a: string, b: string) => `<div class="row"><i style="background:${col}"></i><div><b>${a}</b><span>${b}</span></div></div>`;
+      sum.innerHTML = `<div><div class="k">Month ${s.cycle} of ${B.cycles}</div><h1>${head}</h1></div>
+        <div class="rows">
+          ${h.blocked > 0 ? row('#f2b01e', `${h.blocked} hit${h.blocked > 1 ? 's' : ''} stopped by a coat`, 'A big single-colour patch coated itself.') : row('#f2b01e', 'No coat this month', `A coat needs one patch of ${thr} cells in a single colour.`)}
+          ${h.flares > 0 ? row('#1d6fa5', h.peak < B.overload * 0.85 ? 'The flare was kept in check' : 'The flare nearly got away', `Inflammation peaked at ${peak}%. Flare-out is at ${Math.round(B.overload * 100)}%.`) : row('#1d6fa5', 'No flare this month', `Inflammation peaked at ${peak}%.`)}
+          ${row('#d0392a', `${h.lost} cells lost, ${h.births} grew back`, `${h.hits} phage hit${h.hits === 1 ? '' : 's'}${h.immune ? `, ${h.immune} cells scraped by immune cells` : ''}.`)}
+        </div>
+        ${BIO[s.cycle] ? `<div><div class="k" style="margin-bottom:6px">In the biology</div><div class="bio">${BIO[s.cycle]}</div></div>` : ''}
+        <div class="go"><button class="btn" id="cont" type="button">Month ${s.cycle + 1}</button><span>${NEW[s.cycle + 1] ? `New this month: ${NEW[s.cycle + 1]}` : ''}</span></div>`;
+      sum.classList.add('show');
       $('cont').addEventListener('click', () => this.onContinue());
     }
+  }
+
+  private draggable(el: HTMLButtonElement, i: number): void {
+    let start: { x: number; y: number; left: number; top: number } | null = null, moved = false;
+    el.addEventListener('pointerdown', (e) => { const r = el.getBoundingClientRect(); start = { x: e.clientX, y: e.clientY, left: r.left, top: r.top }; moved = false; el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointermove', (e) => {
+      if (!start) return;
+      const dx = e.clientX - start.x, dy = e.clientY - start.y;
+      if (!moved && Math.hypot(dx, dy) < 6) return;
+      moved = true; el.classList.add('drag');
+      // the card shrinks and hangs below the pointer, so the spot it will land on stays visible
+      el.style.transformOrigin = '0 0';
+      el.style.transform = `translate(${e.clientX + 16 - start.left}px, ${e.clientY + 18 - start.top}px) rotate(-7deg) scale(0.6)`;
+      this.onDragMove(i, e.clientX, e.clientY);
+    });
+    const end = (e: PointerEvent, cancel: boolean) => {
+      if (!start) return;
+      const played = moved && !cancel && this.onDrop(i, e.clientX, e.clientY);
+      start = null; el.classList.remove('drag'); el.style.transform = ''; el.style.transformOrigin = '';
+      this.onDragEnd();
+      if (!moved && !cancel) this.banner('Drag the card', 'Pull it onto the colony or the wall and let go.', 3);
+      if (played) $('hand').classList.remove('show');
+    };
+    el.addEventListener('pointerup', (e) => end(e, false));
+    el.addEventListener('pointercancel', (e) => end(e, true));
   }
 
   tooltip(s: State | null, h: Pick | null, r: Renderer, x: number, y: number): void {
     const el = $('tip');
     const c = s && h ? s.cells[(h.j + B.R) * (2 * B.R + 1) + (h.i + B.R)] : null;
     if (!s || !h || !c || s.phase !== 'wave') { el.style.display = 'none'; return; }
-    const patch = r.patchOf(s, h.i, h.j).size, co = COLOURS[c.c], thr = Math.round(coatThreshold(s));
-    const role = ROLE[c.c];
-    el.innerHTML = `<b style="color:${COLOUR_HEX[c.c]}">${COLOUR_NAME[c.c]}</b> · ${role}<br>Patch of <b>${patch}</b> same-colour pixels · ${patch >= thr ? '<b style="color:#fde047">big enough for a mucus coat</b>' : `a coat needs ${thr}`}${patch >= 150 ? ' <b style="color:#fca5a5">(a hit takes a big bite)</b>' : ''}<br>${exposed(s, h.i, h.j) ? 'On the surface' : 'Inside the blob'} · resist ${Math.round(co.resist * 100)}% · evasion ${Math.round(co.evade * 100)}% · cooling ${Math.round(co.anti * 100)}%${c.m > 0 ? '<br><b style="color:#fde047">Coated</b>' : ''}`;
-    el.style.display = 'block'; el.style.left = `${Math.min(innerWidth - 250, x + 14)}px`; el.style.top = `${Math.min(innerHeight - 130, y + 14)}px`;
+    const patch = r.patchOf(s, h.i, h.j).size, thr = Math.round(coatThreshold(s));
+    el.innerHTML = `<b>${COLOUR_NAME[c.c]}</b> ${ROLE[c.c]}.<br>Patch of ${patch} cells. ${patch >= thr ? 'Big enough for a coat.' : `A coat needs ${thr}.`}${c.m > 0 ? '<br><b>Coated</b>' : ''}`;
+    el.style.display = 'block'; el.style.left = `${Math.min(innerWidth - 260, x + 14)}px`; el.style.top = `${Math.min(innerHeight - 110, y + 14)}px`;
   }
 }
 
 export function showScreen(html: string): void { const el = $('screen'); el.innerHTML = `<div class="card">${html}</div>`; el.classList.add('show'); }
 export function hideScreen(): void { $('screen').classList.remove('show'); }
+void exposed; void COLOUR_HEX;

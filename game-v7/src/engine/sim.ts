@@ -69,6 +69,10 @@ export function pickCard(s: State, i: number): boolean {
   s.stats.cards++;
   if (card.held) s.held = { id: card.id, charges: card.held.charges };
   if (card.mods) s.mods.push({ id: card.id, left: card.cycles ?? 1 });
+  if (card.effect === 'steroid') {
+    s.wall = s.wall.map((w) => Math.max(0.05, w - B.card.steroidCool)); s.inflammation = inflammationOf(s.wall);
+    s.drift += B.card.steroidDrift; s.events?.push({ kind: 'steroid', x: 0, y: 0 });
+  }
   if (card.target) { s.pending = { id: card.id, target: card.target }; return true; }
   afterPick(s);
   return true;
@@ -80,6 +84,14 @@ export function placeTarget(s: State, t: { i?: number; j?: number; sector?: numb
   const card = CARD[s.pending.id];
   if (s.pending.target === 'blob') {
     if (t.i === undefined || t.j === undefined || !cellAt(s, t.i, t.j)) return false;
+    if (card.effect === 'abx') {
+      const R2 = B.card.abxR ** 2;
+      for (let dj = -B.card.abxR; dj <= B.card.abxR; dj++) for (let di = -B.card.abxR; di <= B.card.abxR; di++) {
+        if (di * di + dj * dj > R2 || !cellAt(s, t.i + di, t.j + dj)) continue;
+        s.cells[idx(t.i + di, t.j + dj)] = null; s.stats.abxKilled++; s.events?.push({ kind: 'abx', x: t.i + di, y: t.j + dj });
+      }
+      s.pending = null; afterPick(s); return true;
+    }
     const colour = card.colour ?? 0;
     for (let dj = -B.site.coreR; dj <= B.site.coreR; dj++) for (let di = -B.site.coreR; di <= B.site.coreR; di++) {
       if (di * di + dj * dj > B.site.coreR ** 2) continue;
@@ -118,7 +130,7 @@ function planWave(s: State): void {
       s.flares.push(...segs);
     };
     section(randRange(s, 2, 6), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 1);
-    if (c >= B.flare.secondFrom) section(randRange(s, 5, 8), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 0.8);
+    if (c >= B.flare.secondFrom) section(randRange(s, 5, 8), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 0.7);
   }
 }
 
@@ -287,7 +299,7 @@ export function step(s: State, dt: number = B.dt): void {
       s.phageAcc -= 1;
       let mask = 1 << Math.floor(rand(s) * 3);
       if (c >= B.wave.twoColourFrom && rand(s) < B.wave.twoColourProb) mask |= 1 << Math.floor(rand(s) * 3);
-      s.phages.push({ r: B.phage.spawnR, angle: rand(s) * TAU, mask });
+      s.phages.push({ r: B.phage.spawnR, angle: rand(s) * TAU, mask, wait: B.phage.warn });
     }
   }
   // flares: heat their arc of the wall and fire immune cells from it
@@ -315,6 +327,7 @@ export function step(s: State, dt: number = B.dt): void {
   // phages hit the first pixel on their path; a coat soaks the hit and chips
   const alive: typeof s.phages = [];
   for (const p of s.phages) {
+    if (p.wait && p.wait > 0) { p.wait -= dt; alive.push(p); continue; } // announced at the rim before it launches
     const r0 = p.r; p.r -= phageSpeed(s) * dt;
     const psi = p.angle - s.theta; let done = false;
     for (let rr = r0; rr > p.r && !done; rr -= 0.25) {
