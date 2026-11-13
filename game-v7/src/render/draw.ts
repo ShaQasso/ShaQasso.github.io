@@ -174,26 +174,15 @@ export class Renderer {
   }
 
   // ---- in flight: phages with a head, tail and legs; immune cells with the strip they will scrape ----
-  /** The leading tip (the feet) sits at (x, y); the body trails outward. Head colour is the capsule it infects. */
+  /** A phage is a small hexagon in the colour of the capsule it infects (split in two for a two-colour phage). */
   private phageSprite(x: number, y: number, angle: number, cols: string[], alpha = 1): void {
-    const { ctx } = this; const u = this.view.U / 15;
+    const { ctx } = this; const r = this.view.U * 0.85;
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(angle + Math.PI / 2);
-    ctx.strokeStyle = CREAM; ctx.lineWidth = Math.max(1, u * 1.6); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    // six tail fibres with a knee, splayed from the base plate
-    ctx.beginPath();
-    for (const [kx, fx] of [[-17, -22], [-11, -9], [-5, -3], [5, 3], [11, 9], [17, 22]]) { ctx.moveTo(0, -24 * u); ctx.lineTo(kx * u, -31 * u); ctx.lineTo(fx * u, -2 * u); }
-    ctx.stroke();
-    ctx.fillStyle = CREAM;
-    ctx.beginPath(); ctx.moveTo(-9 * u, -22 * u); ctx.lineTo(9 * u, -22 * u); ctx.lineTo(5 * u, -28 * u); ctx.lineTo(-5 * u, -28 * u); ctx.closePath(); ctx.fill(); // base plate
-    for (let q = 0; q < 7; q++) { ctx.fillStyle = q % 2 ? '#8d957d' : CREAM; ctx.fillRect(-3.5 * u, (-63 + q * 5) * u, 7 * u, 5 * u); } // contractile sheath
-    ctx.fillStyle = CREAM; ctx.fillRect(-7 * u, -67 * u, 14 * u, 4 * u); // collar
-    // an icosahedral head, drawn as a hexagon with flat facets
-    const hex: [number, number][] = [[0, -104], [15, -95], [15, -76], [0, -67], [-15, -76], [-15, -95]];
-    const poly = (pts: [number, number][], fill: string) => { ctx.fillStyle = fill; ctx.beginPath(); pts.forEach(([px, py], k) => (k ? ctx.lineTo(px * u, py * u) : ctx.moveTo(px * u, py * u))); ctx.closePath(); ctx.fill(); };
-    const left = cols[0], right = cols[cols.length - 1];
-    poly([hex[0], hex[3], hex[4], hex[5]], left); poly([hex[0], hex[1], hex[2], hex[3]], right);
-    poly([hex[0], [0, -85], hex[5]], lighten(left, 0.28)); poly([hex[0], hex[1], [0, -85]], lighten(right, 0.14));
-    poly([hex[4], [0, -85], hex[3]], lighten(left, -0.18)); poly([hex[2], hex[3], [0, -85]], lighten(right, -0.3));
+    const pt = (k: number): [number, number] => [Math.sin((k / 6) * TAU) * r, -Math.cos((k / 6) * TAU) * r];
+    const poly = (ks: number[], fill: string) => { ctx.fillStyle = fill; ctx.beginPath(); ks.forEach((k, n) => { const [px, py] = pt(k); if (n) ctx.lineTo(px, py); else ctx.moveTo(px, py); }); ctx.closePath(); ctx.fill(); };
+    poly([0, 1, 2, 3], cols[cols.length - 1]); poly([3, 4, 5, 0], cols[0]);
+    ctx.strokeStyle = CREAM; ctx.lineWidth = Math.max(1, this.view.U * 0.14); ctx.lineJoin = 'round';
+    ctx.beginPath(); for (let k = 0; k < 6; k++) { const [px, py] = pt(k); if (k) ctx.lineTo(px, py); else ctx.moveTo(px, py); } ctx.closePath(); ctx.stroke();
     ctx.restore();
   }
   private drawFlight(s: State, acc: number): void {
@@ -234,14 +223,18 @@ export class Renderer {
   /** The colony is soft: outer pixels trail behind when it turns. */
   private lagK = 0;
   private soft = 0;
+  private rim = 1;
   private lag(i: number, j: number): [number, number] {
-    const a = this.lagK * Math.hypot(i, j); if (!a) return [i, j];
-    const c = Math.cos(a), sn = Math.sin(a); return [i * c - j * sn, i * sn + j * c];
+    if (!this.lagK) return [i, j];
+    const r = Math.hypot(i, j), t = Math.max(0, (r - 0.45 * this.rim) / (0.55 * this.rim)); if (t <= 0) return [i, j];
+    const a = this.lagK * t * t, k = 1 + Math.abs(this.lagK) * 0.22 * t * t; // the core is rigid; the outer cells trail and bulge
+    const c = Math.cos(a), sn = Math.sin(a); return [(i * c - j * sn) * k, (i * sn + j * c) * k];
   }
 
   private drawBlob(s: State, hover: Pick | null): void {
-    this.soft += ((s.phase === 'wave' ? s.omega : 0) - this.soft) * 0.12; // the outer cells catch up a moment after the core
-    this.lagK = -(this.soft * 0.5 + (s.phase === 'wave' ? s.omega : 0) * 0.5) * 0.0062;
+this.rim = Math.max(1, this.blobRadius(s));
+    this.soft += ((s.phase === 'wave' ? s.omega : 0) - this.soft) * 0.1; // the outer cells catch up a moment after the core
+    this.lagK = -(this.soft * 0.6 + (s.phase === 'wave' ? s.omega : 0) * 0.4) * 0.12;
     const { ctx } = this; const { cx, cy, U } = this.view;
     const patch = hover ? this.patchOf(s, hover.i, hover.j) : null;
     const tNow = this.time;
@@ -257,7 +250,7 @@ export class Renderer {
         ctx.fillRect(x, y, sz, sz);
         return;
       }
-      const shade = ((i * 7 + j * 13 + Math.floor(tNow * 0.6 + ((i * 31 + j * 17) & 7))) & 3);
+      const shade = (i * 7 + j * 13 + ((i * 31 + j * 17) & 7)) & 3;
       let fill = c.m > 0 ? COAT[c.c] : SHADES[c.c][shade];
       if (age < 0.7) fill = mix(CREAM, fill, Math.min(1, age / 0.7)); // newborn pixels start pale
       ctx.fillStyle = fill; ctx.fillRect(x, y, sz, sz);

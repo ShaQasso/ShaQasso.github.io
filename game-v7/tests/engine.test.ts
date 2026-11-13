@@ -157,12 +157,12 @@ describe('real-time wave basics', () => {
 
 describe('time to react', () => {
   it('phages start far from the blob and get faster every month', () => {
-    const a = wave(14, () => 1); a.cycle = 1; const b = wave(14, () => 1); b.cycle = 12;
+    const a = wave(14, () => 1); a.cycle = 1; const b = wave(14, () => 1); b.cycle = 6;
     expect(phageSpeed(b)).toBeGreaterThan(phageSpeed(a) * 1.5);
     // in month 1 a phage needs a couple of seconds to cross from its spawn to the blob
     const t = wave(14, () => 1); t.cycle = 1; t.phages.push({ r: balance.phage.spawnR, angle: west, mask: 1 });
     let steps = 0; while (t.phages.length && steps < 400) { step(t); steps++; }
-    expect(steps / 20).toBeGreaterThan(1.8);
+    expect(steps / 20).toBeGreaterThan(1.2); // short flight; the two-second wait at the rim is the time to react
     const u = wave(14, () => 1); u.cycle = 12; u.phages.push({ r: balance.phage.spawnR, angle: west, mask: 1 });
     let s2 = 0; while (u.phages.length && s2 < 400) { step(u); s2++; }
     expect(s2).toBeLessThan(steps * 0.7);
@@ -264,13 +264,13 @@ describe('passive cooling and inflammation', () => {
 });
 
 describe('immune cells and antibiotics', () => {
-  it('immune cells come from the flare arc only while it is on, bite pixels, and violet evades most of them', () => {
+  it('immune cells come from the flare arc only while it is on, bite pixels, and blue is only slightly spared', () => {
     const s = wave(12, () => 0); s.spawning = true; s.flares = [{ t0: 2, t1: 8, angle: 1, half: 0.5, intensity: 1.5, kind: 'flare' }];
     let early = 0, mid = 0; const seen = new Set<object>();
     for (let i = 0; i < 20 * 9; i++) { step(s); for (const m of s.immune) if (!seen.has(m)) { seen.add(m); if (s.waveT < 2) early++; else mid++; } }
     expect(early).toBe(0); expect(mid).toBeGreaterThan(2);
     const bites = (c: number) => { let t = 0; for (let seed = 1; seed <= 4; seed++) { const w = wave(10, () => c, seed); for (let k = 0; k < 30; k++) w.immune.push({ r: R - k * 0.3, angle: west + (k % 5) * 0.2 - 0.4 }); run(w, 4); t += w.stats.immuneKilled; } return t; };
-    expect(bites(2)).toBeLessThan(bites(0) / 2);
+    expect(bites(2)).toBeLessThan(bites(0)); expect(bites(2)).toBeGreaterThan(bites(0) / 2); // blue is spared a little, not a lot: facing a flare costs cells
   });
   it('antibiotics kill by position, not colour; a coat halves them', () => {
     const s = wave(12, mixed); s.abx = [{ t0: 0.05, angle: west, half: 0.6, fired: false }]; run(s, 0.2);

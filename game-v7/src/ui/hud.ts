@@ -9,7 +9,7 @@ import { COLOUR_HEX, COLOUR_NAME, type Pick, type Renderer } from '../render/dra
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const B = balance;
 const FAM: Record<string, string> = { food: 'Food', drug: 'Drug', motility: 'Motion' };
-const ROLE = ['capsule type', 'capsule type', 'capsule type (PSA): calms the wall it faces, and immune cells mostly spare it'];
+const ROLE = ['capsule type', 'capsule type', 'capsule type (PSA): calms the wall it faces'];
 const LABEL = ['Yellow', 'Green', 'Blue · calms the wall'];
 /** What each month adds, so there is always something new. */
 export const NEW: Record<number, string> = { 2: 'flares', 3: 'two-colour phages', 4: 'faster phages', 5: 'stronger flares', 6: 'a second flare' };
@@ -65,7 +65,7 @@ export class Hud {
     if (wave && s.cycle !== this.lastCycle) {
       this.lastCycle = s.cycle;
       if (s.cycle === 1) this.banner('Drag to turn the colony', 'Phages arrive in volleys and wait at the rim before they launch. A head colour is the cells it infects: turn so they land on a different colour.', 9);
-      else if (s.flares.length && !this.seen.has('flare')) { this.seen.add('flare'); this.banner('A flare is coming', 'The orange arc heats the wall and sends immune cells that scrape a strip off the colony. Turn blue toward it: you will see it pulse toward the wall as it calms it.', 8); }
+      else if (s.flares.length && !this.seen.has('flare')) { this.seen.add('flare'); this.banner('A flare is coming', 'The orange arc heats the wall and sends immune cells that scrape a strip off the colony. Turn blue toward it and it pulses out to calm the wall, but the immune cells scrape whatever faces them.', 8); }
       else if (s.cycle === 3) this.banner('Two-colour phages', 'A head split in two colours infects both.', 6);
     }
     if (s.stats.coats > 0 && !this.seen.has('coat')) { this.seen.add('coat'); this.banner('Mucus coat', 'A big single-colour patch coated itself (pale edge). It blocks hits, but once it is chipped a bite takes far more.', 7); }

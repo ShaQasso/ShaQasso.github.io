@@ -9,7 +9,7 @@ export interface CardDef {
 
 /**
  * Colours are capsule types. 2 (blue) stands for an anti-inflammatory capsule such as B. fragilis PSA: it calms the wall it
- * faces and immune cells mostly spare it. 0 (yellow) and 1 (green) are other capsule types with no special role.
+ * faces, which also puts it in the path of the immune cells a flare sends. 0 (yellow) and 1 (green) are other capsule types with no special role.
  * Cards are gardening between waves: only things that come from outside the body (food and drugs). Each one is played
  * once, by dragging it to where it should work. Nothing is held and nothing has a timer beyond the coming wave.
  */

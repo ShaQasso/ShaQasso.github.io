@@ -26,7 +26,7 @@
       "name": "blue",
       "mucus": 0.6,
       "resist": 0.15,
-      "evade": 0.9,
+      "evade": 0.35,
       "growth": 0.95,
       "anti": 1.0
     }
@@ -40,7 +40,7 @@
     "maxOmega": 1.6
   },
   "phage": {
-    "speed": 12,
+    "speed": 19,
     "infectTime": 0.3,
     "burst": [
       0.97,
@@ -93,7 +93,7 @@
   },
   "flare": {
     "from": 2,
-    "heat": 0.146,
+    "heat": 0.138,
     "immunePerSec": 0.32,
     "immuneGrow": 0.08,
     "pre": [
