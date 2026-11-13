@@ -8,8 +8,10 @@ const B = balance;
 export const COLOURS = B.colours;
 const S = B.wallSectors;
 const newCell = (c: number): Cell => ({ c, inf: 0, ph: 0, gen: 0, m: 0, mcd: 0 });
-export const phageSpeed = (s: State) => B.phage.speed * (1 + B.phage.speedGrow * (s.cycle - 1));
-export const immuneSpeed = (s: State) => B.immune.speed * (1 + B.immune.speedGrow * (s.cycle - 1));
+/** How hard the month is: one step per month up to remission, half a step per month after it. */
+export const level = (s: State) => (s.cycle <= B.cycles ? s.cycle : B.cycles + (s.cycle - B.cycles) * 0.5);
+export const phageSpeed = (s: State) => B.phage.speed * (1 + B.phage.speedGrow * (level(s) - 1));
+export const immuneSpeed = (s: State) => B.immune.speed * (1 + B.immune.speedGrow * (level(s) - 1));
 const emptyCyc = (): CycleStats => ({ lost: 0, hits: 0, peak: 0, coats: 0, abx: 0, immune: 0, blocked: 0, births: 0, flares: 0 });
 
 // ---- mods (what the cards do) ------------------------------------------------
@@ -21,7 +23,7 @@ export function mod(s: State, key: string, kind: 'mul' | 'add'): number {
   }
   return v;
 }
-export const baseInflammation = (s: State) => B.wall.base + s.drift + mod(s, 'baseAdd', 'add');
+export const baseInflammation = (s: State) => Math.max(0.12, B.wall.base + s.drift - s.healed + mod(s, 'baseAdd', 'add'));
 export const inflammationOf = (wall: number[]) => Math.pow(wall.reduce((a, w) => a + w ** 3, 0) / wall.length, 1 / 3);
 
 // ---- setup -----------------------------------------------------------------------
@@ -30,7 +32,7 @@ export function createState(seed: number): State {
     rng: seed >>> 0, t: 0, cells: new Array(W * W).fill(null), theta: 0, omega: 0, cmd: 0, cycle: 1, phase: 'groom', offer: [], picksLeft: B.picks, pending: null, sites: [], wallSites: [],
     held: null, mods: [], phaseQueue: null, waveT: 0, waveLen: B.wave.len, abx: [], flares: [], phages: [], immune: [], phageAcc: 0, immuneAcc: 0,
     wall: Array(S).fill(B.wall.base), cooling: Array(S).fill(0), inflammation: B.wall.base, drift: 0, overloadT: 0, coatAcc: 0, coolAcc: 0,
-    spawning: true, mutating: true, coating: true, cyc: emptyCyc(), history: [], status: 'run', reason: '',
+    spawning: true, mutating: true, coating: true, streak: 0, healed: 0, treated: Array(S).fill(0), endless: false, cyc: emptyCyc(), history: [], status: 'run', reason: '',
     stats: { lysed: 0, hits: 0, deflected: 0, blocked: 0, births: 0, abxKilled: 0, immuneKilled: 0, immuneEvaded: 0, flips: 0, coats: 0, cards: 0 },
   };
   const spots: [number, number][] = [];
@@ -101,7 +103,9 @@ export function placeTarget(s: State, t: { i?: number; j?: number; sector?: numb
     s.sites.push({ i: t.i, j: t.j, r: B.site.blobR, colour, left: B.site.waves });
   } else {
     if (t.sector === undefined) return false;
-    s.wallSites.push({ sector: ((t.sector % S) + S) % S, bonus: B.site.wallBonus, left: B.site.wallWaves });
+    const sec = ((t.sector % S) + S) % S;
+    s.wallSites.push({ sector: sec, bonus: B.site.wallBonus, left: B.site.wallWaves });
+    s.treated[sec] = Math.min(B.heal.treatMax, s.treated[sec] + B.heal.treatStack); // a treated section stays a little cooler for good
   }
   s.pending = null;
   afterPick(s);
@@ -119,7 +123,7 @@ function planWave(s: State): void {
     for (let i = 0; i < k; i++) s.abx.push({ t0: (B.wave.len * (i + 1)) / (k + 1) + randRange(s, -3, 3), angle: rand(s) * TAU, half: randRange(s, 0.5, 0.8), fired: false });
   }
   if (c >= B.flare.from) {
-    const grow = 1 + B.flare.immuneGrow * c;
+    const grow = 1 + B.flare.immuneGrow * level(s);
     const section = (t: number, angle: number, half: number, scale: number) => {
       const pre = randSeg(s, B.flare.pre), main = randSeg(s, B.flare.main), after = randSeg(s, B.flare.after);
       const segs: FlareSeg[] = [
@@ -193,6 +197,7 @@ export function coolingFactors(s: State, theta = s.theta, depth = depthMap(s)): 
   const bonus = mod(s, 'coolBonus', 'add');
   const site = new Array<number>(S).fill(0);
   for (const w of s.wallSites) for (let k = -1; k <= 1; k++) site[(w.sector + k + S) % S] += w.bonus * (k === 0 ? 1 : 0.5);
+  if (s.treated) s.treated.forEach((v, j) => { site[j] += v; });
   return sum.map((v, j) => Math.min(B.cool.max + 0.1, Math.min(B.cool.max, 1 - Math.exp(-v / B.cool.K) + bonus) + site[j]));
 }
 function refreshCooling(s: State): void { s.cooling = coolingFactors(s); }
@@ -288,7 +293,12 @@ function finishWave(s: State): void {
   s.sites = s.sites.map((x) => ({ ...x, left: x.left - 1 })).filter((x) => x.left > 0);
   s.wallSites = s.wallSites.map((x) => ({ ...x, left: x.left - 1 })).filter((x) => x.left > 0);
   s.phages = []; s.immune = [];
-  if (s.cycle >= B.cycles) { s.status = 'won'; s.reason = 'a year in remission'; return; }
+  // a calm month heals the gut a little for good and extends the streak; a rough month resets it
+  const calm = s.cyc.peak < B.heal.calmPeak;
+  const earned = calm && s.cyc.flares > 0; // only a month that survived a flare heals the gut
+  if (earned) { s.streak++; s.healed += B.heal.perCalm; } else if (!calm) s.streak = 0;
+  const h = s.history[s.history.length - 1]; h.calm = earned; h.streak = s.streak;
+  if (s.cycle >= B.cycles && !s.endless) { s.status = 'won'; s.reason = 'remission'; return; }
   s.phase = 'checkup';
 }
 
@@ -306,7 +316,7 @@ export function step(s: State, dt: number = B.dt): void {
 
   // a stream of phages from every side, building through the wave and across cycles
   if (s.spawning) {
-    const rate = B.wave.base * (c === 1 ? B.wave.firstMonth : 1) * Math.pow(B.wave.growth, c - 1) * (B.wave.ramp[0] + (B.wave.ramp[1] - B.wave.ramp[0]) * progress);
+    const rate = B.wave.base * (c === 1 ? B.wave.firstMonth : 1) * Math.pow(B.wave.growth, level(s) - 1) * (B.wave.ramp[0] + (B.wave.ramp[1] - B.wave.ramp[0]) * progress);
     s.phageAcc += rate * dt;
     while (s.phageAcc >= 1) {
       s.phageAcc -= 1;
@@ -324,7 +334,7 @@ export function step(s: State, dt: number = B.dt): void {
     const flareMul = mod(s, 'flareMul', 'mul');
     for (let j = 0; j < S; j++) if (Math.abs(angDiff(f.angle, ((j + 0.5) / S) * TAU)) <= f.half + TAU / S / 2) heat[j] += f.intensity * B.flare.heat * flareMul;
     if (s.spawning) {
-      s.immuneAcc += B.flare.immunePerSec * f.intensity * mod(s, 'immuneMul', 'mul') * dt * (1 + 0.1 * c);
+      s.immuneAcc += B.flare.immunePerSec * f.intensity * mod(s, 'immuneMul', 'mul') * dt * (1 + 0.1 * level(s));
       while (s.immuneAcc >= 1) { s.immuneAcc -= 1; s.immune.push({ r: B.wallR, angle: wrap(f.angle + (rand(s) * 2 - 1) * f.half * 1.2) }); }
     }
   }
@@ -462,4 +472,11 @@ export function step(s: State, dt: number = B.dt): void {
   if (count(s) < B.lose.minCells) { s.status = 'lost'; s.reason = 'the community collapsed'; return; }
   if (s.overloadT >= B.overloadSecs) { s.status = 'lost'; s.reason = 'flare-out: inflammation overload'; return; }
   if (s.waveT >= s.waveLen) finishWave(s);
+}
+
+/** After remission (month 6), keep going: the run continues with the next month and the score keeps adding up. */
+export function keepGoing(s: State): boolean {
+  if (s.status !== 'won') return false;
+  s.endless = true; s.status = 'run'; s.reason = ''; s.phase = 'checkup';
+  return true;
 }

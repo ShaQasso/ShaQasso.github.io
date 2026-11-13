@@ -1,7 +1,7 @@
 import balance from '../data/balance.json';
 import { CARD } from '../engine/cards';
 import { count, exposed } from '../engine/geometry';
-import { coatThreshold, patches } from '../engine/sim';
+import { baseInflammation, coatThreshold, patches } from '../engine/sim';
 import { score } from '../engine/score';
 import type { State } from '../engine/types';
 import { COLOUR_HEX, COLOUR_NAME, type Pick, type Renderer } from '../render/draw';
@@ -48,7 +48,8 @@ export class Hud {
 
   update(s: State): void {
     const n = count(s), wave = s.phase === 'wave';
-    $('turn').textContent = `Month ${s.cycle} of ${B.cycles}`;
+    $('turn').textContent = s.endless ? `Month ${s.cycle} · past remission` : `Month ${s.cycle} of ${B.cycles}`;
+    const st = $('streak'); st.textContent = s.streak > 0 ? `Calm streak ${s.streak}` : ''; st.classList.toggle('hot', s.streak >= 3);
     $('phase').textContent = s.status !== 'run' ? '' : s.phase === 'groom' ? (s.pending ? '' : 'Choose one card. Drag it to where it should work.') : '';
     $('timer').style.display = wave ? 'block' : 'none';
     $('b-timer').style.width = `${Math.min(100, (s.waveT / s.waveLen) * 100)}%`;
@@ -111,16 +112,22 @@ export class Hud {
       hand.querySelectorAll<HTMLButtonElement>('.pcard').forEach((el) => this.draggable(el, Number(el.dataset.i)));
     } else if (s.phase === 'checkup') {
       const h = s.history[s.history.length - 1], thr = Math.round(coatThreshold(s)), peak = Math.round(h.peak * 100);
-      const head = h.peak < 0.5 ? 'Remission holds.' : h.peak < 0.68 ? 'A rough month.' : 'A close call.';
-      const row = (col: string, a: string, b: string) => `<div class="row"><i style="background:${col}"></i><div><b>${a}</b><span>${b}</span></div></div>`;
-      sum.innerHTML = `<div><div class="k">Month ${s.cycle} of ${B.cycles}</div><h1>${head}</h1></div>
+      const row = (col: string, a: string, b: string) => `<div class="row"><i style="${col === 'ring' ? 'border:4px solid #eef3d4;box-sizing:border-box' : `background:${col}`}"></i><div><b>${a}</b><span>${b}</span></div></div>`;
+      const head = h.calm ? (h.peak < 0.5 ? 'Remission holds.' : 'A calm month.') : h.peak < 0.7 ? 'A rough month.' : 'A close call.';
+      const baseline = Math.round(baseInflammation(s) * 100), calmAt = Math.round(B.heal.calmPeak * 100);
+      const heal = h.calm
+        ? row('#eef3d4', `Calm month · streak ${h.streak ?? 1}`, `The gut healed a little for good. Another calm month counts ×${(1 + B.heal.streakScore * (h.streak ?? 1)).toFixed(2)} toward your score.`)
+        : h.flares === 0 ? row('#eef3d4', 'A quiet month', 'No flare, so nothing to heal from. A calm month with a flare heals the gut for good.')
+        : row('#e0701f', 'Rough month · streak lost', `Inflammation went above ${calmAt}%. A calm month heals the gut for good and starts a new streak.`);
+      sum.innerHTML = `<div><div class="k">${s.endless ? `Month ${s.cycle} · past remission` : `Month ${s.cycle} of ${B.cycles}`} · baseline ${baseline}%</div><h1>${head}</h1></div>
         <div class="rows">
-          ${h.blocked > 0 ? row('#eef3d4', `${h.blocked} hit${h.blocked > 1 ? 's' : ''} stopped by a coat`, 'A big single-colour patch coated itself.') : row('#eef3d4', 'No coat this month', `A coat needs one patch of ${thr} cells in a single colour.`)}
+          ${heal}
+          ${h.blocked > 0 ? row('ring', `${h.blocked} hit${h.blocked > 1 ? 's' : ''} stopped by a coat`, 'A big single-colour patch coated itself.') : row('ring', 'No coat this month', `A coat needs one patch of ${thr} cells in a single colour.`)}
           ${h.flares > 0 ? row('#1d6fa5', h.peak < B.overload * 0.85 ? 'The flare was kept in check' : 'The flare nearly got away', `Inflammation peaked at ${peak}%. Flare-out is at ${Math.round(B.overload * 100)}%.`) : row('#1d6fa5', 'No flare this month', `Inflammation peaked at ${peak}%.`)}
           ${row('#d0392a', `${h.lost} cells lost, ${h.births} grew back`, `${h.hits} phage hit${h.hits === 1 ? '' : 's'}${h.immune ? `, ${h.immune} cells scraped by immune cells` : ''}.`)}
         </div>
         ${BIO[s.cycle] ? `<div><div class="k" style="margin-bottom:6px">In the biology</div><div class="bio">${BIO[s.cycle]}</div></div>` : ''}
-        <div class="go"><button class="btn" id="cont" type="button">Month ${s.cycle + 1}</button><span>${NEW[s.cycle + 1] ? `New this month: ${NEW[s.cycle + 1]}` : ''}</span></div>`;
+        <div class="go"><button class="btn" id="cont" type="button">Month ${s.cycle + 1}</button><span>${NEW[s.cycle + 1] ? `New this month: ${NEW[s.cycle + 1]}` : s.cycle + 1 > B.cycles ? 'Past remission: everything grows a little stronger' : ''}</span></div>`;
       sum.classList.add('show');
       $('cont').addEventListener('click', () => this.onContinue());
     }

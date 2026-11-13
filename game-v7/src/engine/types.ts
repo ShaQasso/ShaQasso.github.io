@@ -10,7 +10,7 @@ export interface Site { i: number; j: number; r: number; colour: number; left: n
 export interface WallSite { sector: number; bonus: number; left: number }
 export type Phase = 'groom' | 'wave' | 'checkup';
 
-export interface CycleStats { lost: number; hits: number; peak: number; coats: number; abx: number; immune: number; blocked: number; births: number; flares: number }
+export interface CycleStats { lost: number; hits: number; peak: number; coats: number; abx: number; immune: number; blocked: number; births: number; flares: number; calm?: boolean; streak?: number }
 
 export interface State {
   rng: number;
@@ -31,6 +31,8 @@ export interface State {
   spawning: boolean; mutating: boolean; coating: boolean;
   cyc: CycleStats; history: CycleStats[];
   status: 'run' | 'won' | 'lost'; reason: string;
+  /** Stacking, run-long effects: calm months heal the baseline, treated wall sections stay cooler, and the run can go on past remission. */
+  streak: number; healed: number; treated: number[]; endless: boolean;
   events?: GameEvent[];
   stats: { lysed: number; hits: number; deflected: number; blocked: number; births: number; abxKilled: number; immuneKilled: number; immuneEvaded: number; flips: number; coats: number; cards: number };
 }

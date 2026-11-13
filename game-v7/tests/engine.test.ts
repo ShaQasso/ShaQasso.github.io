@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import balance from '../src/data/balance.json';
 import { CARD, CARDS } from '../src/engine/cards';
 import { cellAt, count, eachCell, exposed, idx, R, TAU } from '../src/engine/geometry';
-import { COLOURS, baseInflammation, coatThreshold, coolingFactors, createState, mod, nextCycle, patches, phageSpeed, pickCard, placeTarget, setRotation, step, turnBand, useHeld } from '../src/engine/sim';
+import { COLOURS, keepGoing, baseInflammation, coatThreshold, coolingFactors, createState, mod, nextCycle, patches, phageSpeed, pickCard, placeTarget, setRotation, step, turnBand, useHeld } from '../src/engine/sim';
 import { BOTS } from '../src/sim/bots';
 import type { State } from '../src/engine/types';
 
@@ -345,6 +345,29 @@ describe('v7: gardening cards and announced phages', () => {
     expect(s.stats.lysed).toBeGreaterThan(5);
     const gain = s.wall.map((w, j) => w - before[j]);
     expect(Math.max(...gain)).toBeGreaterThan(0.1);
+  });
+  it('a calm month heals the baseline for good and extends the streak; a rough month resets it', () => {
+    const s = wave(12, () => 2); s.cycle = 2; const b0 = baseInflammation(s);
+    s.waveLen = 1; s.cyc.flares = 1; run(s, 1.2);
+    expect(s.phase).toBe('checkup'); expect(s.streak).toBe(1); expect(baseInflammation(s)).toBeLessThan(b0);
+    expect(s.history[s.history.length - 1].calm).toBe(true);
+    s.phase = 'wave'; s.waveT = 0; s.cyc.peak = 0.9; s.waveLen = 0.5; run(s, 0.6);
+    expect(s.streak).toBe(0);
+  });
+  it('treating a wall section with mesalamine keeps it a little cooler for the rest of the run', () => {
+    const s = wave(12, () => 1); s.phase = 'groom'; s.picksLeft = 5;
+    const c0 = coolingFactors(s)[3];
+    for (let k = 0; k < 2; k++) { s.offer = ['mesalamine', 'fibre', 'mucin']; pickCard(s, 0); placeTarget(s, { sector: 3 }); }
+    s.wallSites = []; // the one-wave boost is gone; the lasting part stays
+    expect(coolingFactors(s)[3]).toBeGreaterThan(c0 + 0.08);
+  });
+  it('after remission you can keep going: the run continues and the months keep counting', () => {
+    const s = wave(12, () => 2); s.cycle = balance.cycles; s.waveLen = 0.5; run(s, 0.6);
+    expect(s.status).toBe('won');
+    expect(keepGoing(s)).toBe(true); expect(s.status).toBe('run');
+    nextCycle(s); expect(s.cycle).toBe(balance.cycles + 1); expect(s.phase).toBe('groom');
+    s.offer = ['steroid_now', 'fibre', 'mucin']; pickCard(s, 0); s.waveLen = 0.5; run(s, 0.6);
+    expect(s.status).toBe('run'); expect(s.phase).toBe('checkup'); // no second win: it goes on until a flare-out
   });
   it('a run is six months, and antibiotics never arrive as a wave', () => {
     expect(balance.cycles).toBe(6); expect(balance.picks).toBe(1);

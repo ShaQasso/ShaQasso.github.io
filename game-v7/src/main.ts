@@ -3,7 +3,7 @@ import balance from './data/balance.json';
 import { CARD } from './engine/cards';
 import { count } from './engine/geometry';
 import { score } from './engine/score';
-import { createState, nextCycle, pickCard, placeTarget, step } from './engine/sim';
+import { createState, keepGoing, nextCycle, pickCard, placeTarget, step } from './engine/sim';
 import { Input } from './input';
 import { COLOUR_NAME, Renderer, type Target } from './render/draw';
 import { Hud, hideScreen, showScreen } from './ui/hud';
@@ -38,18 +38,29 @@ function titleScreen(): void {
   document.getElementById('go')!.addEventListener('click', () => startRun());
 }
 
+/** The best score is a per-browser convenience; the game works the same without it. */
+function best(total: number): { best: number; isNew: boolean } {
+  let prev = 0;
+  try { prev = Number(localStorage.getItem('mbiota-best') || 0); } catch { /* storage unavailable */ }
+  const isNew = total > prev;
+  if (isNew) { try { localStorage.setItem('mbiota-best', String(total)); } catch { /* ignore */ } }
+  return { best: Math.max(prev, total), isNew };
+}
+
 function endScreen(s: State): void {
-  const won = s.status === 'won', sc = score(s), done = won ? balance.cycles : s.cycle - 1;
-  const text = `Mbiota: ${won ? `${balance.cycles} months in remission` : `flare-out in month ${s.cycle}`}, score ${sc.total}`;
+  const won = s.status === 'won', sc = score(s), b = best(sc.total);
+  const months = won ? s.cycle : s.cycle - 1, longest = Math.max(0, ...s.history.map((h) => h.streak ?? 0));
+  const text = `Mbiota: ${won ? `remission in ${s.cycle} months` : s.endless ? `remission, then flare-out in month ${s.cycle}` : `flare-out in month ${s.cycle}`} · score ${sc.total}`;
   showScreen(`
     <div class="big">${won ? 'Remission.' : 'Flare-out.'}</div>
-    <h2>${won ? `You kept the gut calm for ${balance.cycles} months.` : `Inflammation stayed too high in month ${s.cycle}.`}</h2>
+    <h2>${won ? `You kept the gut calm for ${s.cycle} months. Keep going to build your score: each month past remission is harder, and calm streaks still multiply.` : s.endless ? `You held remission and kept going until month ${s.cycle}.` : `Inflammation stayed too high in month ${s.cycle}.`}</h2>
     <div class="stats">
-      <div><span>Remission score</span><br><b style="font-size:28px">${sc.total}</b></div><div><span>Months completed</span><br>${done} of ${balance.cycles}</div>
-      <div><span>Calm months</span><br>${sc.calm}</div><div><span>Colony size</span><br>${sc.size}</div>
-      <div><span>Colour mix</span><br>${sc.mix}</div><div><span>Cells left</span><br>${count(s)}</div>
+      <div><span>Remission score${b.isNew ? ' · new best' : ''}</span><br><b style="font-size:28px">${sc.total}</b></div><div><span>Best score</span><br><b style="font-size:28px">${b.best}</b></div>
+      <div><span>Months completed</span><br>${months}</div><div><span>Longest calm streak</span><br>${longest}</div>
+      <div><span>Calm months (with streak bonus)</span><br>${sc.calm}</div><div><span>Colony size + colour mix</span><br>${sc.size} + ${sc.mix}</div>
     </div>
-    <div><button class="btn" id="again" type="button">Play again</button><button class="btn alt" id="copy" type="button">Copy result</button></div>`);
+    <div>${won ? '<button class="btn" id="more" type="button">Keep going</button>' : ''}<button class="btn${won ? ' alt' : ''}" id="again" type="button">${won ? 'New run' : 'Play again'}</button><button class="btn alt" id="copy" type="button">Copy result</button></div>`);
+  document.getElementById('more')?.addEventListener('click', () => { if (state && keepGoing(state)) { hideScreen(); shown = false; } });
   document.getElementById('again')!.addEventListener('click', () => startRun());
   document.getElementById('copy')!.addEventListener('click', (e) => { navigator.clipboard?.writeText(text).then(() => { (e.target as HTMLElement).textContent = 'Copied'; }).catch(() => { (e.target as HTMLElement).textContent = text; }); });
 }
