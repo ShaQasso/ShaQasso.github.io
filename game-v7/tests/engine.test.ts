@@ -335,9 +335,16 @@ describe('v7: gardening cards and announced phages', () => {
   it('a bite heals: cells on the edge of a crater grow back before the colony grows outward', () => {
     const s = wave(14, () => 1);
     for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) s.cells[idx(i, j)] = null;
-    const before = count(s); run(s, 12);
+    const before = count(s); run(s, 40); // healing is slower now, so a bad wave still shows next month
     let hole = 0; for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (!s.cells[idx(i, j)]) hole++;
     expect(hole).toBeLessThan(12); expect(count(s)).toBeGreaterThan(before);
+  });
+  it('a phage bite inflames the section of wall it faces', () => {
+    const s = wave(12, () => 1); const before = s.wall.slice();
+    infect(s, -12, 0, 2); run(s, 3);
+    expect(s.stats.lysed).toBeGreaterThan(5);
+    const gain = s.wall.map((w, j) => w - before[j]);
+    expect(Math.max(...gain)).toBeGreaterThan(0.1);
   });
   it('a run is six months, and antibiotics never arrive as a wave', () => {
     expect(balance.cycles).toBe(6); expect(balance.picks).toBe(1);

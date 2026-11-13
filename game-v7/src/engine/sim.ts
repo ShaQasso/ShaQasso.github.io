@@ -129,8 +129,16 @@ function planWave(s: State): void {
       ];
       s.flares.push(...segs);
     };
-    section(randRange(s, 2, 6), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 1);
-    if (c >= B.flare.secondFrom) section(randRange(s, 5, 8), rand(s) * TAU, randRange(s, B.flare.half[0], B.flare.half[1]), 0.7);
+    // flares tend to land where the wall is least covered by blue, so luck does not cover you
+    const cool = coolingFactors(s);
+    const aim = (): number => {
+      if (rand(s) >= B.flare.aim) return rand(s) * TAU;
+      let best = rand(s) * TAU, low = Infinity;
+      for (let k = 0; k < 4; k++) { const a = rand(s) * TAU, f = cool[Math.floor((a / TAU) * S) % S]; if (f < low) { low = f; best = a; } }
+      return best;
+    };
+    section(randRange(s, 2, 6), aim(), randRange(s, B.flare.half[0], B.flare.half[1]), 1);
+    if (c >= B.flare.secondFrom) section(randRange(s, 5, 8), aim(), randRange(s, B.flare.half[0], B.flare.half[1]), 0.7);
   }
 }
 

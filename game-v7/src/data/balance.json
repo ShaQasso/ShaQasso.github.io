@@ -43,15 +43,17 @@
     "speed": 60,
     "infectTime": 0.3,
     "burst": [
+      1.0,
       0.97,
+      0.94,
       0.9,
-      0.82,
-      0.74,
-      0.64,
-      0.52,
-      0.4,
-      0.28,
-      0.16,
+      0.85,
+      0.78,
+      0.7,
+      0.6,
+      0.48,
+      0.34,
+      0.2,
       0
     ],
     "resistFactor": 0.55,
@@ -93,7 +95,7 @@
   },
   "flare": {
     "from": 2,
-    "heat": 0.138,
+    "heat": 0.14,
     "immunePerSec": 0.32,
     "immuneGrow": 0.08,
     "pre": [
@@ -117,7 +119,8 @@
       0.5,
       0.9
     ],
-    "secondFrom": 6
+    "secondFrom": 6,
+    "aim": 0.75
   },
   "cool": {
     "half": 0.6,
@@ -130,7 +133,7 @@
   "wall": {
     "base": 0.3,
     "decay": 0.04,
-    "lysisPulse": 0.004
+    "lysisPulse": 0.03
   },
   "chronic": {
     "perCycle": 0.032,
@@ -180,5 +183,5 @@
     "steroidCool": 0.25,
     "steroidDrift": 0.03
   },
-  "regrow": 7
+  "regrow": 3
 }
