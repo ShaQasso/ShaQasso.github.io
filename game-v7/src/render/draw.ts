@@ -105,6 +105,7 @@ export class Renderer {
     this.drainEvents(s);
     if (s.phase === 'wave') this.drawTelegraphs(s);
     this.drawBlob(s, hover);
+    if (s.phase === 'wave') this.drawHealing(s);
     this.drawSites(s);
     if (s.phase === 'wave') this.drawFlight(s, acc);
     this.drawEffects();
@@ -134,7 +135,7 @@ export class Renderer {
       }
       ctx.lineCap = 'butt';
       const f = s.cooling[j] ?? 0;
-      if (f > 0.02) { ctx.strokeStyle = hexA(CREAM, 0.12 + 0.5 * f); ctx.lineWidth = U * (0.25 + 1.0 * f); ctx.beginPath(); ctx.arc(cx, cy, (WALL_R - 4.2) * U, a0 + 0.03, a1 - 0.03); ctx.stroke(); }
+      if (f > 0.02) { ctx.strokeStyle = hexA('#3b9bd8', 0.15 + 0.6 * f); ctx.lineWidth = U * (0.25 + 1.0 * f); ctx.beginPath(); ctx.arc(cx, cy, (WALL_R - 4.2) * U, a0 + 0.03, a1 - 0.03); ctx.stroke(); }
     }
   }
 
@@ -173,25 +174,26 @@ export class Renderer {
   }
 
   // ---- in flight: phages with a head, tail and legs; immune cells with the strip they will scrape ----
-  /** The leading tip (the legs) sits at (x, y); the body trails outward. Head colour is the cells it infects. */
+  /** The leading tip (the feet) sits at (x, y); the body trails outward. Head colour is the capsule it infects. */
   private phageSprite(x: number, y: number, angle: number, cols: string[], alpha = 1): void {
-    const { ctx } = this; const u = this.view.U / 10;
+    const { ctx } = this; const u = this.view.U / 15;
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(angle + Math.PI / 2);
-    ctx.strokeStyle = hexA(CREAM, 0.4); ctx.lineWidth = Math.max(1.5, u * 2); ctx.setLineDash([u * 2.5, u * 5]);
-    ctx.beginPath(); ctx.moveTo(0, u * 4); ctx.lineTo(0, u * 36); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = CREAM; ctx.strokeStyle = CREAM; ctx.lineWidth = Math.max(1.4, u * 2); ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(0, -22 * u); ctx.lineTo(-16 * u, 0); ctx.moveTo(0, -22 * u); ctx.lineTo(-6 * u, 3 * u); ctx.moveTo(0, -22 * u); ctx.lineTo(6 * u, 3 * u); ctx.moveTo(0, -22 * u); ctx.lineTo(16 * u, 0); ctx.stroke();
-    ctx.fillRect(-10 * u, -26 * u, 20 * u, 4 * u);
-    for (let q = 0; q < 6; q++) { ctx.fillStyle = q % 2 ? '#7e8670' : CREAM; ctx.fillRect(-3 * u, (-58 + q * 5.4) * u, 6 * u, 5.4 * u); }
-    ctx.fillStyle = CREAM; ctx.fillRect(-6 * u, -62 * u, 12 * u, 4 * u);
-    const head = (fill: string, left: boolean | null) => {
-      ctx.fillStyle = fill; ctx.beginPath();
-      if (left === null) { ctx.moveTo(0, -92 * u); ctx.lineTo(12 * u, -85 * u); ctx.lineTo(12 * u, -69 * u); ctx.lineTo(0, -62 * u); ctx.lineTo(-12 * u, -69 * u); ctx.lineTo(-12 * u, -85 * u); }
-      else if (left) { ctx.moveTo(0, -92 * u); ctx.lineTo(0, -62 * u); ctx.lineTo(-12 * u, -69 * u); ctx.lineTo(-12 * u, -85 * u); }
-      else { ctx.moveTo(0, -92 * u); ctx.lineTo(12 * u, -85 * u); ctx.lineTo(12 * u, -69 * u); ctx.lineTo(0, -62 * u); }
-      ctx.closePath(); ctx.fill();
-    };
-    if (cols.length === 1) head(cols[0], null); else { head(cols[0], true); head(cols[1], false); }
+    ctx.strokeStyle = CREAM; ctx.lineWidth = Math.max(1, u * 1.6); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // six tail fibres with a knee, splayed from the base plate
+    ctx.beginPath();
+    for (const [kx, fx] of [[-17, -22], [-11, -9], [-5, -3], [5, 3], [11, 9], [17, 22]]) { ctx.moveTo(0, -24 * u); ctx.lineTo(kx * u, -31 * u); ctx.lineTo(fx * u, -2 * u); }
+    ctx.stroke();
+    ctx.fillStyle = CREAM;
+    ctx.beginPath(); ctx.moveTo(-9 * u, -22 * u); ctx.lineTo(9 * u, -22 * u); ctx.lineTo(5 * u, -28 * u); ctx.lineTo(-5 * u, -28 * u); ctx.closePath(); ctx.fill(); // base plate
+    for (let q = 0; q < 7; q++) { ctx.fillStyle = q % 2 ? '#8d957d' : CREAM; ctx.fillRect(-3.5 * u, (-63 + q * 5) * u, 7 * u, 5 * u); } // contractile sheath
+    ctx.fillStyle = CREAM; ctx.fillRect(-7 * u, -67 * u, 14 * u, 4 * u); // collar
+    // an icosahedral head, drawn as a hexagon with flat facets
+    const hex: [number, number][] = [[0, -104], [15, -95], [15, -76], [0, -67], [-15, -76], [-15, -95]];
+    const poly = (pts: [number, number][], fill: string) => { ctx.fillStyle = fill; ctx.beginPath(); pts.forEach(([px, py], k) => (k ? ctx.lineTo(px * u, py * u) : ctx.moveTo(px * u, py * u))); ctx.closePath(); ctx.fill(); };
+    const left = cols[0], right = cols[cols.length - 1];
+    poly([hex[0], hex[3], hex[4], hex[5]], left); poly([hex[0], hex[1], hex[2], hex[3]], right);
+    poly([hex[0], [0, -85], hex[5]], lighten(left, 0.28)); poly([hex[0], hex[1], [0, -85]], lighten(right, 0.14));
+    poly([hex[4], [0, -85], hex[3]], lighten(left, -0.18)); poly([hex[2], hex[3], [0, -85]], lighten(right, -0.3));
     ctx.restore();
   }
   private drawFlight(s: State, acc: number): void {
@@ -202,7 +204,7 @@ export class Renderer {
       const [x, y] = this.polar(r, p.angle);
       if (waiting) { // announced: it sits at the rim and shows its path, so you can turn before it launches
         const [ex, ey] = this.polar(4, p.angle);
-        ctx.strokeStyle = hexA(maskColours(p.mask)[0], 0.5); ctx.lineWidth = Math.max(1.5, U * 0.22); ctx.setLineDash([U * 0.5, U * 0.9]);
+        ctx.strokeStyle = hexA(maskColours(p.mask)[0], 0.4); ctx.lineWidth = Math.max(1, U * 0.16); ctx.setLineDash([U * 0.4, U * 0.9]);
         ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
       }
       this.phageSprite(x, y, p.angle, maskColours(p.mask), waiting ? 0.45 + 0.3 * Math.sin(this.time * 10) : 1);
@@ -231,13 +233,15 @@ export class Renderer {
 
   /** The colony is soft: outer pixels trail behind when it turns. */
   private lagK = 0;
+  private soft = 0;
   private lag(i: number, j: number): [number, number] {
     const a = this.lagK * Math.hypot(i, j); if (!a) return [i, j];
     const c = Math.cos(a), sn = Math.sin(a); return [i * c - j * sn, i * sn + j * c];
   }
 
   private drawBlob(s: State, hover: Pick | null): void {
-    this.lagK = s.phase === 'wave' ? -s.omega * 0.0035 : 0;
+    this.soft += ((s.phase === 'wave' ? s.omega : 0) - this.soft) * 0.12; // the outer cells catch up a moment after the core
+    this.lagK = -(this.soft * 0.5 + (s.phase === 'wave' ? s.omega : 0) * 0.5) * 0.0062;
     const { ctx } = this; const { cx, cy, U } = this.view;
     const patch = hover ? this.patchOf(s, hover.i, hover.j) : null;
     const tNow = this.time;
@@ -278,6 +282,28 @@ export class Renderer {
     ctx.stroke();
     if (hover) { ctx.strokeStyle = CREAM; ctx.lineWidth = 0.2; ctx.strokeRect(hover.i - 0.6, hover.j - 0.6, 1.2, 1.2); }
     ctx.restore();
+  }
+
+  /** Blue at work: pulses travel from the blue cells that face a hot part of the wall out to that wall. */
+  private drawHealing(s: State): void {
+    const { ctx } = this; const { U } = this.view;
+    const base = s.wall.reduce((a, w) => Math.min(a, w), 1);
+    // the outermost blue cell in each of 96 directions (screen angle), so pulses start on real blue cells
+    const N = 96, edge = new Array<number>(N).fill(0);
+    eachCell(s, (c, i, j) => { if (c.c !== 2) return; const r = Math.hypot(i, j), a = ((Math.atan2(j, i) + this.theta) % TAU + TAU) % TAU, k = Math.floor((a / TAU) * N) % N; if (r > edge[k]) edge[k] = r; });
+    const rim = this.blobRadius(s);
+    for (let k = 0; k < N; k++) {
+      if (edge[k] < rim - 4) continue; // blue must be near the surface to reach the wall
+      const a = ((k + 0.5) / N) * TAU, j = Math.floor((a / TAU) * S) % S;
+      const hot = Math.min(1, Math.max(0, (s.wall[j] - base - 0.03) / 0.25)), f = s.cooling[j] ?? 0;
+      const power = hot * Math.min(1, f * 1.6); if (power < 0.04) continue;
+      for (let q = 0; q < 2; q++) {
+        const t = (this.time * 0.9 + hash(k * 7 + q * 3)) % 1, r = edge[k] + 1 + t * (WALL_R - 3 - edge[k]);
+        const [x, y] = this.polar(r, a);
+        ctx.fillStyle = hexA('#6cc0f5', (0.4 + 0.6 * power) * (1 - t * 0.5));
+        ctx.beginPath(); ctx.arc(x, y, U * (0.3 + 0.38 * power), 0, TAU); ctx.fill();
+      }
+    }
   }
 
   // ---- feeding sites, wall treatments, and the drag-and-drop preview ----------------------------------

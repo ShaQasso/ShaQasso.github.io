@@ -1,7 +1,8 @@
 import './style.css';
 import balance from './data/balance.json';
 import { CARD } from './engine/cards';
-import { count, eachCell } from './engine/geometry';
+import { count } from './engine/geometry';
+import { score } from './engine/score';
 import { createState, nextCycle, pickCard, placeTarget, step } from './engine/sim';
 import { Input } from './input';
 import { COLOUR_NAME, Renderer, type Target } from './render/draw';
@@ -29,20 +30,12 @@ function titleScreen(): void {
     <h2>You are the gut bacteria of someone with Crohn's disease. Keep the gut in remission for ${balance.cycles} months. It takes about five minutes.</h2>
     <ul>
       <li><i style="background:#eef3d4"></i><span><b>Between waves, garden.</b> Drag one card onto the colony or the gut wall: food grows one colour, drugs calm the wall or clear cells.</span></li>
-      <li><i style="background:#d0392a"></i><span><b>In a wave, turn the colony.</b> Drag, scroll, or use A and D. Phages wait at the rim before they launch, and each infects only the colour of its head.</span></li>
-      <li><i style="background:#1d6fa5"></i><span><b>Keep inflammation down.</b> Blue cells facing a hot part of the wall cool it. Too hot for too long ends the run.</span></li>
+      <li><i style="background:#d0392a"></i><span><b>In a wave, turn the colony.</b> Drag, scroll, or use A and D. Phages come in volleys, wait at the rim before they launch, and infect only the colour of their head.</span></li>
+      <li><i style="background:#1d6fa5"></i><span><b>Blue calms the wall.</b> Turn blue toward a hot part of the wall and it pulses out to cool it. Too hot for too long ends the run.</span></li>
+      <li><i style="background:#f2b01e"></i><span><b>Big patch or mixed?</b> A big patch of one colour grows a coat that blocks hits, but a bite into it takes far more. Your score rewards calm months and keeping all three colours.</span></li>
     </ul>
     <div><button class="btn" id="go" type="button">Start</button></div>`);
   document.getElementById('go')!.addEventListener('click', () => startRun());
-}
-
-/** Remission score: calm months, a surviving colony, and a colony that kept all three colours. */
-function score(s: State): { total: number; calm: number; size: number; mix: number } {
-  const calm = Math.round(s.history.reduce((a, h) => a + Math.max(0, 100 - h.peak * 100), 0));
-  const n = count(s), by = [0, 0, 0];
-  eachCell(s, (c) => { by[c.c]++; });
-  const size = Math.round(n / 5), mix = n ? Math.round((Math.min(...by) / n) * 600) : 0;
-  return { total: calm + size + mix, calm, size, mix };
 }
 
 function endScreen(s: State): void {

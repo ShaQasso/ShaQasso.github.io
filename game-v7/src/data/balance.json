@@ -8,26 +8,26 @@
   "colours": [
     {
       "name": "yellow",
-      "mucus": 1.0,
+      "mucus": 0.6,
       "resist": 0.15,
       "evade": 0.1,
-      "growth": 1.0,
-      "anti": 0.35
+      "growth": 0.95,
+      "anti": 0.08
     },
     {
       "name": "green",
-      "mucus": 0.1,
-      "resist": 0.9,
+      "mucus": 0.6,
+      "resist": 0.15,
       "evade": 0.1,
-      "growth": 0.85,
-      "anti": 0.15
+      "growth": 0.95,
+      "anti": 0.08
     },
     {
       "name": "blue",
-      "mucus": 0.1,
+      "mucus": 0.6,
       "resist": 0.15,
       "evade": 0.9,
-      "growth": 0.9,
+      "growth": 0.95,
       "anti": 1.0
     }
   ],
@@ -74,7 +74,7 @@
   },
   "wave": {
     "len": 30,
-    "base": 0.5,
+    "base": 0.2,
     "growth": 1.12,
     "ramp": [
       0.5,
@@ -84,11 +84,16 @@
     "twoColourProb": 0.4,
     "abxFrom": 99,
     "abxLate": 99,
-    "firstMonth": 0.6
+    "firstMonth": 0.6,
+    "volley": [
+      3,
+      5
+    ],
+    "spread": 0.3
   },
   "flare": {
     "from": 2,
-    "heat": 0.155,
+    "heat": 0.146,
     "immunePerSec": 0.32,
     "immuneGrow": 0.08,
     "pre": [
@@ -128,7 +133,7 @@
     "lysisPulse": 0.004
   },
   "chronic": {
-    "perCycle": 0.04,
+    "perCycle": 0.032,
     "recover": 0.35
   },
   "overload": 0.78,
@@ -174,5 +179,6 @@
     "abxR": 5,
     "steroidCool": 0.25,
     "steroidDrift": 0.03
-  }
+  },
+  "regrow": 7
 }

@@ -135,7 +135,7 @@ describe('real-time wave basics', () => {
     const s = wave(10, () => 0); s.spawning = true; s.cycle = 6;
     const masks = new Set<number>(), quad = new Set<number>();
     for (let i = 0; i < 20 * 25; i++) { step(s); for (const p of s.phages) { masks.add(p.mask); quad.add(Math.floor(p.angle / (TAU / 4))); } }
-    expect(masks.size).toBeGreaterThanOrEqual(3); expect(quad.size).toBe(4);
+    expect(masks.size).toBeGreaterThanOrEqual(3); expect(quad.size).toBeGreaterThanOrEqual(3); // volleys land on fewer sides
     const spawned = (cycle: number) => { const t = wave(14, () => 1); t.spawning = true; t.cycle = cycle; let n = 0, seen = new Set<object>(); for (let i = 0; i < 20 * 20; i++) { step(t); for (const p of t.phages) if (!seen.has(p)) { seen.add(p); n++; } } return n; };
     expect(spawned(10)).toBeGreaterThan(spawned(1) * 1.5);
   });
@@ -174,11 +174,10 @@ describe('time to react', () => {
 
 describe('bites and bet hedging', () => {
   const lysed = (colour: (i: number, j: number) => number, c0 = 0) => { let t = 0; for (const seed of [1, 2, 3, 4]) { const s = wave(12, colour, seed); infect(s, 6, 0, 1 << c0); run(s, 8); t += s.stats.lysed; } return t / 4; };
-  it('one hit on a uniform amber blob takes a real bite; on a mixed blob almost nothing; cyan damps it', () => {
+  it('one hit on a single-colour blob takes a real bite; on a mixed blob almost nothing', () => {
     const mono = lysed(() => 0);
     expect(mono).toBeGreaterThan(40);
     expect(lysed(mixed)).toBeLessThan(mono / 10);
-    expect(lysed(() => 1, 1)).toBeLessThan(mono / 2);
   });
   it('a different colour is a firewall', () => {
     const s = wave(12, (i) => (i < 0 ? 0 : 1)); infect(s, -6, 0, 1); run(s, 10);
@@ -214,9 +213,10 @@ describe('mucus coats on big patches', () => {
     expect(after).toBeLessThan(before); expect(cooling).toBeGreaterThan(3);
   });
 
-  it('yellow (mucus) coats last much longer than purple ones', () => {
+  it('every capsule type grows the same coat: only blue has a special role', () => {
     const dur = (colour: number) => { const s = wave(13, () => colour); s.coating = true; run(s, 1.2); let m = 0; eachCell(s, (c) => { m = Math.max(m, c.m); }); return m; };
-    expect(dur(0)).toBeGreaterThan(dur(1) * 1.5);
+    expect(dur(0)).toBeCloseTo(dur(1), 5);
+    expect(COLOURS[2].anti).toBeGreaterThan(COLOURS[0].anti * 5); expect(COLOURS[0].anti).toBe(COLOURS[1].anti);
   });
 
   it('the mucus secretagogue (held card) coats the whole surface at once', () => {
@@ -323,6 +323,21 @@ describe('v7: gardening cards and announced phages', () => {
     const s = wave(12, () => 1); s.phages.push({ r: balance.phage.spawnR, angle: 0, mask: 2, wait: 1 });
     run(s, 0.9); expect(s.phages[0].r).toBe(balance.phage.spawnR);
     run(s, 0.5); expect(s.phages[0].r).toBeLessThan(balance.phage.spawnR);
+  });
+  it('phages arrive as a volley: several of one kind, spread over an arc', () => {
+    const s = wave(12, () => 1); s.spawning = true; s.cycle = 2;
+    for (let i = 0; i < 20 * 20 && !s.phages.length; i++) step(s);
+    expect(s.phages.length).toBeGreaterThanOrEqual(balance.wave.volley[0]);
+    expect(new Set(s.phages.map((p) => p.mask)).size).toBe(1);
+    const a = s.phages.map((p) => p.angle);
+    expect(Math.max(...a.map((x) => Math.abs(Math.atan2(Math.sin(x - a[0]), Math.cos(x - a[0]))))).valueOf()).toBeLessThan(balance.wave.spread * 2 + 0.2);
+  });
+  it('a bite heals: cells on the edge of a crater grow back before the colony grows outward', () => {
+    const s = wave(14, () => 1);
+    for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) s.cells[idx(i, j)] = null;
+    const before = count(s); run(s, 12);
+    let hole = 0; for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (!s.cells[idx(i, j)]) hole++;
+    expect(hole).toBeLessThan(12); expect(count(s)).toBeGreaterThan(before);
   });
   it('a run is six months, and antibiotics never arrive as a wave', () => {
     expect(balance.cycles).toBe(6); expect(balance.picks).toBe(1);

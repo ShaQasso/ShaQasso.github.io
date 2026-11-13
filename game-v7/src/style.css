@@ -89,3 +89,18 @@ button { font: inherit; }
   .card h1, .big { font-size: 38px; }
 }
 @media (prefers-reduced-motion: reduce) { .pcard, #banner { transition: none; } }
+
+/* live score and the patch panel (the central trade-off, always on screen) */
+.score { font-size: 12px; color: var(--dim); display: flex; flex-direction: column; gap: 1px; min-width: 96px; }
+.score b { font-size: 20px; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.patches { position: absolute; left: 32px; bottom: 26px; width: 292px; display: flex; flex-direction: column; gap: 9px; font-size: 13px; color: var(--dim); }
+.patches .h { font-size: 12px; line-height: 1.4; }
+.prow { display: grid; grid-template-columns: 12px 1fr; gap: 4px 10px; align-items: center; }
+.prow i { width: 12px; height: 12px; border-radius: 3px; }
+.prow .t { display: flex; justify-content: space-between; gap: 8px; color: var(--soft); }
+.prow .t em { font-style: normal; color: var(--dim); }
+.prow .t em.on { color: var(--ink); font-weight: 600; }
+.pbar { grid-column: 2; position: relative; height: 6px; border-radius: 3px; background: var(--line); }
+.pbar b { display: block; height: 100%; border-radius: 3px; }
+.pbar u { position: absolute; left: 50%; top: -3px; width: 2px; height: 12px; background: var(--ink); }
+@media (max-width: 900px) { .patches, .score { display: none; } }

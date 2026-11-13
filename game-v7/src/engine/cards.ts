@@ -8,14 +8,15 @@ export interface CardDef {
 }
 
 /**
- * Colours: 0 yellow (mucus capsule), 1 green (phage-resistant capsule), 2 blue (immune-evasion capsule, calms flares).
+ * Colours are capsule types. 2 (blue) stands for an anti-inflammatory capsule such as B. fragilis PSA: it calms the wall it
+ * faces and immune cells mostly spare it. 0 (yellow) and 1 (green) are other capsule types with no special role.
  * Cards are gardening between waves: only things that come from outside the body (food and drugs). Each one is played
  * once, by dragging it to where it should work. Nothing is held and nothing has a timer beyond the coming wave.
  */
 export const CARDS: CardDef[] = [
-  { id: 'fibre', name: 'Fibre', family: 'food', effect: 'feed', weight: 1, target: 'blob', colour: 2, text: 'Blue grows where you drop it. Blue calms flares.' },
-  { id: 'mucin', name: 'Mucin', family: 'food', effect: 'feed', weight: 1, target: 'blob', colour: 0, text: 'Yellow grows where you drop it. Yellow builds a coat.' },
-  { id: 'starch', name: 'Starch', family: 'food', effect: 'feed', weight: 1, target: 'blob', colour: 1, text: 'Green grows where you drop it. Green resists phages.' },
+  { id: 'fibre', name: 'Fibre', family: 'food', effect: 'feed', weight: 1, target: 'blob', colour: 2, text: 'Blue grows where you drop it. Blue calms the wall it faces.' },
+  { id: 'mucin', name: 'Mucin', family: 'food', effect: 'feed', weight: 1, target: 'blob', colour: 0, text: 'Yellow grows where you drop it. Build a patch, or break one up.' },
+  { id: 'starch', name: 'Starch', family: 'food', effect: 'feed', weight: 1, target: 'blob', colour: 1, text: 'Green grows where you drop it. Build a patch, or break one up.' },
   { id: 'antibiotic', name: 'Antibiotic', family: 'drug', effect: 'abx', weight: 0.8, target: 'blob', text: 'Clears every cell where you drop it. Prune a patch that got too big.' },
   { id: 'mesalamine', name: 'Mesalamine', family: 'drug', effect: 'wallcool', weight: 1, target: 'wall', text: 'Drop on the wall: that section stays cooler this wave.' },
   { id: 'steroid_now', name: 'Steroid', family: 'drug', effect: 'steroid', weight: 0.8, text: 'Cools the whole wall now. The baseline creeps up for good.' },

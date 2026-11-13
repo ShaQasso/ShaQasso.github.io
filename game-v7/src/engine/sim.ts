@@ -263,6 +263,11 @@ export function turnBand(s: State, dir: number): void {
 }
 
 // ---- helpers ----------------------------------------------------------------------------------
+/** True when this cell borders a hole inside the colony's outline (a bite), not the open outside. */
+function wound(s: State, i: number, j: number, rim: number): boolean {
+  for (const [di, dj] of NEIGH) { const a = i + di, b = j + dj; if (inside(a, b) && !s.cells[idx(a, b)] && Math.hypot(a, b) < rim - 1) return true; }
+  return false;
+}
 function kill(s: State, i: number, j: number, why: 'abx' | 'immune' | 'lysis', mask?: number): void {
   s.cells[idx(i, j)] = null; s.cyc.lost++;
   s.events?.push({ kind: why, x: i, y: j, mask });
@@ -299,7 +304,9 @@ export function step(s: State, dt: number = B.dt): void {
       s.phageAcc -= 1;
       let mask = 1 << Math.floor(rand(s) * 3);
       if (c >= B.wave.twoColourFrom && rand(s) < B.wave.twoColourProb) mask |= 1 << Math.floor(rand(s) * 3);
-      s.phages.push({ r: B.phage.spawnR, angle: rand(s) * TAU, mask, wait: B.phage.warn });
+      // a volley: several phages of one kind, spread over an arc like a shotgun blast
+      const n = B.wave.volley[0] + Math.floor(rand(s) * (B.wave.volley[1] - B.wave.volley[0] + 1)), a0 = rand(s) * TAU;
+      for (let k = 0; k < n; k++) s.phages.push({ r: B.phage.spawnR + rand(s) * 3, angle: wrap(a0 + ((k + 0.5) / n - 0.5) * 2 * B.wave.spread + (rand(s) - 0.5) * 0.05), mask, wait: B.phage.warn + rand(s) * 0.35 });
     }
   }
   // flares: heat their arc of the wall and fire immune cells from it
@@ -395,6 +402,7 @@ export function step(s: State, dt: number = B.dt): void {
   const rareW = share.map((v) => 1 / (v / Math.max(1, n0) + B.mutate.rareBias));
   const gAll = mod(s, 'growthAll', 'mul');
   const parents: [number, number][] = [];
+  let rim = 0; eachCell(s, (_, i, j) => { rim = Math.max(rim, Math.hypot(i, j)); });
   eachCell(s, (cell, i, j) => {
     if (cell.inf > 0) return;
     if (s.mutating && rand(s) < 1 - Math.exp(-B.mutate.rate * (1 + s.inflammation) * dt)) {
@@ -411,6 +419,7 @@ export function step(s: State, dt: number = B.dt): void {
     }
     let g = (COLOURS[cell.c].growth / B.growthInterval) * gAll * mod(s, `growth${cell.c}`, 'mul') * room;
     for (const st of s.sites) if ((i - st.i) ** 2 + (j - st.j) ** 2 <= st.r * st.r) { g *= B.site.growMul; break; }
+    if (wound(s, i, j, rim)) g *= B.regrow; // bites heal: the edge of a crater grows back fast
     if (rand(s) < 1 - Math.exp(-dt * g)) parents.push([i, j]);
     if (cell.m > 0) { cell.m -= dt; if (cell.m <= 0) cell.mcd = B.coat.cooldown; } else if (cell.mcd > 0) cell.mcd -= dt;
   });
@@ -419,7 +428,9 @@ export function step(s: State, dt: number = B.dt): void {
     if (!p || p.inf > 0) continue;
     const empties = NEIGH.map(([di, dj]) => [i + di, j + dj] as [number, number]).filter(([a, b]) => inside(a, b) && !s.cells[idx(a, b)]);
     if (!empties.length) continue;
-    const [ei, ej] = empties[Math.floor(rand(s) * empties.length)];
+    const deep = empties.filter(([a, b]) => Math.hypot(a, b) < rim - 1); // fill craters before growing outward
+    const from = deep.length ? deep : empties;
+    const [ei, ej] = from[Math.floor(rand(s) * from.length)];
     const votes = [0, 0, 0]; votes[p.c] += B.parentWeight;
     for (const [di, dj] of NEIGH) { const nb = cellAt(s, ei + di, ej + dj); if (nb && nb !== p && nb.inf === 0) votes[nb.c] += 1; }
     let x = rand(s) * (votes[0] + votes[1] + votes[2]), pick = p.c;

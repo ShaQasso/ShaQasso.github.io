@@ -1,19 +1,21 @@
 import balance from '../data/balance.json';
 import { CARD } from '../engine/cards';
 import { count, exposed } from '../engine/geometry';
-import { coatThreshold } from '../engine/sim';
+import { coatThreshold, patches } from '../engine/sim';
+import { score } from '../engine/score';
 import type { State } from '../engine/types';
 import { COLOUR_HEX, COLOUR_NAME, type Pick, type Renderer } from '../render/draw';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const B = balance;
 const FAM: Record<string, string> = { food: 'Food', drug: 'Drug', motility: 'Motion' };
-const ROLE = ['builds a mucus coat when the patch is big', 'resists phages', 'calms flares and slips past immune cells'];
+const ROLE = ['capsule type', 'capsule type', 'capsule type (PSA): calms the wall it faces, and immune cells mostly spare it'];
+const LABEL = ['Yellow', 'Green', 'Blue · calms the wall'];
 /** What each month adds, so there is always something new. */
 export const NEW: Record<number, string> = { 2: 'flares', 3: 'two-colour phages', 4: 'faster phages', 5: 'stronger flares', 6: 'a second flare' };
 const BIO: Record<number, string> = {
   1: 'Phages attack one type of capsule at a time, so a colony with several types is rarely wiped out.',
-  2: 'In an inflamed gut, Bacteroides shift which capsules they make. Blue cells stand in for the types that calm the immune system.',
+  2: 'Blue stands for a capsule like PSA of Bacteroides fragilis, which calms the immune system. In an inflamed gut, fewer bacteria make it.',
   3: 'Bacteria change capsule type by flipping short stretches of DNA, so one lineage can hold several types at once.',
   4: 'Diet moves the same switches: different carbohydrates favour different capsule states.',
   5: 'A thick mucus layer keeps bacteria and the gut wall apart. It thins when the gut is inflamed.',
@@ -56,19 +58,34 @@ export class Hud {
     $('m-over').style.left = '78%';
     $('b-pop').style.width = `${Math.min(100, (n / B.capacity) * 100)}%`;
     $('pop-label').textContent = `Colony ${n} / ${B.capacity}`;
-    $('legend').style.display = wave ? '' : 'none';
+    $('score').textContent = String(score(s).total);
+    this.patchPanel(s);
 
     // one prompt at a time, the first time each thing appears
     if (wave && s.cycle !== this.lastCycle) {
       this.lastCycle = s.cycle;
-      if (s.cycle === 1) this.banner('Drag to turn the colony', 'Each phage waits at the rim before it launches. Its head colour is the cells it infects: turn so it lands on a different colour.', 9);
-      else if (s.flares.length && !this.seen.has('flare')) { this.seen.add('flare'); this.banner('A flare is coming', 'The orange arc heats the wall and sends immune cells that scrape a strip off the colony. Turn blue cells toward it.', 8); }
+      if (s.cycle === 1) this.banner('Drag to turn the colony', 'Phages arrive in volleys and wait at the rim before they launch. A head colour is the cells it infects: turn so they land on a different colour.', 9);
+      else if (s.flares.length && !this.seen.has('flare')) { this.seen.add('flare'); this.banner('A flare is coming', 'The orange arc heats the wall and sends immune cells that scrape a strip off the colony. Turn blue toward it: you will see it pulse toward the wall as it calms it.', 8); }
       else if (s.cycle === 3) this.banner('Two-colour phages', 'A head split in two colours infects both.', 6);
     }
-    if (s.stats.coats > 0 && !this.seen.has('coat')) { this.seen.add('coat'); this.banner('Mucus coat', 'A big single-colour patch coated itself (pale edge). It blocks hits, but a bite into a big patch is large.', 7); }
+    if (s.stats.coats > 0 && !this.seen.has('coat')) { this.seen.add('coat'); this.banner('Mucus coat', 'A big single-colour patch coated itself (pale edge). It blocks hits, but once it is chipped a bite takes far more.', 7); }
     if (this.bannerT > 0 && this.bannerT < 9000) { this.bannerT -= 1 / 60; if (this.bannerT <= 0) $('banner').classList.remove('show'); }
 
     this.screens(s);
+  }
+
+  /** The trade-off, always visible: a big single-colour patch grows a coat, but a bite into it is big. */
+  private patchT = 0;
+  private patchPanel(s: State): void {
+    const el = $('patches');
+    const show = s.status === 'run' && s.phase !== 'checkup';
+    el.style.display = show ? '' : 'none';
+    if (!show || performance.now() - this.patchT < 350) return;
+    this.patchT = performance.now();
+    const thr = Math.round(coatThreshold(s)), big = [0, 0, 0];
+    for (const p of patches(s)) big[p.colour] = Math.max(big[p.colour], p.cells.length);
+    const rows = [2, 0, 1].map((c) => { const on = big[c] >= thr; return `<div class="prow"><i style="background:${COLOUR_HEX[c]}"></i><div class="t"><span>${LABEL[c]}</span><em class="${on ? 'on' : ''}">${big[c]} · ${on ? 'coat, big bite' : 'no coat, small bite'}</em></div><div class="pbar"><b style="width:${Math.min(100, (big[c] / (2 * thr)) * 100)}%;background:${COLOUR_HEX[c]}"></b><u></u></div></div>`; }).join('');
+    el.innerHTML = `<div class="h">Biggest patch of each type. At ${thr} cells a patch grows a coat that blocks hits, but a bite into it takes far more.</div>${rows}`;
   }
 
   banner(title: string, sub: string, secs: number): void { const b = $('banner'); b.innerHTML = `${title}<small>${sub}</small>`; b.classList.add('show'); this.bannerT = secs; }
@@ -98,7 +115,7 @@ export class Hud {
       const row = (col: string, a: string, b: string) => `<div class="row"><i style="background:${col}"></i><div><b>${a}</b><span>${b}</span></div></div>`;
       sum.innerHTML = `<div><div class="k">Month ${s.cycle} of ${B.cycles}</div><h1>${head}</h1></div>
         <div class="rows">
-          ${h.blocked > 0 ? row('#f2b01e', `${h.blocked} hit${h.blocked > 1 ? 's' : ''} stopped by a coat`, 'A big single-colour patch coated itself.') : row('#f2b01e', 'No coat this month', `A coat needs one patch of ${thr} cells in a single colour.`)}
+          ${h.blocked > 0 ? row('#eef3d4', `${h.blocked} hit${h.blocked > 1 ? 's' : ''} stopped by a coat`, 'A big single-colour patch coated itself.') : row('#eef3d4', 'No coat this month', `A coat needs one patch of ${thr} cells in a single colour.`)}
           ${h.flares > 0 ? row('#1d6fa5', h.peak < B.overload * 0.85 ? 'The flare was kept in check' : 'The flare nearly got away', `Inflammation peaked at ${peak}%. Flare-out is at ${Math.round(B.overload * 100)}%.`) : row('#1d6fa5', 'No flare this month', `Inflammation peaked at ${peak}%.`)}
           ${row('#d0392a', `${h.lost} cells lost, ${h.births} grew back`, `${h.hits} phage hit${h.hits === 1 ? '' : 's'}${h.immune ? `, ${h.immune} cells scraped by immune cells` : ''}.`)}
         </div>
@@ -146,4 +163,4 @@ export class Hud {
 
 export function showScreen(html: string): void { const el = $('screen'); el.innerHTML = `<div class="card">${html}</div>`; el.classList.add('show'); }
 export function hideScreen(): void { $('screen').classList.remove('show'); }
-void exposed; void COLOUR_HEX;
+void exposed;
