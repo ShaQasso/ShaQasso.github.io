@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mbiota · Shaqed Carasso</title>
+<meta name="description" content="Mbiota, a five-minute browser game about keeping a gut in remission, built on the biology of Bacteroides capsule switching.">
+<link rel="canonical" href="https://shaqasso.github.io/mbiota.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mbiota · Shaqed Carasso">
+<meta property="og:description" content="Mbiota, a five-minute browser game about keeping a gut in remission, built on the biology of Bacteroides capsule switching.">
+<meta property="og:image" content="https://shaqasso.github.io/media/share.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" href="media/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="wrap nav">
+<a class="brand" href="index.html"><span class="mark" aria-hidden="true"><i></i><i></i></span>Shaqed Carasso</a>
+<nav aria-label="Main">
+<a href="index.html#research">Research</a>
+<a href="mbiota.html" aria-current="page">Mbiota</a>
+<a href="publications.html">Publications</a>
+<a href="media/Carasso_Shaqed_CV_2026.pdf">CV</a>
+<a href="mailto:scarasso@broadinstitute.org">Contact</a>
+</nav>
+</header>
+<main>
+
+<section class="wrap hero">
+<div class="text">
+<span class="label yellow">Mbiota</span>
+<h1>Keep a gut in remission for six months</h1>
+<p class="body">I turned the biology I work on into a small browser game. You look after a colony of <em>Bacteroides</em> through six months. Phages attack in volleys, the gut wall flares, and between waves you garden the colony with food and drugs.</p>
+<div class="actions"><a class="btn" href="play/mbiota.html">Play in your browser</a><span>About 5 minutes. Mouse, touch or keyboard.</span></div>
+</div>
+<div class="art"><img src="media/mbiota-game.png" width="1000" height="982" alt="Mbiota gameplay: a volley of phages waits at the rim while a flare heats one side of the gut wall and blue cells pulse toward it"></div>
+</section>
+
+<section class="story">
+<div class="wrap">
+<div class="step">
+<span class="label">1 · The colony</span>
+<div class="text"><h2>A colony of cells in three capsule types</h2>
+<p class="body">Each colour is a capsule type, the coat a bacterium shows to its surroundings, and each has one job. Blue stands for a capsule like PSA of <em>Bacteroides fragilis</em>, which calms the immune system: it cools the wall it faces. Yellow resists immune cells. Green slows flares: the more green, the slower they build. A big patch of one colour grows a protective coat, but a bite into it takes far more.</p></div>
+<img src="media/mbiota-growth.png" width="1040" height="474" alt="A colony growing in three steps; the same founder cells grow into the same colour patches">
+</div>
+<div class="step">
+<span class="label">2 · The phages</span>
+<div class="text"><h2>Phages infect one capsule type</h2>
+<p class="body">Phages arrive in volleys and wait at the rim before they launch. Each infects only the colour of its head and spreads through neighbours of that colour. Your one control in a wave is to turn the colony, so they land on a different colour.</p></div>
+<img src="media/mbiota-phages.png" width="1040" height="513" alt="Hexagon phages on dotted paths toward a colony; one has bitten into its edge">
+</div>
+<div class="step">
+<span class="label">3 · The wall</span>
+<div class="text"><h2>Blue calms a flare, at a cost</h2>
+<p class="body">When a section of the wall flares, turn blue cells toward it and they pulse out to cool it. The flare also sends immune cells that scrape whatever faces them, so calming the wall costs you blue. Let inflammation stay too high for too long and the run ends.</p></div>
+<img src="media/mbiota-flare.png" width="1040" height="723" alt="A colony on the left sends blue pulses from its blue cells toward a flare on the right">
+</div>
+<div class="step">
+<span class="label">4 · The garden</span>
+<div class="text"><h2>Between waves you garden</h2>
+<p class="body">Each month you drag one card to where it should work. Fibre, mucin or starch grows one colour in a spot you choose. An antibiotic clears a patch that got too big. Mesalamine cools one section of the wall, and a steroid cools all of it but raises the baseline.</p></div>
+</div>
+</div>
+</section>
+
+<section class="panel dark">
+<div class="wrap">
+<img class="wide" src="media/phase-variation.png" width="1040" height="693" alt="The same bacterium twice: with a red coat, then with a blue coat and a flipped stretch of DNA">
+<div class="text">
+<span class="label">What is real and what is simplified</span>
+<p class="body">The idea is real: <em>Bacteroides</em> switch capsule types by flipping DNA, and phages, inflammation and diet push those switches. PSA is a real anti-inflammatory capsule. The game uses three clean colours, fixed speeds and a lot of simplification. It is a way into the idea, not a model of a gut.</p>
+<div class="links"><a href="index.html#research">The research behind it</a><a href="publications.html">The papers</a></div>
+</div>
+</div>
+</section>
+
+<section class="panel">
+<div class="wrap">
+<img class="cover" src="media/mbiota-adventures.png" width="160" height="160" alt="Cover of Mbiota Adventures, the original version">
+<div class="text">
+<span class="label">Where it started</span>
+<h2>Mbiota Adventures, the first version</h2>
+<p class="body">The idea began as Mbiota Adventures, a browser game about diversity, fitness and host defence. I built it iteratively with Gemini 3 and tuned the event logic and diversity dynamics by hand. This version grew out of it. The original is kept as it was.</p>
+<a href="game/microbiome_game_v2.0_biomni.html">Play Mbiota Adventures, the original →</a>
+</div>
+</div>
+</section>
+
+</main>
+<footer id="contact">
+<div class="wrap">
+<div class="col"><b>Shaqed Carasso, Ph.D.</b><span>Xavier lab, Broad Institute of MIT and Harvard</span><span>Cambridge, MA</span></div>
+<div class="col"><a href="mailto:scarasso@broadinstitute.org">scarasso@broadinstitute.org</a><a href="https://scholar.google.com/citations?user=RTsG9ekAAAAJ">Google Scholar</a><a href="https://www.linkedin.com/in/shaqed-carasso/">LinkedIn</a><a href="media/Carasso_Shaqed_CV_2026.pdf">CV (PDF)</a></div>
+</div>
+</footer>
+</body>
+</html>
