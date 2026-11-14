@@ -4,7 +4,7 @@ import { coatThreshold, immuneSpeed, phageSpeed } from '../engine/sim';
 import type { Cell, State } from '../engine/types';
 
 const B = balance;
-export const CREAM = '#eef3d4', BLACK = '#0d0d0d', RED = '#d0392a', ORANGE = '#e0701f', YELLOW = '#f2b01e', GREEN = '#1f7a52', BLUE = '#1d6fa5';
+export const CREAM = '#f2ebdc', BLACK = '#0d0d0d', RED = '#d0392a', ORANGE = '#e0701f', YELLOW = '#f2b01e', GREEN = '#1f7a52', BLUE = '#1d6fa5';
 export const COLOUR_HEX = [YELLOW, GREEN, BLUE];
 export const COLOUR_NAME = ['Yellow', 'Green', 'Blue'];
 const WALL_R = B.wallR;

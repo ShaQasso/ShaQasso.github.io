@@ -25,12 +25,12 @@ const BIO: Record<number, string> = {
 function art(id: string): string {
   const d = (style: string) => `<div style="${style}"></div>`;
   switch (id) {
-    case 'fibre': return `<div class="art" style="background:#0d0d0d">${d('left:50px;top:8px;width:84px;height:84px;border-radius:50%;border:4px dashed #eef3d4')}${d('left:68px;top:26px;width:48px;height:48px;border-radius:50%;background:#1d6fa5')}</div>`;
+    case 'fibre': return `<div class="art" style="background:#0d0d0d">${d('left:50px;top:8px;width:84px;height:84px;border-radius:50%;border:4px dashed #f2ebdc')}${d('left:68px;top:26px;width:48px;height:48px;border-radius:50%;background:#1d6fa5')}</div>`;
     case 'mucin': return `<div class="art" style="background:#f2b01e">${d('left:20px;top:44px;width:140px;height:140px;border-radius:50%;border:7px solid #0d0d0d')}${d('left:44px;top:68px;width:92px;height:92px;border-radius:50%;border:7px solid #0d0d0d')}${d('left:68px;top:92px;width:44px;height:44px;border-radius:50%;background:#0d0d0d')}</div>`;
-    case 'starch': return `<div class="art" style="background:#1f7a52">${d('left:66px;top:20px;width:48px;height:58px;background:#eef3d4;clip-path:polygon(50% 0,100% 22%,100% 78%,50% 100%,0 78%,0 22%)')}${d('left:40px;top:45px;width:100px;height:9px;background:#0d0d0d;transform:rotate(-32deg)')}</div>`;
-    case 'antibiotic': return `<div class="art" style="background:#d0392a">${d('left:55px;top:15px;width:70px;height:70px;border-radius:50%;background:#0d0d0d')}${d('left:14px;top:20px;width:16px;height:16px;border-radius:3px;background:#eef3d4')}${d('left:22px;top:62px;width:16px;height:16px;border-radius:3px;background:#f2b01e')}${d('left:146px;top:28px;width:16px;height:16px;border-radius:3px;background:#f2b01e')}${d('left:140px;top:66px;width:16px;height:16px;border-radius:3px;background:#eef3d4')}</div>`;
+    case 'starch': return `<div class="art" style="background:#1f7a52">${d('left:66px;top:20px;width:48px;height:58px;background:#f2ebdc;clip-path:polygon(50% 0,100% 22%,100% 78%,50% 100%,0 78%,0 22%)')}${d('left:40px;top:45px;width:100px;height:9px;background:#0d0d0d;transform:rotate(-32deg)')}</div>`;
+    case 'antibiotic': return `<div class="art" style="background:#d0392a">${d('left:55px;top:15px;width:70px;height:70px;border-radius:50%;background:#0d0d0d')}${d('left:14px;top:20px;width:16px;height:16px;border-radius:3px;background:#f2ebdc')}${d('left:22px;top:62px;width:16px;height:16px;border-radius:3px;background:#f2b01e')}${d('left:146px;top:28px;width:16px;height:16px;border-radius:3px;background:#f2b01e')}${d('left:140px;top:66px;width:16px;height:16px;border-radius:3px;background:#f2ebdc')}</div>`;
     case 'mesalamine': return `<div class="art" style="background:#0d0d0d">${d('left:10px;top:20px;width:160px;height:160px;border-radius:50%;background:#d0392a')}${d('left:35px;top:45px;width:110px;height:110px;border-radius:50%;background:#e0701f')}${d('left:60px;top:70px;width:60px;height:60px;border-radius:50%;background:#1d6fa5')}</div>`;
-    default: return `<div class="art" style="background:#e0701f">${d('left:40px;top:0;width:100px;height:100px;border-radius:50%;border:6px solid #eef3d4')}${d('left:62px;top:22px;width:56px;height:56px;border-radius:50%;border:6px solid #eef3d4')}${d('left:82px;top:42px;width:16px;height:16px;border-radius:50%;background:#0d0d0d')}</div>`;
+    default: return `<div class="art" style="background:#e0701f">${d('left:40px;top:0;width:100px;height:100px;border-radius:50%;border:6px solid #f2ebdc')}${d('left:62px;top:22px;width:56px;height:56px;border-radius:50%;border:6px solid #f2ebdc')}${d('left:82px;top:42px;width:16px;height:16px;border-radius:50%;background:#0d0d0d')}</div>`;
   }
 }
 
@@ -112,12 +112,12 @@ export class Hud {
       hand.querySelectorAll<HTMLButtonElement>('.pcard').forEach((el) => this.draggable(el, Number(el.dataset.i)));
     } else if (s.phase === 'checkup') {
       const h = s.history[s.history.length - 1], thr = Math.round(coatThreshold(s)), peak = Math.round(h.peak * 100);
-      const row = (col: string, a: string, b: string) => `<div class="row"><i style="${col === 'ring' ? 'border:4px solid #eef3d4;box-sizing:border-box' : `background:${col}`}"></i><div><b>${a}</b><span>${b}</span></div></div>`;
+      const row = (col: string, a: string, b: string) => `<div class="row"><i style="${col === 'ring' ? 'border:4px solid #f2ebdc;box-sizing:border-box' : `background:${col}`}"></i><div><b>${a}</b><span>${b}</span></div></div>`;
       const head = h.calm ? (h.peak < 0.5 ? 'Remission holds.' : 'A calm month.') : h.peak < 0.7 ? 'A rough month.' : 'A close call.';
       const baseline = Math.round(baseInflammation(s) * 100), calmAt = Math.round(B.heal.calmPeak * 100);
       const heal = h.calm
-        ? row('#eef3d4', `Calm month · streak ${h.streak ?? 1}`, `The gut healed a little for good. Another calm month counts ×${(1 + B.heal.streakScore * (h.streak ?? 1)).toFixed(2)} toward your score.`)
-        : h.flares === 0 ? row('#eef3d4', 'A quiet month', 'No flare, so nothing to heal from. A calm month with a flare heals the gut for good.')
+        ? row('#f2ebdc', `Calm month · streak ${h.streak ?? 1}`, `The gut healed a little for good. Another calm month counts ×${(1 + B.heal.streakScore * (h.streak ?? 1)).toFixed(2)} toward your score.`)
+        : h.flares === 0 ? row('#f2ebdc', 'A quiet month', 'No flare, so nothing to heal from. A calm month with a flare heals the gut for good.')
         : row('#e0701f', 'Rough month · streak lost', `Inflammation went above ${calmAt}%. A calm month heals the gut for good and starts a new streak.`);
       sum.innerHTML = `<div><div class="k">${s.endless ? `Month ${s.cycle} · past remission` : `Month ${s.cycle} of ${B.cycles}`} · baseline ${baseline}%</div><h1>${head}</h1></div>
         <div class="rows">

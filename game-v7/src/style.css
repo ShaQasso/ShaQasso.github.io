@@ -1,4 +1,4 @@
-:root { --bg: #0d0d0d; --ink: #eef3d4; --soft: #dfe5c6; --dim: #b4bba0; --line: #2c2c27; --red: #d0392a; --orange: #e0701f; --yellow: #f2b01e; --green: #1f7a52; --blue: #1d6fa5; }
+:root { --bg: #0d0d0d; --ink: #f2ebdc; --soft: #e3dccb; --dim: #b8ae9b; --line: #2c2c27; --red: #d0392a; --orange: #e0701f; --yellow: #f2b01e; --green: #1f7a52; --blue: #1d6fa5; }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
 #app { position: fixed; inset: 0; }
