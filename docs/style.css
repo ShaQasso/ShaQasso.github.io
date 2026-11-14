@@ -131,3 +131,10 @@ footer b { color: var(--ink); font-weight: 600; }
   .step img, .panel img.wide { flex-basis: 100%; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* own work vs. what others wrote about it */
+.chip { display: inline-block; font-size: 11.5px; font-weight: 600; line-height: 1.5; border-radius: 4px; padding: 0 6px; margin-right: 8px; vertical-align: 1px; }
+.chip.own { background: var(--yellow); color: #0d0d0d; }
+.chip.ext { background: var(--blue); color: var(--ink); }
+.refs-h { margin: 10px 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.refs.ext { border-top: 0; padding-top: 0; margin-top: 0; }
