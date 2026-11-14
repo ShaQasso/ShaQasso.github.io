@@ -46,15 +46,18 @@ footer b { color: var(--ink); font-weight: 600; }
 
 /* home: research */
 .lead { border-top: 1px solid var(--line); }
-.lead .wrap { padding-top: 72px; padding-bottom: 24px; display: flex; flex-direction: column; gap: 14px; }
+.lead .wrap { padding-top: 72px; padding-bottom: 24px; display: flex; gap: 48px; flex-wrap: wrap; align-items: center; }
+.lead .text { flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.lead .art { flex: 1 1 400px; min-width: 0; display: flex; justify-content: center; }
 .lead h2 { font-size: 30px; line-height: 1.2; font-weight: 600; letter-spacing: -.01em; max-width: 24em; }
 .lead p { max-width: 36em; }
-.lead img { width: 100%; max-width: 640px; margin-top: 8px; }
+.lead img { width: 100%; max-width: 400px; }
 .topic { display: flex; gap: 48px; flex-wrap: wrap; align-items: center; padding: 48px 0; border-bottom: 1px solid var(--line); }
 .topic:last-child { border-bottom: 0; padding-bottom: 72px; }
 .topic .text { flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .topic .art { flex: 1 1 400px; min-width: 0; display: flex; justify-content: center; }
-.topic .art img { width: 100%; max-width: 520px; }
+.topic .art img { width: 100%; max-width: 400px; }
+.topic { align-items: flex-start; }
 .tag { font-size: 13px; font-weight: 600; color: var(--link); display: flex; align-items: center; gap: 8px; }
 .tag i { width: 10px; height: 10px; border-radius: 50%; }
 .topic h3 { font-size: 26px; line-height: 1.2; font-weight: 600; }
