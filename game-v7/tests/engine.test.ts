@@ -248,9 +248,9 @@ describe('passive cooling and inflammation', () => {
     const S = balance.wallSectors;
     expect(a[0]).toBeGreaterThan(a[S / 2] * 2); expect(b[S / 2]).toBeGreaterThan(b[0] * 2);
   });
-  it('a flare heats its arc of the wall; violet facing it keeps it much cooler than cyan facing it', () => {
+  it('a flare heats its arc of the wall; blue facing it keeps it much cooler than yellow facing it', () => {
     const run2 = (colour: number) => { const s = wave(14, () => colour); s.flares = [{ t0: 0, t1: 30, angle: 0.4, half: 0.5, intensity: 1.0, kind: 'flare' }]; run(s, 8); return s.wall[0]; };
-    const hot = run2(1), cooled = run2(2);
+    const hot = run2(0), cooled = run2(2);
     expect(hot).toBeGreaterThan(balance.wall.base + 0.2); expect(cooled).toBeLessThan(hot - 0.1);
   });
   it('doing nothing against a flare hurts: a sustained overload loses the run, a brief one does not', () => {
@@ -264,13 +264,13 @@ describe('passive cooling and inflammation', () => {
 });
 
 describe('immune cells and antibiotics', () => {
-  it('immune cells come from the flare arc only while it is on, bite pixels, and blue is only slightly spared', () => {
+  it('immune cells come from the flare arc only while it is on, bite pixels, and yellow resists them best', () => {
     const s = wave(12, () => 0); s.spawning = true; s.flares = [{ t0: 2, t1: 8, angle: 1, half: 0.5, intensity: 1.5, kind: 'flare' }];
     let early = 0, mid = 0; const seen = new Set<object>();
     for (let i = 0; i < 20 * 9; i++) { step(s); for (const m of s.immune) if (!seen.has(m)) { seen.add(m); if (s.waveT < 2) early++; else mid++; } }
     expect(early).toBe(0); expect(mid).toBeGreaterThan(2);
     const bites = (c: number) => { let t = 0; for (let seed = 1; seed <= 4; seed++) { const w = wave(10, () => c, seed); for (let k = 0; k < 30; k++) w.immune.push({ r: R - k * 0.3, angle: west + (k % 5) * 0.2 - 0.4 }); run(w, 4); t += w.stats.immuneKilled; } return t; };
-    expect(bites(2)).toBeLessThan(bites(0)); expect(bites(2)).toBeGreaterThan(bites(0) / 2); // blue is spared a little, not a lot: facing a flare costs cells
+    expect(bites(0)).toBeLessThan(bites(2) * 0.6); expect(bites(2)).toBeLessThan(bites(1)); // yellow resists immune cells; blue only a little
   });
   it('antibiotics kill by position, not colour; a coat halves them', () => {
     const s = wave(12, mixed); s.abx = [{ t0: 0.05, angle: west, half: 0.6, fired: false }]; run(s, 0.2);
@@ -368,6 +368,10 @@ describe('v7: gardening cards and announced phages', () => {
     nextCycle(s); expect(s.cycle).toBe(balance.cycles + 1); expect(s.phase).toBe('groom');
     s.offer = ['steroid_now', 'fibre', 'mucin']; pickCard(s, 0); s.waveLen = 0.5; run(s, 0.6);
     expect(s.status).toBe('run'); expect(s.phase).toBe('checkup'); // no second win: it goes on until a flare-out
+  });
+  it('green slows flares: the larger the green share, the less a flare heats the wall', () => {
+    const heatOf = (colour: (i: number, j: number) => number) => { const s = wave(14, colour); s.flares = [{ t0: 0, t1: 30, angle: 2.5, half: 0.5, intensity: 1.0, kind: 'flare' }]; const w0 = s.wall.slice(); run(s, 6); return Math.max(...s.wall.map((w, j) => w - w0[j])); };
+    expect(heatOf(() => 1)).toBeLessThan(heatOf(() => 0) * 0.5);
   });
   it('a run is six months, and antibiotics never arrive as a wave', () => {
     expect(balance.cycles).toBe(6); expect(balance.picks).toBe(1);

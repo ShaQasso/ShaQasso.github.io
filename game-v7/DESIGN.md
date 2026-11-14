@@ -4,7 +4,7 @@ A five-minute browser game: you are the gut bacteria of someone with Crohn's dis
 
 ## Rules
 - **Six months.** Each month is one card, then a 30-second wave, then a short summary.
-- **Capsule types.** Three colours are three capsule types. Blue stands for an anti-inflammatory capsule such as *B. fragilis* PSA: it calms the wall it faces (shown as blue pulses travelling to the wall) and immune cells mostly spare it. Yellow and green are other capsule types with no special role.
+- **Capsule types.** Three colours are three capsule types. Blue stands for an anti-inflammatory capsule such as *B. fragilis* PSA: it calms the wall it faces (shown as blue pulses travelling to the wall) and immune cells mostly spare it. Yellow resists immune cells. Green slows flares: the larger the green share of the colony, the less heat a flare adds.
 - **The central trade-off.** A big patch of one colour grows a coat that blocks hits, but a bite into it takes far more. A panel shows the biggest patch of each type against the coat threshold at all times.
 - **Cards are gardening between waves.** Only things from outside the body: food (Fibre grows blue, Mucin yellow, Starch green), an Antibiotic that clears cells where you drop it, Mesalamine that cools one wall section for the coming wave, and a Steroid that cools the whole wall but raises the baseline for good. Each card is dragged to where it works. Nothing is held and nothing has a timer beyond the coming wave.
 - **In a wave you turn the colony.** Phages arrive in volleys of 3 to 5 of one kind, spread over an arc. They wait at the rim for about two seconds and show their path. A phage infects only the colour of its head.
@@ -20,7 +20,7 @@ A five-minute browser game: you are the gut bacteria of someone with Crohn's dis
 Flat geometry on black and cream with red, orange, yellow, green and blue. Outer pixels trail and then catch up when the colony turns, bites leave a fading outline, and new pixels start pale.
 
 ## Balance
-24 seeds per bot (remission by month 6): idle 8%, a bot that only dodges phages 83%, a bot that also turns blue toward flares 79%. Past remission the good bot lasts about one to seven more months. The bots choose cards crudely. A human playtest has not been done.
+24 seeds per bot (remission by month 6): idle 8%, a bot that only dodges phages 79%, a bot that also turns blue toward flares 92%. Past remission the good bot lasts about one to seven more months. The bots choose cards crudely. A human playtest has not been done.
 
 ## Code
 `src/engine` is the headless rules (seeded, fixed timestep), `src/render/draw.ts` the canvas, `src/ui/hud.ts` the card hand, patch panel and summary, `tests/` the engine tests, `npm run pack` builds the single file `play/mbiota.html`.

@@ -27,11 +27,12 @@ function startRun(forced?: number): void {
 function titleScreen(): void {
   showScreen(`
     <h1>Mbiota</h1>
-    <h2>You are the gut bacteria of someone with Crohn's disease. Keep the gut in remission for ${balance.cycles} months. It takes about five minutes.</h2>
+    <h2>You are the <i>Bacteroides</i> of someone with Crohn's disease. Keep the gut in remission for ${balance.cycles} months. It takes about five minutes.</h2>
     <ul>
       <li><i style="background:#eef3d4"></i><span><b>Between waves, garden.</b> Drag one card onto the colony or the gut wall: food grows one colour, drugs calm the wall or clear cells.</span></li>
       <li><i style="background:#d0392a"></i><span><b>In a wave, turn the colony.</b> Drag, scroll, or use A and D. Phages come in volleys, wait at the rim before they launch, and infect only the colour of their head.</span></li>
       <li><i style="background:#1d6fa5"></i><span><b>Blue calms the wall.</b> Turn blue toward a hot part of the wall and it pulses out to cool it. Too hot for too long ends the run.</span></li>
+      <li><i style="background:#1f7a52"></i><span><b>Each colour has a job.</b> Yellow resists immune cells. Green slows flares: the more green, the slower they build.</span></li>
       <li><i style="background:#f2b01e"></i><span><b>Big patch or mixed?</b> A big patch of one colour grows a coat that blocks hits, but a bite into it takes far more. Your score rewards calm months and keeping all three colours.</span></li>
     </ul>
     <div><button class="btn" id="go" type="button">Start</button></div>`);

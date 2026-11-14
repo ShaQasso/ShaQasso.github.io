@@ -329,10 +329,13 @@ export function step(s: State, dt: number = B.dt): void {
   }
   // flares: heat their arc of the wall and fire immune cells from it
   const heat = new Array<number>(S).fill(0);
+  // green capsules slow how fast flares build: the more of the colony is green, the less heat a flare adds
+  let green = 0, all = 0; eachCell(s, (cell) => { all++; if (cell.c === 1) green++; });
+  const slow = 1 - B.flare.greenSlow * (all ? green / all : 0);
   for (const f of s.flares) {
     if (s.waveT < f.t0 || s.waveT >= f.t1) continue;
     const flareMul = mod(s, 'flareMul', 'mul');
-    for (let j = 0; j < S; j++) if (Math.abs(angDiff(f.angle, ((j + 0.5) / S) * TAU)) <= f.half + TAU / S / 2) heat[j] += f.intensity * B.flare.heat * flareMul;
+    for (let j = 0; j < S; j++) if (Math.abs(angDiff(f.angle, ((j + 0.5) / S) * TAU)) <= f.half + TAU / S / 2) heat[j] += f.intensity * B.flare.heat * flareMul * slow;
     if (s.spawning) {
       s.immuneAcc += B.flare.immunePerSec * f.intensity * mod(s, 'immuneMul', 'mul') * dt * (1 + 0.1 * level(s));
       while (s.immuneAcc >= 1) { s.immuneAcc -= 1; s.immune.push({ r: B.wallR, angle: wrap(f.angle + (rand(s) * 2 - 1) * f.half * 1.2) }); }

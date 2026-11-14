@@ -10,7 +10,7 @@
       "name": "yellow",
       "mucus": 0.6,
       "resist": 0.15,
-      "evade": 0.1,
+      "evade": 0.8,
       "growth": 0.95,
       "anti": 0.08
     },
@@ -95,7 +95,7 @@
   },
   "flare": {
     "from": 2,
-    "heat": 0.132,
+    "heat": 0.18,
     "immunePerSec": 0.32,
     "immuneGrow": 0.08,
     "pre": [
@@ -120,7 +120,8 @@
       0.9
     ],
     "secondFrom": 6,
-    "aim": 0.75
+    "aim": 0.75,
+    "greenSlow": 0.9
   },
   "cool": {
     "half": 0.6,
