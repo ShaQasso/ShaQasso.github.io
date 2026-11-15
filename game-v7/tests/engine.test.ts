@@ -299,10 +299,11 @@ describe('balance sanity', () => {
     const play = (bot: string, seed: number) => {
       const s = createState(seed); const b = BOTS[bot]; let r = seed >>> 0; const rnd = () => { r = (r + 0x6d2b79f5) >>> 0; let t = r; t = Math.imul(t ^ (t >>> 15), t | 1); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; let k = 0;
       while (s.status === 'run') { if (s.phase === 'groom') { while (s.phase === 'groom') b.groom(s, rnd); continue; } if (s.phase === 'checkup') { nextCycle(s); continue; } if (k++ % 5 === 0) b.tick(s, rnd); step(s); }
-      return s.stats.hits;
+      return { hits: s.stats.hits, months: s.cycle };
     };
-    let smart = 0, idle = 0; for (const seed of [1, 2, 3]) { smart += play('smart', seed); idle += play('idle', seed); }
-    expect(smart).toBeLessThan(idle * 0.7); // turning away from announced phages takes far fewer hits
+    // Compare hits per month survived: the idle bot usually loses early, so its total over a shorter run undercounts.
+    const rate = (bot: string) => { let h = 0, m = 0; for (const seed of [1, 2, 3]) { const r = play(bot, seed); h += r.hits; m += r.months; } return h / m; };
+    expect(rate('smart')).toBeLessThan(rate('idle') * 0.7); // turning away from announced phages takes far fewer hits
   }, 280000);
 });
 
