@@ -1,0 +1,16 @@
+# Mbiota: Remission score server (Cloudflare Workers free plan + D1)
+name = "mbiota-remission"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+account_id = "5f79832defee83992abf987fed475c1a"
+workers_dev = true
+preview_urls = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mbiota-remission"
+database_id = "3ceb3da7-bc79-4162-a2fb-2f0ddcfbfb22"
+
+[vars]
+# pages allowed to post scores (the site, and local testing)
+ORIGINS = "https://shaqasso.github.io,http://localhost:8768,http://localhost:5173"

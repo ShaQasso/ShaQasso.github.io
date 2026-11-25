@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mbiota · Shaqed Carasso</title>
-<meta name="description" content="Mbiota, a five-minute browser game about keeping a gut in remission, built on the biology of Bacteroides capsule switching.">
+<title>Mbiota: Remission · Shaqed Carasso</title>
+<meta name="description" content="Mbiota: Remission, a five-minute browser game about keeping a gut in remission, built on the biology of Bacteroides capsule switching. A new daily gut every day.">
 <link rel="canonical" href="https://shaqasso.github.io/mbiota.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Mbiota · Shaqed Carasso">
+<meta property="og:title" content="Mbiota: Remission · Shaqed Carasso">
 <meta property="og:description" content="Mbiota, a five-minute browser game about keeping a gut in remission, built on the biology of Bacteroides capsule switching.">
 <meta property="og:image" content="https://shaqasso.github.io/media/share.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -33,12 +33,24 @@
 
 <section class="wrap hero">
 <div class="text">
-<span class="label yellow">Mbiota</span>
+<span class="label yellow">Mbiota: Remission</span>
 <h1>Keep a gut in remission for six months</h1>
 <p class="body">I turned the biology I work on into a small browser game. You look after a colony of <em>Bacteroides</em> through six months. Phages attack in volleys, the gut wall flares, and between waves you garden the colony with food and drugs.</p>
-<div class="actions"><a class="btn" href="play/mbiota.html">Play in your browser</a><span>About 5 minutes. Mouse, touch or keyboard.</span></div>
+<div class="actions"><a class="btn" href="play/mbiota.html">Play today's gut</a><span>About 5 minutes. Mouse, touch or keyboard.</span></div>
 </div>
 <div class="art"><img src="media/mbiota-game.png" width="1000" height="982" alt="Mbiota gameplay: a volley of phages waits at the rim while a flare heats one side of the gut wall and blue cells pulse toward it"></div>
+</section>
+
+<section class="today" aria-labelledby="today-h">
+<div class="wrap">
+<div class="text">
+<span class="label yellow">Today's gut</span>
+<h2 id="today-h">Everyone plays the same colony today</h2>
+<p class="body">Each day brings one new gut: the same starting colony, cards, phages and flares for every player. Hold remission longest and put your initials on the board. A new gut starts every day at midnight UTC.</p>
+<div class="actions"><a class="btn" href="play/mbiota.html">Play today's gut</a></div>
+</div>
+<div class="board" id="today-board"><p class="note">Loading today's board…</p></div>
+</div>
 </section>
 
 <section class="story">
@@ -99,5 +111,18 @@
 <div class="col"><a href="mailto:scarasso@broadinstitute.org">scarasso@broadinstitute.org</a><a href="https://scholar.google.com/citations?user=RTsG9ekAAAAJ" target="_blank" rel="noopener">Google Scholar</a><a href="https://www.linkedin.com/in/shaqed-carasso/" target="_blank" rel="noopener">LinkedIn</a><a href="media/Carasso_Shaqed_CV_2026.pdf" target="_blank" rel="noopener">CV (PDF)</a></div>
 </div>
 </footer>
+<script>
+// Today's top three from the game's board; the page reads the same without it
+(function () {
+  var el = document.getElementById('today-board');
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  fetch('https://mbiota-remission.shaqasso.workers.dev/top?limit=3').then(function (r) { return r.json(); }).then(function (b) {
+    if (!b.scores || !b.scores.length) { el.innerHTML = '<p class="note">No scores yet today. Be the first on the board.</p>'; return; }
+    el.innerHTML = '<table class="lb">' + b.scores.map(function (r, k) {
+      return '<tr><td>' + (k + 1) + '</td><td class="n">' + esc(r.initials) + '</td><td class="m">' + esc(r.months) + (r.months === 1 ? ' month' : ' months') + '</td><td class="s">' + Number(r.score).toLocaleString('en-US') + '</td></tr>';
+    }).join('') + '</table>' + (b.total > 3 ? '<p class="note">' + b.total + ' players today</p>' : '');
+  }).catch(function () { el.innerHTML = '<p class="note">The board cannot be reached right now.</p>'; });
+})();
+</script>
 </body>
 </html>

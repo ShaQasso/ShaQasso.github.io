@@ -138,3 +138,17 @@ footer b { color: var(--ink); font-weight: 600; }
 .chip.ext { background: var(--blue); color: var(--ink); }
 .refs-h { margin: 10px 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .refs.ext { border-top: 0; padding-top: 0; margin-top: 0; }
+
+/* Mbiota page: today's gut */
+.today { border-top: 1px solid var(--line); background: var(--panel); }
+.today .wrap { padding-top: 56px; padding-bottom: 56px; display: flex; gap: 40px 56px; flex-wrap: wrap; align-items: center; }
+.today .text { flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.today h2 { font-size: 26px; line-height: 1.2; font-weight: 600; }
+.today .board { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.note { margin: 0; font-size: 15px; color: var(--dim); }
+table.lb { width: 100%; border-collapse: collapse; font-size: 16px; }
+.lb td { padding: 10px 6px; border-bottom: 1px solid var(--line); }
+.lb td:first-child { color: var(--dim); width: 32px; }
+.lb td.n { font-weight: 700; letter-spacing: .12em; }
+.lb td.m { color: var(--dim); text-align: right; }
+.lb td.s { text-align: right; font-weight: 700; width: 80px; }

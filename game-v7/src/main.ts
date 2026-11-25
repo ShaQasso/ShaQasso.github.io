@@ -8,6 +8,7 @@ import { createState, step } from './engine/sim';
 import { Input } from './input';
 import { COLOUR_NAME, Renderer, type Target } from './render/draw';
 import { Hud, hideScreen, showScreen } from './ui/hud';
+import { boardHtml, saveInitials, savedInitials, submit, ticket, top } from './ui/board';
 import type { State } from './engine/types';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -20,13 +21,16 @@ let seed = 0, acc = 0, last = performance.now(), shown = false;
 /** Today's gut: everyone plays the same world on the same date (UTC). Free play: a new world every time. */
 let mode: 'daily' | 'free' = 'daily', day = todayUTC();
 let rec = new Recorder();
+/** Today's gut asks the board for a signed ticket when the run starts; free play has none. */
+let runTicket: Promise<string | null> | null = null, submitted = false;
 const dayLabel = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 let dragTarget: Target | null = null;
 
 function startRun(m: 'daily' | 'free' = mode, forced?: number): void {
   mode = m; day = todayUTC();
   seed = forced ?? (mode === 'daily' ? dailySeed(day) : (Math.random() * 2 ** 31) >>> 0);
-  state = createState(seed); rec = new Recorder(); acc = 0; shown = false; dragTarget = null;
+  state = createState(seed); rec = new Recorder(); acc = 0; shown = false; dragTarget = null; submitted = false;
+  runTicket = mode === 'daily' ? ticket(day).catch(() => null) : null;
   renderer.reset(); input.reset(); hud.reset(); hideScreen();
 }
 
@@ -43,9 +47,14 @@ function titleScreen(): void {
       <li><i style="background:#f2b01e"></i><span><b>Big patch or mixed?</b> A big patch of one colour grows a coat that blocks hits, but a bite into it takes far more. Your score rewards calm months and keeping all three colours.</span></li>
     </ul>
     <div><span class="chipd">Today's gut · ${dayLabel(todayUTC())} · the same for everyone</span></div>
-    <div><button class="btn" id="go" type="button">Play today's gut</button><button class="btn alt" id="free" type="button">Free play</button></div>`);
+    <div><button class="btn" id="go" type="button">Play today's gut</button><button class="btn alt" id="free" type="button">Free play</button></div>
+    <p class="note" id="leader"></p>`);
   document.getElementById('go')!.addEventListener('click', () => startRun('daily'));
   document.getElementById('free')!.addEventListener('click', () => startRun('free'));
+  top(todayUTC(), 1).then((b) => {
+    const el = document.getElementById('leader'); const r = b.scores[0];
+    if (el && r) el.innerHTML = `Today's leader: <b>${r.initials}</b> · ${r.score.toLocaleString('en-US')}`;
+  }).catch(() => { /* the board is optional */ });
 }
 
 /** The best score is a per-browser convenience; the game works the same without it. */
@@ -71,11 +80,51 @@ function endScreen(s: State): void {
       <div><span>Months completed</span><br>${months}</div><div><span>Longest calm streak</span><br>${longest}</div>
       <div><span>Calm months (with streak bonus)</span><br>${sc.calm}</div><div><span>Colony size + colour mix</span><br>${sc.size} + ${sc.mix}</div>
     </div>
-    <div>${won ? '<button class="btn" id="more" type="button">Keep going</button>' : ''}<button class="btn${won ? ' alt' : ''}" id="again" type="button">Play again</button>${mode === 'daily' ? '<button class="btn alt" id="free" type="button">Free play</button>' : ''}<button class="btn alt" id="copy" type="button">Copy result</button></div>`);
+    <div>${won ? '<button class="btn" id="more" type="button">Keep going</button>' : ''}<button class="btn${won ? ' alt' : ''}" id="again" type="button">Play again</button>${mode === 'daily' ? '<button class="btn alt" id="free" type="button">Free play</button>' : ''}<button class="btn alt" id="copy" type="button">Copy result</button></div>
+    ${mode === 'daily' ? `<div class="lbbox">
+      ${submitted ? '' : `<form id="lbform" autocomplete="off"><label for="ini">Put your initials on today's board</label>
+        <div class="lbrow"><input id="ini" maxlength="3" spellcheck="false" autocapitalize="characters" inputmode="text" value="${savedInitials()}" placeholder="ABC" aria-describedby="lbmsg"><button class="btn" type="submit">Submit</button></div></form>`}
+      <p class="note" id="lbmsg">${submitted ? '' : won ? 'Submitting ends this run. Keep going first if you want a higher score.' : 'Three letters, A–Z.'}</p>
+      <div class="tabs" role="tablist"><button type="button" data-t="day" class="on">Today</button><button type="button" data-t="all">All-time</button></div>
+      <div id="lbtable"><p class="note">Loading the board…</p></div>
+    </div>` : ''}`);
   document.getElementById('more')?.addEventListener('click', () => { if (state && rec.more(state)) { hideScreen(); shown = false; } });
   document.getElementById('again')!.addEventListener('click', () => startRun(mode));
   document.getElementById('free')?.addEventListener('click', () => startRun('free'));
+  if (mode === 'daily') wireBoard(s, sc.total, won || s.endless);
   document.getElementById('copy')!.addEventListener('click', (e) => { navigator.clipboard?.writeText(text).then(() => { (e.target as HTMLElement).textContent = 'Copied'; }).catch(() => { (e.target as HTMLElement).textContent = text; }); });
+}
+
+/** The daily board on the end screen: show today's scores, and submit this run with your initials. */
+function wireBoard(s: State, total: number, remission: boolean): void {
+  const table = document.getElementById('lbtable')!, msg = document.getElementById('lbmsg')!;
+  let showing: 'day' | 'all' = 'day', mine: number | undefined;
+  const show = (which: 'day' | 'all') => {
+    showing = which;
+    document.querySelectorAll<HTMLButtonElement>('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.t === which));
+    top(which === 'all' ? 'all' : day, 10).then((b) => { if (showing === which) table.innerHTML = boardHtml(b, which === 'day' ? mine : undefined, which === 'all'); })
+      .catch(() => { table.innerHTML = '<p class="note">The board cannot be reached right now.</p>'; });
+  };
+  document.querySelectorAll<HTMLButtonElement>('.tabs button').forEach((b) => b.addEventListener('click', () => show(b.dataset.t as 'day' | 'all')));
+  show('day');
+  const form = document.getElementById('lbform') as HTMLFormElement | null, input = document.getElementById('ini') as HTMLInputElement | null;
+  if (!form || !input) return;
+  input.addEventListener('input', () => { input.value = input.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3); });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const initials = input.value.toUpperCase();
+    if (!/^[A-Z]{3}$/.test(initials)) { msg.textContent = 'Three letters, A–Z.'; input.focus(); return; }
+    const btn = form.querySelector('button')!; btn.disabled = true; msg.textContent = 'Sending…';
+    const t = await runTicket;
+    if (!t) { msg.textContent = 'The board could not be reached when this run started, so it cannot be submitted. Your best score is still saved on this device.'; btn.disabled = false; return; }
+    try {
+      const r = await submit({ ticket: t, initials, score: total, outcome: remission ? 'remission' : 'flare-out', moves: rec.moves });
+      saveInitials(initials); submitted = true; mine = r.rank;
+      form.remove(); document.getElementById('more')?.remove();
+      msg.innerHTML = `You are <b>#${r.rank}</b> of ${r.total} today.`;
+      if (showing === 'day') table.innerHTML = boardHtml(r, r.rank <= 10 ? r.rank : undefined);
+    } catch (err) { msg.textContent = `Not sent: ${(err as Error).message}.`; btn.disabled = false; }
+  });
 }
 
 /** Where a dragged card would land, or null if the pointer is not over a valid spot. */
