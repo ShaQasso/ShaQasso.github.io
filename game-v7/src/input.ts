@@ -1,5 +1,8 @@
 import { angDiff, TAU } from './engine/geometry';
 import { nextCycle, pickCard, placeTarget, setRotation } from './engine/sim';
+
+/** Moves that change the run go through here, so main can record them for replays. */
+export type Actions = { pick: (s: State, i: number) => boolean; place: (s: State, t: { i?: number; j?: number; sector?: number }) => boolean; next: (s: State) => void };
 import type { State } from './engine/types';
 import type { Renderer } from './render/draw';
 
@@ -7,6 +10,7 @@ import type { Renderer } from './render/draw';
 export class Input {
   pointer = { x: -1, y: -1, inside: false };
   onStart: () => void = () => {};
+  actions: Actions = { pick: pickCard, place: placeTarget, next: nextCycle };
   private drag: { last: number; target: number } | null = null;
   private target: number | null = null;
   private dir = 0;
@@ -31,8 +35,8 @@ export class Input {
     const g = this.getState();
     if (g && g.status === 'run' && g.phase === 'groom' && g.pending) {
       const [x, y] = this.rel(e);
-      if (g.pending.target === 'blob') { const p = this.renderer.pick(g, x, y); if (p) placeTarget(g, { i: p.i, j: p.j }); }
-      else if (this.renderer.distOf(x, y) > this.renderer.blobRadius(g) + 3) placeTarget(g, { sector: this.renderer.sectorAt(x, y) });
+      if (g.pending.target === 'blob') { const p = this.renderer.pick(g, x, y); if (p) this.actions.place(g, { i: p.i, j: p.j }); }
+      else if (this.renderer.distOf(x, y) > this.renderer.blobRadius(g) + 3) this.actions.place(g, { sector: this.renderer.sectorAt(x, y) });
       return;
     }
     const s = this.waving(); if (!s) return;
@@ -58,11 +62,11 @@ export class Input {
     const s = this.getState();
     if (!down) { if (['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(e.code)) this.dir = 0; return; }
     if (e.code === 'Enter') {
-      if (!s || s.status !== 'run') this.onStart(); else if (s.phase === 'checkup') nextCycle(s);
+      if (!s || s.status !== 'run') this.onStart(); else if (s.phase === 'checkup') this.actions.next(s);
       e.preventDefault(); return;
     }
     if (!s || s.status !== 'run') return;
-    if (s.phase === 'groom' && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) { pickCard(s, Number(e.code.slice(5)) - 1); return; }
+    if (s.phase === 'groom' && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) { this.actions.pick(s, Number(e.code.slice(5)) - 1); return; }
     if (s.phase !== 'wave') return;
     if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.dir = -1;
     else if (e.code === 'ArrowRight' || e.code === 'KeyD') this.dir = 1;

@@ -13,7 +13,7 @@ export type Phase = 'groom' | 'wave' | 'checkup';
 export interface CycleStats { lost: number; hits: number; peak: number; coats: number; abx: number; immune: number; blocked: number; births: number; flares: number; calm?: boolean; streak?: number }
 
 export interface State {
-  rng: number;
+  rng: number; wrng: number;
   t: number; // total real time in waves
   cells: (Cell | null)[]; // (2R+1)^2 pixel grid in blob-fixed coordinates
   theta: number; omega: number; cmd: number;

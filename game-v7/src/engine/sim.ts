@@ -1,6 +1,8 @@
 import balance from '../data/balance.json';
 import { CARD, CARDS } from './cards';
-import { rand, randRange } from './rng';
+import { bioSeed, rand, randRange, wrand, wrandRange } from './rng';
+import * as dm from './dmath';
+const sq = (x: number) => x * x;
 import { NEIGH, R, TAU, W, angDiff, cellAt, count, eachCell, exposed, idx, inside, sectorOfAngle, wrap, worldAngle } from './geometry';
 import type { Cell, CycleStats, FlareSeg, State } from './types';
 
@@ -24,28 +26,28 @@ export function mod(s: State, key: string, kind: 'mul' | 'add'): number {
   return v;
 }
 export const baseInflammation = (s: State) => Math.max(0.12, B.wall.base + s.drift - s.healed + mod(s, 'baseAdd', 'add'));
-export const inflammationOf = (wall: number[]) => Math.pow(wall.reduce((a, w) => a + w ** 3, 0) / wall.length, 1 / 3);
+export const inflammationOf = (wall: number[]) => dm.pow(wall.reduce((a, w) => a + w * w * w, 0) / wall.length, 1 / 3);
 
 // ---- setup -----------------------------------------------------------------------
 export function createState(seed: number): State {
   const s: State = {
-    rng: seed >>> 0, t: 0, cells: new Array(W * W).fill(null), theta: 0, omega: 0, cmd: 0, cycle: 1, phase: 'groom', offer: [], picksLeft: B.picks, pending: null, sites: [], wallSites: [],
+    rng: bioSeed(seed), wrng: seed >>> 0, t: 0, cells: new Array(W * W).fill(null), theta: 0, omega: 0, cmd: 0, cycle: 1, phase: 'groom', offer: [], picksLeft: B.picks, pending: null, sites: [], wallSites: [],
     held: null, mods: [], phaseQueue: null, waveT: 0, waveLen: B.wave.len, abx: [], flares: [], phages: [], immune: [], phageAcc: 0, immuneAcc: 0,
     wall: Array(S).fill(B.wall.base), cooling: Array(S).fill(0), inflammation: B.wall.base, drift: 0, overloadT: 0, coatAcc: 0, coolAcc: 0,
     spawning: true, mutating: true, coating: true, streak: 0, healed: 0, treated: Array(S).fill(0), endless: false, cyc: emptyCyc(), history: [], status: 'run', reason: '',
     stats: { lysed: 0, hits: 0, deflected: 0, blocked: 0, births: 0, abxKilled: 0, immuneKilled: 0, immuneEvaded: 0, flips: 0, coats: 0, cards: 0 },
   };
   const spots: [number, number][] = [];
-  for (let j = -R; j <= R; j++) for (let i = -R; i <= R; i++) if (i * i + j * j <= B.startRadius ** 2) spots.push([i, j]);
+  for (let j = -R; j <= R; j++) for (let i = -R; i <= R; i++) if (i * i + j * j <= sq(B.startRadius)) spots.push([i, j]);
   const seeds: { i: number; j: number; c: number }[] = [];
   const pool = spots.slice();
-  for (let k = 0; k < B.seedPatches; k++) { const [i, j] = pool.splice(Math.floor(rand(s) * pool.length), 1)[0]; seeds.push({ i, j, c: k % COLOURS.length }); }
+  for (let k = 0; k < B.seedPatches; k++) { const [i, j] = pool.splice(Math.floor(wrand(s) * pool.length), 1)[0]; seeds.push({ i, j, c: k % COLOURS.length }); }
   for (const [i, j] of spots) {
     let best = seeds[0], bd = Infinity;
-    for (const sd of seeds) { const d = (sd.i - i) ** 2 + (sd.j - j) ** 2; if (d < bd) { bd = d; best = sd; } }
+    for (const sd of seeds) { const d = sq(sd.i - i) + sq(sd.j - j); if (d < bd) { bd = d; best = sd; } }
     s.cells[idx(i, j)] = newCell(best.c);
   }
-  s.theta = rand(s) * TAU;
+  s.theta = wrand(s) * TAU;
   drawOffer(s);
   return s;
 }
@@ -56,7 +58,7 @@ export function drawOffer(s: State): void {
   s.offer = [];
   for (let k = 0; k < 3 && pool.length; k++) {
     const total = pool.reduce((a, c) => a + c.weight, 0);
-    let x = rand(s) * total, pick = 0;
+    let x = wrand(s) * total, pick = 0;
     for (let i = 0; i < pool.length; i++) { x -= pool[i].weight; if (x <= 0) { pick = i; break; } }
     s.offer.push(pool.splice(pick, 1)[0].id);
   }
@@ -87,7 +89,7 @@ export function placeTarget(s: State, t: { i?: number; j?: number; sector?: numb
   if (s.pending.target === 'blob') {
     if (t.i === undefined || t.j === undefined || !cellAt(s, t.i, t.j)) return false;
     if (card.effect === 'abx') {
-      const R2 = B.card.abxR ** 2;
+      const R2 = sq(B.card.abxR);
       for (let dj = -B.card.abxR; dj <= B.card.abxR; dj++) for (let di = -B.card.abxR; di <= B.card.abxR; di++) {
         if (di * di + dj * dj > R2 || !cellAt(s, t.i + di, t.j + dj)) continue;
         s.cells[idx(t.i + di, t.j + dj)] = null; s.stats.abxKilled++; s.events?.push({ kind: 'abx', x: t.i + di, y: t.j + dj });
@@ -96,7 +98,7 @@ export function placeTarget(s: State, t: { i?: number; j?: number; sector?: numb
     }
     const colour = card.colour ?? 0;
     for (let dj = -B.site.coreR; dj <= B.site.coreR; dj++) for (let di = -B.site.coreR; di <= B.site.coreR; di++) {
-      if (di * di + dj * dj > B.site.coreR ** 2) continue;
+      if (di * di + dj * dj > sq(B.site.coreR)) continue;
       const c = cellAt(s, t.i + di, t.j + dj);
       if (c && c.inf === 0) c.c = colour;
     }
@@ -113,14 +115,14 @@ export function placeTarget(s: State, t: { i?: number; j?: number; sector?: numb
 }
 
 // ---- waves ----------------------------------------------------------------------------
-const randSeg = (s: State, r: number[]) => randRange(s, r[0], r[1]);
+const randSeg = (s: State, r: number[]) => wrandRange(s, r[0], r[1]);
 
 function planWave(s: State): void {
   const c = s.cycle;
   s.abx = []; s.flares = [];
   if (c >= B.wave.abxFrom) {
     const k = c >= B.wave.abxLate ? 2 : 1;
-    for (let i = 0; i < k; i++) s.abx.push({ t0: (B.wave.len * (i + 1)) / (k + 1) + randRange(s, -3, 3), angle: rand(s) * TAU, half: randRange(s, 0.5, 0.8), fired: false });
+    for (let i = 0; i < k; i++) s.abx.push({ t0: (B.wave.len * (i + 1)) / (k + 1) + wrandRange(s, -3, 3), angle: wrand(s) * TAU, half: wrandRange(s, 0.5, 0.8), fired: false });
   }
   if (c >= B.flare.from) {
     const grow = 1 + B.flare.immuneGrow * level(s);
@@ -136,13 +138,15 @@ function planWave(s: State): void {
     // flares tend to land where the wall is least covered by blue, so luck does not cover you
     const cool = coolingFactors(s);
     const aim = (): number => {
-      if (rand(s) >= B.flare.aim) return rand(s) * TAU;
-      let best = rand(s) * TAU, low = Infinity;
-      for (let k = 0; k < 4; k++) { const a = rand(s) * TAU, f = cool[Math.floor((a / TAU) * S) % S]; if (f < low) { low = f; best = a; } }
+      // always six draws, so the world stream stays in step whatever the wall looks like
+      const roll = wrand(s), any = wrand(s) * TAU, cands = [0, 1, 2, 3].map(() => wrand(s) * TAU);
+      if (roll >= B.flare.aim) return any;
+      let best = any, low = Infinity;
+      for (const a of cands) { const f = cool[Math.floor((a / TAU) * S) % S]; if (f < low) { low = f; best = a; } }
       return best;
     };
-    section(randRange(s, 2, 6), aim(), randRange(s, B.flare.half[0], B.flare.half[1]), 1);
-    if (c >= B.flare.secondFrom) section(randRange(s, 5, 8), aim(), randRange(s, B.flare.half[0], B.flare.half[1]), 0.7);
+    section(wrandRange(s, 2, 6), aim(), wrandRange(s, B.flare.half[0], B.flare.half[1]), 1);
+    if (c >= B.flare.secondFrom) section(wrandRange(s, 5, 8), aim(), wrandRange(s, B.flare.half[0], B.flare.half[1]), 0.7);
   }
 }
 
@@ -185,7 +189,7 @@ export function depthMap(s: State): Map<number, number> {
 export function coolingFactors(s: State, theta = s.theta, depth = depthMap(s)): number[] {
   const sum = new Array<number>(S).fill(0);
   eachCell(s, (c, i, j) => {
-    const a = wrap(Math.atan2(j, i) + theta);
+    const a = wrap(dm.atan2(j, i) + theta);
     const w = COLOURS[c.c].anti / (1 + B.cool.proximity * (depth.get(idx(i, j)) ?? 9));
     const j0 = Math.floor((a / TAU) * S);
     for (let k = -2; k <= 2; k++) {
@@ -198,7 +202,7 @@ export function coolingFactors(s: State, theta = s.theta, depth = depthMap(s)): 
   const site = new Array<number>(S).fill(0);
   for (const w of s.wallSites) for (let k = -1; k <= 1; k++) site[(w.sector + k + S) % S] += w.bonus * (k === 0 ? 1 : 0.5);
   if (s.treated) s.treated.forEach((v, j) => { site[j] += v; });
-  return sum.map((v, j) => Math.min(B.cool.max + 0.1, Math.min(B.cool.max, 1 - Math.exp(-v / B.cool.K) + bonus) + site[j]));
+  return sum.map((v, j) => Math.min(B.cool.max + 0.1, Math.min(B.cool.max, 1 - dm.exp(-v / B.cool.K) + bonus) + site[j]));
 }
 function refreshCooling(s: State): void { s.cooling = coolingFactors(s); }
 
@@ -235,7 +239,7 @@ function coatCheck(s: State): void {
 
 function chipCoat(s: State, x: number, y: number): void {
   for (let dj = -B.coat.breakRadius; dj <= B.coat.breakRadius; dj++) for (let di = -B.coat.breakRadius; di <= B.coat.breakRadius; di++) {
-    if (di * di + dj * dj > B.coat.breakRadius ** 2) continue;
+    if (di * di + dj * dj > sq(B.coat.breakRadius)) continue;
     const c = cellAt(s, x + di, y + dj);
     if (c && c.m > 0) { c.m = 0; c.mcd = B.coat.cooldown; }
   }
@@ -261,14 +265,14 @@ export function useHeld(s: State, reverse = false): boolean {
 /** Turn the outer band of the blob against the core (shape the blob). */
 export function turnBand(s: State, dir: number): void {
   let maxR = 0;
-  eachCell(s, (_, i, j) => { maxR = Math.max(maxR, Math.hypot(i, j)); });
-  const rin = maxR - B.band.width, ang = dir * B.band.angle, ca = Math.cos(ang), sa = Math.sin(ang);
+  eachCell(s, (_, i, j) => { maxR = Math.max(maxR, dm.hypot(i, j)); });
+  const rin = maxR - B.band.width, ang = dir * B.band.angle, ca = dm.cos(ang), sa = dm.sin(ang);
   const next = s.cells.slice();
   for (let j = -R; j <= R; j++) for (let i = -R; i <= R; i++) {
-    const r = Math.hypot(i, j);
+    const r = dm.hypot(i, j);
     if (r < rin || r > maxR + 1.5) continue;
     const si = Math.round(i * ca + j * sa), sj = Math.round(-i * sa + j * ca);
-    const sr = Math.hypot(si, sj), src = inside(si, sj) && sr >= rin && sr <= maxR + 1.5 ? s.cells[idx(si, sj)] : null;
+    const sr = dm.hypot(si, sj), src = inside(si, sj) && sr >= rin && sr <= maxR + 1.5 ? s.cells[idx(si, sj)] : null;
     next[idx(i, j)] = src ? { ...src } : null;
   }
   s.cells = next;
@@ -278,7 +282,7 @@ export function turnBand(s: State, dir: number): void {
 // ---- helpers ----------------------------------------------------------------------------------
 /** True when this cell borders a hole inside the colony's outline (a bite), not the open outside. */
 function wound(s: State, i: number, j: number, rim: number): boolean {
-  for (const [di, dj] of NEIGH) { const a = i + di, b = j + dj; if (inside(a, b) && !s.cells[idx(a, b)] && Math.hypot(a, b) < rim - 1) return true; }
+  for (const [di, dj] of NEIGH) { const a = i + di, b = j + dj; if (inside(a, b) && !s.cells[idx(a, b)] && dm.hypot(a, b) < rim - 1) return true; }
   return false;
 }
 function kill(s: State, i: number, j: number, why: 'abx' | 'immune' | 'lysis', mask?: number): void {
@@ -316,15 +320,17 @@ export function step(s: State, dt: number = B.dt): void {
 
   // a stream of phages from every side, building through the wave and across cycles
   if (s.spawning) {
-    const rate = B.wave.base * (c === 1 ? B.wave.firstMonth : 1) * Math.pow(B.wave.growth, level(s) - 1) * (B.wave.ramp[0] + (B.wave.ramp[1] - B.wave.ramp[0]) * progress);
+    const rate = B.wave.base * (c === 1 ? B.wave.firstMonth : 1) * dm.pow(B.wave.growth, level(s) - 1) * (B.wave.ramp[0] + (B.wave.ramp[1] - B.wave.ramp[0]) * progress);
     s.phageAcc += rate * dt;
     while (s.phageAcc >= 1) {
       s.phageAcc -= 1;
-      let mask = 1 << Math.floor(rand(s) * 3);
-      if (c >= B.wave.twoColourFrom && rand(s) < B.wave.twoColourProb) mask |= 1 << Math.floor(rand(s) * 3);
+      // always three draws for the kind of volley, so the world stream stays in step
+      const k1 = wrand(s), k2 = wrand(s), k3 = wrand(s);
+      let mask = 1 << Math.floor(k1 * 3);
+      if (c >= B.wave.twoColourFrom && k2 < B.wave.twoColourProb) mask |= 1 << Math.floor(k3 * 3);
       // a volley: several phages of one kind, spread over an arc like a shotgun blast
-      const n = B.wave.volley[0] + Math.floor(rand(s) * (B.wave.volley[1] - B.wave.volley[0] + 1)), a0 = rand(s) * TAU;
-      for (let k = 0; k < n; k++) s.phages.push({ r: B.phage.spawnR + rand(s) * 3, angle: wrap(a0 + ((k + 0.5) / n - 0.5) * 2 * B.wave.spread + (rand(s) - 0.5) * 0.05), mask, wait: B.phage.warn + rand(s) * 0.35 });
+      const n = B.wave.volley[0] + Math.floor(wrand(s) * (B.wave.volley[1] - B.wave.volley[0] + 1)), a0 = wrand(s) * TAU;
+      for (let k = 0; k < n; k++) s.phages.push({ r: B.phage.spawnR + wrand(s) * 3, angle: wrap(a0 + ((k + 0.5) / n - 0.5) * 2 * B.wave.spread + (wrand(s) - 0.5) * 0.05), mask, wait: B.phage.warn + wrand(s) * 0.35 });
     }
   }
   // flares: heat their arc of the wall and fire immune cells from it
@@ -359,7 +365,7 @@ export function step(s: State, dt: number = B.dt): void {
     const r0 = p.r; p.r -= phageSpeed(s) * dt;
     const psi = p.angle - s.theta; let done = false;
     for (let rr = r0; rr > p.r && !done; rr -= 0.25) {
-      const x = Math.round(rr * Math.cos(psi)), y = Math.round(rr * Math.sin(psi));
+      const x = Math.round(rr * dm.cos(psi)), y = Math.round(rr * dm.sin(psi));
       const cell = cellAt(s, x, y);
       if (!cell) continue;
       done = true;
@@ -377,7 +383,7 @@ export function step(s: State, dt: number = B.dt): void {
     const r0 = m.r; m.r -= immuneSpeed(s) * dt;
     const psi = m.angle - s.theta; let done = false;
     for (let rr = r0; rr > m.r && !done; rr -= 0.25) {
-      const x = Math.round(rr * Math.cos(psi)), y = Math.round(rr * Math.sin(psi));
+      const x = Math.round(rr * dm.cos(psi)), y = Math.round(rr * dm.sin(psi));
       const cell = cellAt(s, x, y);
       if (!cell) continue;
       done = true;
@@ -385,7 +391,7 @@ export function step(s: State, dt: number = B.dt): void {
       else if (rand(s) < COLOURS[cell.c].evade * B.immune.evadeFactor) { s.stats.immuneEvaded++; s.events?.push({ kind: 'evade', x, y, c: cell.c }); }
       else {
         // the cell scrapes a strip: a few pixels wide, a few deep along its path; coats and evasive pixels survive
-        const ux = Math.cos(psi), uy = Math.sin(psi), H = B.immune.stripHalf, D = B.immune.stripDepth;
+        const ux = dm.cos(psi), uy = dm.sin(psi), H = B.immune.stripHalf, D = B.immune.stripDepth;
         const seen = new Set<number>();
         for (let d = 0; d <= D; d++) for (let w = -H; w <= H; w++) {
           const px = Math.round(x - ux * d - uy * w), py = Math.round(y - uy * d + ux * w);
@@ -423,10 +429,10 @@ export function step(s: State, dt: number = B.dt): void {
   const rareW = share.map((v) => 1 / (v / Math.max(1, n0) + B.mutate.rareBias));
   const gAll = mod(s, 'growthAll', 'mul');
   const parents: [number, number][] = [];
-  let rim = 0; eachCell(s, (_, i, j) => { rim = Math.max(rim, Math.hypot(i, j)); });
+  let rim = 0; eachCell(s, (_, i, j) => { rim = Math.max(rim, dm.hypot(i, j)); });
   eachCell(s, (cell, i, j) => {
     if (cell.inf > 0) return;
-    if (s.mutating && rand(s) < 1 - Math.exp(-B.mutate.rate * (1 + s.inflammation) * dt)) {
+    if (s.mutating && rand(s) < 1 - dm.exp(-B.mutate.rate * (1 + s.inflammation) * dt)) {
       let pick: number;
       if (s.phaseQueue && s.phaseQueue.n > 0) { pick = s.phaseQueue.colour; s.phaseQueue.n--; if (s.phaseQueue.n <= 0) s.phaseQueue = null; }
       else {
@@ -439,9 +445,9 @@ export function step(s: State, dt: number = B.dt): void {
       s.stats.flips++;
     }
     let g = (COLOURS[cell.c].growth / B.growthInterval) * gAll * mod(s, `growth${cell.c}`, 'mul') * room;
-    for (const st of s.sites) if ((i - st.i) ** 2 + (j - st.j) ** 2 <= st.r * st.r) { g *= B.site.growMul; break; }
+    for (const st of s.sites) if (sq(i - st.i) + sq(j - st.j) <= st.r * st.r) { g *= B.site.growMul; break; }
     if (wound(s, i, j, rim)) g *= B.regrow; // bites heal: the edge of a crater grows back fast
-    if (rand(s) < 1 - Math.exp(-dt * g)) parents.push([i, j]);
+    if (rand(s) < 1 - dm.exp(-dt * g)) parents.push([i, j]);
     if (cell.m > 0) { cell.m -= dt; if (cell.m <= 0) cell.mcd = B.coat.cooldown; } else if (cell.mcd > 0) cell.mcd -= dt;
   });
   for (const [i, j] of parents) {
@@ -449,14 +455,14 @@ export function step(s: State, dt: number = B.dt): void {
     if (!p || p.inf > 0) continue;
     const empties = NEIGH.map(([di, dj]) => [i + di, j + dj] as [number, number]).filter(([a, b]) => inside(a, b) && !s.cells[idx(a, b)]);
     if (!empties.length) continue;
-    const deep = empties.filter(([a, b]) => Math.hypot(a, b) < rim - 1); // fill craters before growing outward
+    const deep = empties.filter(([a, b]) => dm.hypot(a, b) < rim - 1); // fill craters before growing outward
     const from = deep.length ? deep : empties;
     const [ei, ej] = from[Math.floor(rand(s) * from.length)];
     const votes = [0, 0, 0]; votes[p.c] += B.parentWeight;
     for (const [di, dj] of NEIGH) { const nb = cellAt(s, ei + di, ej + dj); if (nb && nb !== p && nb.inf === 0) votes[nb.c] += 1; }
     let x = rand(s) * (votes[0] + votes[1] + votes[2]), pick = p.c;
     for (let k = 0; k < 3; k++) { x -= votes[k]; if (x <= 0) { pick = k; break; } }
-    for (const st of s.sites) if ((ei - st.i) ** 2 + (ej - st.j) ** 2 <= st.r * st.r && rand(s) < B.site.newbornP) { pick = st.colour; break; }
+    for (const st of s.sites) if (sq(ei - st.i) + sq(ej - st.j) <= st.r * st.r && rand(s) < B.site.newbornP) { pick = st.colour; break; }
     s.cells[idx(ei, ej)] = newCell(pick); s.stats.births++; s.cyc.births++;
   }
 

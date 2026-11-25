@@ -63,7 +63,9 @@ button { font: inherit; }
 .btn.alt { background: transparent; color: var(--ink); border: 2px solid var(--line); margin-left: 8px; }
 
 /* title and end screens */
-#screen { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(13,13,13,.9); padding: 16px; overflow: auto; }
+#screen { position: absolute; inset: 0; display: none; align-items: flex-start; justify-content: center; background: rgba(13,13,13,.9); padding: 72px 16px 24px; overflow: auto; }
+/* centred when it fits, scrollable from the top when it does not (phones) */
+#screen > * { margin: auto 0; }
 #screen.show { display: flex; }
 .card { max-width: 560px; width: 100%; display: flex; flex-direction: column; gap: 18px; }
 .card h1 { margin: 0; font-size: 52px; line-height: 1; font-weight: 700; letter-spacing: -.02em; }
@@ -106,3 +108,7 @@ button { font: inherit; }
 @media (max-width: 900px) { .patches, .score { display: none; } }
 .score em { font-style: normal; font-size: 12px; color: var(--ink); margin-top: 3px; }
 .score em.hot { color: var(--yellow); font-weight: 600; }
+
+/* Mbiota: Remission — small label above the title, and the daily-world chip */
+.kick { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--yellow); font-weight: 600; }
+.chipd { display: inline-block; font-size: 13px; color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }

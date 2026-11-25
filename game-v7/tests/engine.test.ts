@@ -205,12 +205,20 @@ describe('mucus coats on big patches', () => {
   });
 
   it('a coat soaks up a phage (no infection) and the hit chips a hole in the shell', () => {
-    const s = wave(13, () => 0); s.coating = true; run(s, 1.2);
-    const before = (() => { let n = 0; eachCell(s, (c) => { if (c.m > 0) n++; }); return n; })();
-    s.phages.push({ r: R + 2, angle: west, mask: 1 }); run(s, 2);
+    const s = wave(13, () => 0); s.coating = true; run(s, 1.2); s.events = [];
+    s.phages.push({ r: R + 2, angle: west, mask: 1 });
+    for (let k = 0; k < 400 && s.stats.blocked === 0 && s.stats.hits === 0; k++) step(s, balance.dt); // look right after the hit
     expect(s.stats.hits).toBe(0); expect(s.stats.blocked).toBe(1);
-    let after = 0, cooling = 0; eachCell(s, (c) => { if (c.m > 0) after++; if (c.mcd > 0) cooling++; });
-    expect(after).toBeLessThan(before); expect(cooling).toBeGreaterThan(3);
+    // the hole is where the phage hit: every cell around that spot lost its coat and is cooling down
+    // (the colony keeps growing meanwhile, so a colony-wide count of coated cells is not a fair measure)
+    const hit = s.events.find((e) => e.kind === 'coat')!; const br = balance.coat.breakRadius;
+    let hole = 0, stillCoated = 0, cooling = 0;
+    for (let dj = -br; dj <= br; dj++) for (let di = -br; di <= br; di++) {
+      if (di * di + dj * dj > br * br) continue;
+      const c = cellAt(s, hit.x + di, hit.y + dj); if (!c) continue;
+      hole++; if (c.m > 0) stillCoated++; if (c.mcd > 0) cooling++;
+    }
+    expect(hole).toBeGreaterThan(3); expect(stillCoated).toBe(0); expect(cooling).toBeGreaterThan(3);
   });
 
   it('every capsule type grows the same coat: only blue has a special role', () => {

@@ -1,5 +1,6 @@
 import balance from '../data/balance.json';
 import type { Cell, State } from './types';
+import { atan2 } from './dmath';
 
 export const TAU = Math.PI * 2;
 export const R = balance.R;
@@ -21,7 +22,7 @@ export function eachCell(s: State, f: (c: Cell, i: number, j: number) => void): 
 export const count = (s: State) => { let n = 0; eachCell(s, () => n++); return n; };
 
 /** World angle (radians, clockwise) of a local cell given the blob's rotation. */
-export const worldAngle = (s: State, i: number, j: number) => wrap(Math.atan2(j, i) + s.theta);
+export const worldAngle = (s: State, i: number, j: number) => wrap(atan2(j, i) + s.theta);
 export const sectorOfAngle = (a: number, sectors: number) => Math.floor(wrap(a) / (TAU / sectors)) % sectors;
 
 /** A cell is exposed when it touches empty space (it is on the surface). */

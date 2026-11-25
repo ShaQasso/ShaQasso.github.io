@@ -3,7 +3,8 @@ import balance from './data/balance.json';
 import { CARD } from './engine/cards';
 import { count } from './engine/geometry';
 import { score } from './engine/score';
-import { createState, keepGoing, nextCycle, pickCard, placeTarget, step } from './engine/sim';
+import { Recorder, dailySeed, todayUTC } from './engine/replay';
+import { createState, step } from './engine/sim';
 import { Input } from './input';
 import { COLOUR_NAME, Renderer, type Target } from './render/draw';
 import { Hud, hideScreen, showScreen } from './ui/hud';
@@ -16,17 +17,23 @@ const hud = new Hud();
 
 let state: State | null = null, demo: State | null = null;
 let seed = 0, acc = 0, last = performance.now(), shown = false;
+/** Today's gut: everyone plays the same world on the same date (UTC). Free play: a new world every time. */
+let mode: 'daily' | 'free' = 'daily', day = todayUTC();
+let rec = new Recorder();
+const dayLabel = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 let dragTarget: Target | null = null;
 
-function startRun(forced?: number): void {
-  seed = forced ?? ((Math.random() * 2 ** 31) | 0);
-  state = createState(seed); acc = 0; shown = false; dragTarget = null;
+function startRun(m: 'daily' | 'free' = mode, forced?: number): void {
+  mode = m; day = todayUTC();
+  seed = forced ?? (mode === 'daily' ? dailySeed(day) : (Math.random() * 2 ** 31) >>> 0);
+  state = createState(seed); rec = new Recorder(); acc = 0; shown = false; dragTarget = null;
   renderer.reset(); input.reset(); hud.reset(); hideScreen();
 }
 
 function titleScreen(): void {
   showScreen(`
-    <h1>Mbiota</h1>
+    <div class="kick">Mbiota</div>
+    <h1>Remission</h1>
     <h2>You are the <i>Bacteroides</i> of someone with Crohn's disease. Keep the gut in remission for ${balance.cycles} months. It takes about five minutes.</h2>
     <ul>
       <li><i style="background:#f2ebdc"></i><span><b>Between waves, garden.</b> Drag one card onto the colony or the gut wall: food grows one colour, drugs calm the wall or clear cells.</span></li>
@@ -35,8 +42,10 @@ function titleScreen(): void {
       <li><i style="background:#1f7a52"></i><span><b>Each colour has a job.</b> Yellow resists immune cells. Green slows flares: the more green, the slower they build.</span></li>
       <li><i style="background:#f2b01e"></i><span><b>Big patch or mixed?</b> A big patch of one colour grows a coat that blocks hits, but a bite into it takes far more. Your score rewards calm months and keeping all three colours.</span></li>
     </ul>
-    <div><button class="btn" id="go" type="button">Start</button></div>`);
-  document.getElementById('go')!.addEventListener('click', () => startRun());
+    <div><span class="chipd">Today's gut · ${dayLabel(todayUTC())} · the same for everyone</span></div>
+    <div><button class="btn" id="go" type="button">Play today's gut</button><button class="btn alt" id="free" type="button">Free play</button></div>`);
+  document.getElementById('go')!.addEventListener('click', () => startRun('daily'));
+  document.getElementById('free')!.addEventListener('click', () => startRun('free'));
 }
 
 /** The best score is a per-browser convenience; the game works the same without it. */
@@ -51,8 +60,10 @@ function best(total: number): { best: number; isNew: boolean } {
 function endScreen(s: State): void {
   const won = s.status === 'won', sc = score(s), b = best(sc.total);
   const months = won ? s.cycle : s.cycle - 1, longest = Math.max(0, ...s.history.map((h) => h.streak ?? 0));
-  const text = `Mbiota: ${won ? `remission in ${s.cycle} months` : s.endless ? `remission, then flare-out in month ${s.cycle}` : `flare-out in month ${s.cycle}`} · score ${sc.total}`;
+  const where = mode === 'daily' ? `today's gut, ${dayLabel(day)}` : 'free play';
+  const text = `Mbiota: Remission · ${where} · ${won ? `remission in ${s.cycle} months` : s.endless ? `remission, then flare-out in month ${s.cycle}` : `flare-out in month ${s.cycle}`} · score ${sc.total}`;
   showScreen(`
+    <div class="kick">${mode === 'daily' ? `Today's gut · ${dayLabel(day)}` : 'Free play'}</div>
     <div class="big">${won ? 'Remission.' : 'Flare-out.'}</div>
     <h2>${won ? `You kept the gut calm for ${s.cycle} months. Keep going to build your score: each month past remission is harder, and calm streaks still multiply.` : s.endless ? `You held remission and kept going until month ${s.cycle}.` : `Inflammation stayed too high in month ${s.cycle}.`}</h2>
     <div class="stats">
@@ -60,9 +71,10 @@ function endScreen(s: State): void {
       <div><span>Months completed</span><br>${months}</div><div><span>Longest calm streak</span><br>${longest}</div>
       <div><span>Calm months (with streak bonus)</span><br>${sc.calm}</div><div><span>Colony size + colour mix</span><br>${sc.size} + ${sc.mix}</div>
     </div>
-    <div>${won ? '<button class="btn" id="more" type="button">Keep going</button>' : ''}<button class="btn${won ? ' alt' : ''}" id="again" type="button">${won ? 'New run' : 'Play again'}</button><button class="btn alt" id="copy" type="button">Copy result</button></div>`);
-  document.getElementById('more')?.addEventListener('click', () => { if (state && keepGoing(state)) { hideScreen(); shown = false; } });
-  document.getElementById('again')!.addEventListener('click', () => startRun());
+    <div>${won ? '<button class="btn" id="more" type="button">Keep going</button>' : ''}<button class="btn${won ? ' alt' : ''}" id="again" type="button">Play again</button>${mode === 'daily' ? '<button class="btn alt" id="free" type="button">Free play</button>' : ''}<button class="btn alt" id="copy" type="button">Copy result</button></div>`);
+  document.getElementById('more')?.addEventListener('click', () => { if (state && rec.more(state)) { hideScreen(); shown = false; } });
+  document.getElementById('again')!.addEventListener('click', () => startRun(mode));
+  document.getElementById('free')?.addEventListener('click', () => startRun('free'));
   document.getElementById('copy')!.addEventListener('click', (e) => { navigator.clipboard?.writeText(text).then(() => { (e.target as HTMLElement).textContent = 'Copied'; }).catch(() => { (e.target as HTMLElement).textContent = text; }); });
 }
 
@@ -81,14 +93,15 @@ function targetFor(s: State, i: number, x: number, y: number): Target | null {
 
 input.bind(() => state);
 input.onStart = () => { if (!state || state.status !== 'run') startRun(); };
-hud.onContinue = () => { if (state) nextCycle(state); };
+input.actions = { pick: (s, i) => rec.pick(s, i), place: (s, t) => rec.place(s, t), next: (s) => rec.next(s) };
+hud.onContinue = () => { if (state) rec.next(state); };
 hud.onDragMove = (i, x, y) => { dragTarget = state ? targetFor(state, i, x, y) : null; };
 hud.onDragEnd = () => { dragTarget = null; };
 hud.onDrop = (i, x, y) => {
   if (!state) return false;
   const t = targetFor(state, i, x, y); if (!t) return false;
-  pickCard(state, i);
-  if (state.pending) placeTarget(state, t.kind === 'blob' ? { i: t.i, j: t.j } : { sector: t.sector });
+  rec.pick(state, i);
+  if (state.pending) rec.place(state, t.kind === 'blob' ? { i: t.i, j: t.j } : { sector: t.sector });
   return true;
 };
 
@@ -97,7 +110,7 @@ function frame(now: number): void {
   last = now;
   if (state && state.status === 'run' && state.phase === 'wave') {
     acc += dt;
-    while (acc >= balance.dt && state.phase === 'wave' && state.status === 'run') { input.apply(state); step(state, balance.dt); acc -= balance.dt; }
+    while (acc >= balance.dt && state.phase === 'wave' && state.status === 'run') { const before = state.cmd; input.apply(state); rec.turn(before, state.cmd); step(state, balance.dt); rec.stepped(); acc -= balance.dt; }
   } else acc = 0;
   if (state) {
     const hover = input.pointer.inside && !input.dragging ? renderer.pick(state, input.pointer.x, input.pointer.y) : null;
@@ -121,4 +134,4 @@ function frame(now: number): void {
 
 titleScreen();
 requestAnimationFrame(frame);
-(window as unknown as { __mbiota: unknown }).__mbiota = { start: startRun, get state() { return state; } };
+(window as unknown as { __mbiota: unknown }).__mbiota = { start: startRun, get state() { return state; }, get run() { return { mode, day, seed, moves: rec.moves }; } };
